@@ -294,26 +294,33 @@ function doSwap(i,j){ const di=isoOfIdx(i), dj=isoOfIdx(j), prev={[di]:edits[di]
   W.addEventListener("contextmenu",e=>{ if(e.target.closest(".sd")) e.preventDefault(); });
 })();
 let calScrolled=false, calFilter="all";
+let calPastOpen=false;
 function renderCalendar(t){
   const cw=weekOf(t); let h="", lastPh=null;
   const want=c=> calFilter==="all" || (calFilter==="run"&&RUN.has(c)) || (calFilter==="key"&&(c==="P"||c==="X"||c==="R"));
-  for(let w=1;w<=36;w++){
+  // menneet viikot yhteen riviin
+  if(cw>1){ let km=0, pl=0, dn=0, met=0; for(let w=1;w<cw;w++){ const a=weekKm(BASE,logs,w); km+=a; if(TARGET_EFF[w-1]&&a>=TARGET_EFF[w-1]*0.9) met++; }
+    for(let i=0;i<(cw-1)*7-1&&i<BASE.length;i++){ const c=sessionsOn(BASE,logs,ADAPT,i)[0].code; if(c==="L") continue; pl++; const l=logs[isoOfIdx(i)]; if(l&&l.status==="done") dn++; }
+    h+=`<button class="calpast" id="calPast" aria-expanded="${calPastOpen}"><span><b>Vk 1–${cw-1}</b> · ${n1(km)} km · ${dn}/${pl} treeniä · tavoite täynnä ${met}/${cw-1} viikkona</span><span aria-hidden="true">${calPastOpen?"▴":"▾"}</span></button>`; }
+  for(let w=calPastOpen?1:cw;w<=36;w++){
     const a0=(w-1)*7-1, ph=PHASE(w); if(ph!==lastPh){ h+=`<div class="calphase">${esc(ph)}</div>`; lastPh=ph; }
     const act=weekKm(BASE,logs,w), tgt=TARGET_EFF[w-1]; let cells="";
     for(let i=a0;i<=a0+6;i++){
       if(i<0||i>=BASE.length){ cells+=`<span class="cc empty"></span>`; continue; }
-      const ss=sessionsOn(BASE,logs,ADAPT,i), s0=ss[0], note=BASE[i][2], c=s0.code, dim=!want(c);
-      cells+=`<button class="cc${i===t?" today":""}${i<t?" past":""}${dim?" dim":""}${c==="R"?" race":""}" data-cal="${i}" aria-label="${fmt(i)}: ${TYPES[c].l}${note?`, ${esc(note)}`:""}"><span class="dn num">${new Date(START_UTC+i*864e5).getUTCDate()}</span><span class="ty ${TYPES[c].c}">${SHORT[c]||""}</span>${i<=t?dayMark(ss)||`<span class="mark none"></span>`:note?`<span class="cn" aria-hidden="true">📌</span>`:`<span class="mark none"></span>`}${extrasOn(i).length?`<i class="plus">+${extrasOn(i).length}</i>`:""}</button>`;
+      const ss=sessionsOn(BASE,logs,ADAPT,i), s0=ss[0], note=BASE[i][2], c=s0.code, dim=!want(c), chg=changeInfo(s0)||(edits[isoOfIdx(i)]&&!edits[isoOfIdx(i)].ev);
+      cells+=`<button class="cc${i===t?" today":""}${i<t?" past":""}${dim?" dim":""}${c==="R"?" race":""}${chg?" chg":""}" data-cal="${i}" aria-label="${fmt(i)}: ${TYPES[c].l}${chg?", muutettu":""}${note?`, ${esc(note)}`:""}"><span class="dn num">${new Date(START_UTC+i*864e5).getUTCDate()}</span><span class="ty ${TYPES[c].c}">${SHORT[c]||""}</span>${i<=t?dayMark(ss)||`<span class="mark none"></span>`:note?`<span class="cn" aria-hidden="true">📌</span>`:`<span class="mark none"></span>`}${extrasOn(i).length?`<i class="plus">+${extrasOn(i).length}</i>`:""}</button>`;
     }
-    const past=w<cw, pct=tgt?Math.round(act/tgt*100):0;
-    h+=`<div class="calwk${w===cw?" cur":""}" id="cw${w}"><div class="cwh"><b>Vk ${w}</b><span>${fmtShort(Math.max(0,a0))}–${fmtShort(Math.min(BASE.length-1,a0+6))}</span><span class="cwk num${past&&pct<70?" low":""}">${w<=cw?`${n1(act)} / `:""}${tgt} km</span></div><div class="calgrid">${cells}</div></div>`;
+    const past=w<cw, met=tgt?act>=tgt*0.9:true;
+    h+=`<div class="calwk${w===cw?" cur":""}${past?(met?" met":" short"):""}" id="cw${w}"><div class="cwh"><b>Vk ${w}</b><span>${fmtShort(Math.max(0,a0))}–${fmtShort(Math.min(BASE.length-1,a0+6))}</span><span class="cwk num">${past&&met?"✓ ":""}${w<=cw?`${n1(act)} / `:""}${tgt} km</span></div><div class="calgrid">${cells}</div></div>`;
   }
+  h+=`<p class="tip callegend"><span class="lg-chg"></span> ohjelmaa muutettu · ✓ tehty · ⊖ väliin · ○ kirjaamatta</p>`;
   $("calBody").innerHTML=h;
+  if($("calPast")) $("calPast").onclick=()=>{ calPastOpen=!calPastOpen; render(); if(!calPastOpen){ const el=$("cw"+cw); if(el) el.scrollIntoView({block:"center"}); } };
   document.querySelectorAll("#calFilters [data-cf]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.cf===calFilter)));
-  if(!calScrolled){ calScrolled=true; const el=$("cw"+cw); if(el) setTimeout(()=>el.scrollIntoView({block:"center"}),30); }
+  if(!calScrolled){ calScrolled=true; const el=$("cw"+cw); if(el&&cw>2) setTimeout(()=>el.scrollIntoView({block:"start"}),30); }
 }
 $("calFilters").onclick=e=>{ const b=e.target.closest("[data-cf]"); if(!b) return; calFilter=b.dataset.cf; render(); };
-$("calNow").onclick=()=>{ const el=$("cw"+weekOf(T0())); if(el) el.scrollIntoView({behavior:"smooth",block:"center"}); };
+$("calNow").onclick=()=>{ if(calPastOpen){ calPastOpen=false; render(); } const el=$("cw"+weekOf(T0())); if(el) el.scrollIntoView({behavior:"smooth",block:"center"}); };
 function renderProfile(t){
   const W=380,H=220,pl=26,pr=8,pt=26,pb=26,pw=W-pl-pr,ph=H-pt-pb,max=75,x=w=>pl+(w-1)*(pw/35),y=v=>pt+ph-v/max*ph,cw=weekOf(t);
   let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Viikkokilometrit: tavoite ja toteuma">`;

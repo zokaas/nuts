@@ -558,5 +558,13 @@ body.maint .hero, body.maint #week, body.maint #status, body.maint #summary, bod
 .cp-near .cpi{border-color:var(--warn); color:var(--warn)}
 .wxwarn{background:var(--warn-bg); border-radius:10px; padding:10px 12px; display:flex; flex-direction:column; gap:8px; font-size:14px}
 .wxwarn p{margin:0}
+.calpast{display:flex; justify-content:space-between; align-items:center; gap:8px; text-align:left; width:100%; border:1px dashed var(--line); background:transparent; border-radius:12px; padding:10px 12px; font-size:13px; color:var(--muted)}
+.calpast b{color:var(--ink); font-family:var(--display)}
+.calwk.met{border-left:4px solid var(--ok)} .calwk.met .cwk{color:var(--ok)}
+.calwk.short{border-left:4px solid var(--warn)} .calwk.short .cwk{color:var(--warn)}
+.cc{position:relative}
+.cc.chg::after{content:""; position:absolute; top:3px; right:4px; width:6px; height:6px; border-radius:50%; background:var(--fell)}
+.callegend{display:flex; align-items:center; gap:6px; flex-wrap:wrap; font-size:12px}
+.lg-chg{display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--fell)}
 </style>
 </head>
