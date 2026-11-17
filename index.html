@@ -223,6 +223,10 @@ body.locked{overflow:hidden}
 .file input{position:absolute; opacity:0; width:1px; height:1px}
 
 /* v4 */
+.suggest{border:1px solid var(--accent); border-radius:10px; padding:10px; display:flex; flex-direction:column; gap:8px; font-size:14px}
+.sugs{display:flex; flex-direction:column; gap:6px}
+.sugs .btn{display:flex; flex-direction:column; align-items:flex-start; text-align:left}
+.sugs .btn small{font-weight:400; font-size:12px; opacity:.85}
 .tipcard .target{font-size:16px}
 .scalebar{font-size:14px; color:var(--muted)}
 .fold{border:1px solid var(--line); border-radius:10px; padding:10px 12px}
@@ -374,6 +378,7 @@ details.wk[open]{display:flex; flex-direction:column; gap:8px}
       <div class="row"><button class="btn" id="peSave">Tallenna muutos</button><button class="btn ghost" id="peReset">Palauta alkuperäinen</button></div>
       <div class="field" id="peSwapRow"><label for="peSwap">Vaihda treeni toisen päivän kanssa</label><div class="row"><select id="peSwap"></select><button class="btn" id="peSwapBtn">Vaihda päiviä</button></div></div>
       <div class="field"><label for="peEvent">Meno tälle päivälle (päivä muuttuu lepopäiväksi)</label><div class="row"><input type="text" id="peEvent" placeholder="Esim. juhlat, työmatka"><button class="btn" id="peEventBtn">Merkitse meno</button></div></div>
+      <div class="suggest" id="peSuggest" hidden></div>
     </details>
     <p class="err" id="edErr" hidden></p>
     <div class="row"><button class="btn primary" id="edSave">Tallenna</button><button class="btn ghost" id="edCancel">Peruuta</button><button class="btn ghost" id="edClear">Tyhjennä</button></div>
@@ -734,7 +739,7 @@ function openEditor(key,pre){
   $("shoeField").hidden=!(runish&&act.length); $("edShoe").innerHTML=`<option value="">–</option>`+act.map(x=>`<option value="${x.id}">${esc(x.name)}</option>`).join(""); $("edShoe").value = draft.shoeId ?? (l?"":(meta.defaultShoe||""));
   const fuelish=["P","X","R","PT"].includes(s.code)||(typeof draft.min==="number"&&draft.min>=75); $("fuelBox").hidden=!fuelish; $("fuelBox").open=!!(draft.fuel||draft.carbsH||draft.gut);
   $("edFuel").value=draft.fuel||""; $("edCarb").value=typeof draft.carbsH==="number"?draft.carbsH:""; draft.gut=draft.gut||null;
-  planEditUI(s);
+  planEditUI(s); $("peSuggest").hidden=true; $("peSuggest").innerHTML="";
   const canMove=train&&!s.moved&&s.idx<BASE.length-1&&(!l||l.status==="moved"||l.status==="skip"||l.status==="note");
   $("edMove").hidden=!canMove; $("edMove").textContent=l&&l.status==="moved"?"Peru siirto":"Siirrä huomiselle";
   syncEditor(); $("sheetBg").classList.add("open"); document.body.classList.add("locked");
@@ -828,8 +833,9 @@ function buildBase(){
   for(const w in weekScale){ const f=weekScale[w]; const [a,z]=weekRange(+w); for(let i=a;i<=z&&i<b.length;i++){ const [c,t,n]=b[i]; if(RUN.has(c)&&c!=="R"&&c!=="X") b[i]=[c, scaleText(c,t,f,false).replace(/\.$/,"")+` (viikko kevennetty ${Math.round(f*100)} %).`, n]; } }
   TARGET_EFF = TARGET.map((v,i)=>weekScale[i+1]?Math.round(v*weekScale[i+1]):v);
   // Menot ja muokkaukset: jos juoksu poistui ohjelmasta, viikon km-tavoite pienenee sen verran.
-  for(const d in edits){ const i=idxOfISO(d); if(i<0||i>=PLAN.length) continue; const o=PLAN[i], e=edits[d];
-    if(RUN.has(o[0]) && !RUN.has(e.code)){ const w=weekOf(i); TARGET_EFF[w-1]=Math.max(0, TARGET_EFF[w-1]-Math.round(estKm(o[1])*(weekScale[w]||1))); } }
+  const delta={}; for(const d in edits){ const i=idxOfISO(d); if(i<0||i>=PLAN.length) continue; const o=PLAN[i], e=edits[d], w=weekOf(i);
+    delta[w]=(delta[w]||0) + (RUN.has(o[0])?estKm(o[1]):0) - (RUN.has(e.code)?estKm(e.text):0); }
+  for(const w in delta){ if(Math.abs(delta[w])>=0.5) TARGET_EFF[w-1]=Math.max(0, Math.round(TARGET_EFF[w-1]-delta[w]*(weekScale[w]||1))); }
   return b;
 }
 function planEditUI(s){
@@ -844,7 +850,49 @@ function planEditUI(s){
 function afterPlanEdit(msg){ persist(); closeEditor(); render(); toast(msg); }
 $("peSave").onclick=()=>{ const i=edit.idx; const code=$("peType").value, text=$("peText").value.trim().slice(0,300); edits[isoOfIdx(i)]={code,text,note:rawAt(i)[2]}; afterPlanEdit("Päivän ohjelma päivitetty."); };
 $("peSwapBtn").onclick=()=>{ const i=edit.idx, j=+$("peSwap").value; if(isNaN(j)) return; const A=rawAt(i), B=rawAt(j); edits[isoOfIdx(i)]={code:B[0],text:B[1],note:B[2]}; edits[isoOfIdx(j)]={code:A[0],text:A[1],note:A[2]}; afterPlanEdit(`Treenit vaihdettu: ${fmt(i)} ↔ ${fmt(j)}.`); };
-$("peEventBtn").onclick=()=>{ const i=edit.idx, name=$("peEvent").value.trim().slice(0,80)||"Meno"; const was=rawAt(i); edits[isoOfIdx(i)]={code:"L",text:`${name}: ei treeniä.`,note:name}; afterPlanEdit(was[0]!=="L"?`Merkitty: ${name}. Vinkki: siirrä ${TYPES[was[0]].l.toLowerCase()} toiselle päivälle Vaihda päiviä -toiminnolla.`:`Merkitty: ${name}.`); };
+function isHardRaw(r){ return ["P","X","R"].includes(r[0]) || (RUN.has(r[0]) && hasIntensity(r[1])); }
+function isMeno(j){ const e=edits[isoOfIdx(j)]; return !!(e && e.code==="L" && e.note && /ei treeniä/.test(e.text||"")); }
+function suggestSlots(i, moved){
+  const [a,z]=weekRange(weekOf(i)); const out=[]; const hard=isHardRaw(moved);
+  for(let j=a;j<=z&&j<PLAN.length;j++){
+    if(j===i||j<todayIdx()||isMeno(j)) continue; const r=rawAt(j);
+    if(["R","X","P"].includes(r[0])) continue;
+    if(r[0]==="L" && r[1]) continue; // tarkoituksellinen lepo: matka, juhlat, darra, palautus
+    if(hard && isHardRaw(r)) continue;
+    let score, what;
+    if(r[0]==="L"){ score=3; what="lepopäivä"; }
+    else if(!RUN.has(r[0])){ score=2; what=`${TYPES[r[0]].l.toLowerCase()} jää pois`; }
+    else if(moved[0]==="P"||hard){ score=1; what=`${TYPES[r[0]].l.toLowerCase()} korvautuu`; }
+    else continue;
+    const why=[];
+    if(hard){ for(const n of [j-1,j+1]){ if(n<0||n>=PLAN.length||n===i) continue; if(isHardRaw(rawAt(n))){ score-=2; why.push(`kova treeni ${n<j?"edellisenä":"seuraavana"} päivänä`); } } }
+    if(!RUN.has(moved[0]) && j+1<PLAN.length && rawAt(j+1)[0]==="P"){ score-=1.5; why.push("pitkä lenkki seuraavana päivänä"); }
+    if(RUN.has(moved[0]) && j-1>=0 && j-1!==i && rawAt(j-1)[0]==="P"){ score-=0.5; why.push("päivä pitkän lenkin jälkeen"); }
+    if(moved[0]==="P" && dow(j)>=5) { score+=0.5; why.push("viikonloppu"); }
+    score -= Math.abs(j-i)*0.2;
+    out.push({j,score,label:`${fmt(j)}: ${what}`,why});
+  }
+  return out.sort((x,y)=>y.score-x.score).slice(0,3);
+}
+$("peEventBtn").onclick=()=>{ const i=edit.idx, name=$("peEvent").value.trim().slice(0,80)||"Meno"; const was=rawAt(i);
+  edits[isoOfIdx(i)]={code:"L",text:`${name}: ei treeniä.`,note:name}; persist();
+  if(was[0]==="L"){ closeEditor(); render(); toast(`Merkitty: ${name}.`); return; }
+  const sug=suggestSlots(i,was);
+  const best=sug.filter(x=>x.score>0);
+  const drop = !isHardRaw(was) && was[0]!=="P";
+  $("peSuggest").hidden=false;
+  $("peSuggest").innerHTML=`<b>Merkitty: ${esc(name)}.</b> Minne ${esc(TYPES[was[0]].l.toLowerCase())} siirretään?
+    <div class="sugs">${(best.length?best:sug).map((x,k)=>`<button class="btn${k===0&&best.length?" primary":""}" data-moveto="${x.j}">${esc(x.label)}${x.why.length?`<small>${esc(x.why.join(", "))}</small>`:k===0&&best.length?`<small>suositus</small>`:""}</button>`).join("")}
+    <button class="btn ghost" data-dropmoved="1">Jätä pois tältä viikolta${drop?"<small>helppo treeni, ei haittaa</small>":"<small>ei suositella</small>"}</button></div>
+    ${sug.length?"":`<p class="tip">Viikossa ei ole sopivaa vapaata päivää. Jätä treeni pois tai harkitse viikon keventämistä.</p>`}`;
+  $("peSuggest").dataset.from=i; $("peSuggest").dataset.was=JSON.stringify(was);
+  render(); $("peSuggest").scrollIntoView({block:"nearest"});
+};
+document.addEventListener("click",e=>{
+  const m=e.target.closest("[data-moveto]"); if(m&&edit){ const j=+m.dataset.moveto, was=JSON.parse($("peSuggest").dataset.was); const keepNote=rawAt(j)[2];
+    edits[isoOfIdx(j)]={code:was[0],text:was[1],note:keepNote}; persist(); closeEditor(); render(); toast(`${TYPES[was[0]].l} siirretty: ${fmt(j)}.`); return; }
+  const d=e.target.closest("[data-dropmoved]"); if(d&&edit){ closeEditor(); render(); toast("Treeni jätetty pois. Viikon km-tavoite päivitetty."); }
+});
 $("peReset").onclick=()=>{ delete edits[isoOfIdx(edit.idx)]; afterPlanEdit("Alkuperäinen ohjelma palautettu."); };
 function weekScaleControls(w,t){
   if(w<weekOf(t)) return "";
