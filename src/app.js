@@ -160,7 +160,7 @@ function sessionBlock(s,first,ti){
   const l=logs[s.key]; const text=s.text||(s.code==="L"?pick(REST_LINES,s.idx):"");
   const adaptBox = (s.reason||SCALED[s.idx]) && !s.moved ? changeBlock(s) :
     (adjOff[isoOfIdx(s.idx)]&&first ? `<div class="adapt off"><span>Käytät alkuperäistä ohjelmaa tälle päivälle.</span><button class="link" data-adjon="${isoOfIdx(s.idx)}">Ota mukautus takaisin</button></div>`:"");
-  const editedBox = first && edits[isoOfIdx(s.idx)] && !s.reason ? `<div class="adapt off"><span>✏️ Muokattu. Alkuperäinen: ${TYPES[PLAN[s.idx][0]].l}${PLAN[s.idx][1]?`, ${esc(PLAN[s.idx][1])}`:""}</span></div>` : "";
+  const editedBox = first && edits[isoOfIdx(s.idx)] && !edits[isoOfIdx(s.idx)].ev && !s.reason ? `<div class="adapt off"><span>✏️ Muokattu. Alkuperäinen: ${TYPES[PLAN[s.idx][0]].l}${PLAN[s.idx][1]?`, ${esc(PLAN[s.idx][1])}`:""}</span></div>` : "";
   const prog = /lihaskunto|Tribe|Kuntopiiri/i.test(text)&&!(l&&l.strength) ? progFromText(text,weekOf(s.idx)) : null;
   const logged = l&&l.status&&l.status!=="note";
   const canMove = s.code!=="L" && !s.moved && s.idx<BASE.length-1 && !logged;
@@ -250,8 +250,8 @@ function renderWeek(t){
     strip+=`<button class="sd${i===t?" today":""}${i===sel?" sel":""}${ci?" chg":""}" data-sel="${i}" aria-pressed="${i===sel}" aria-label="${fmt(i)}: ${TYPES[s0.code].l}"><span class="dw">${DOW[dow(i)]}</span><span class="dn num">${d.getUTCDate()}</span><span class="ty ${TYPES[s0.code].c}">${SHORT[s0.code]||""}</span>${dayMark(ss)||`<span class="mark none"></span>`}${(ss.length-1+extrasOn(i).length)>0?`<i class="plus">+${ss.length-1+extrasOn(i).length}</i>`:""}</button>`;
   }
   for(let i=a;i<=b&&i<BASE.length;i++){ const d=new Date(START_UTC+i*864e5); sessionsOn(BASE,logs,ADAPT,i).concat(extrasOn(i)).forEach((s,k)=>{
-    const ci=changeInfo(s); rows+=`<button class="day${i===t?" is-today":""}${ci?` changed k-${ci.kind}`:""}" data-open="${s.key}"><span class="d">${k?"":DOW[dow(i)]}<small>${k?(s.key.includes("~s")?"lisä":"siirretty"):`${d.getUTCDate()}.${d.getUTCMonth()+1}.`}</small></span><span class="what">${typeChip(s.code)}${changeTag(s)||(edits[isoOfIdx(i)]&&!k?`<span class="adtag">✏️ muokattu</span>`:"")}<span class="t">${esc(s.text||"Lepo")}</span></span>${markFor(s)}</button>`; }); }
-  $("week").innerHTML=`<div class="weekhead"><div><div class="eyebrow">${PHASE(w)}${(w<=21&&!(w>=8&&w<=10))?" · 🏠 sisäkausi":""}</div><h2>Viikko ${w}</h2></div><div class="navbtns"><button id="wPrev" aria-label="Edellinen viikko" ${w<=1?"disabled":""}>‹</button><button id="wNow" aria-label="Tämä viikko">•</button><button id="wNext" aria-label="Seuraava viikko" ${w>=36?"disabled":""}>›</button></div></div>
+    const ci=changeInfo(s); rows+=`<button class="day${i===t?" is-today":""}${ci?` changed k-${ci.kind}`:""}" data-open="${s.key}"><span class="d">${k?"":DOW[dow(i)]}<small>${k?(s.key.includes("~s")?"lisä":"siirretty"):`${d.getUTCDate()}.${d.getUTCMonth()+1}.`}</small></span><span class="what">${typeChip(s.code)}${changeTag(s)||(edits[isoOfIdx(i)]&&!k&&!edits[isoOfIdx(i)].ev?`<span class="adtag">✏️ muokattu</span>`:"")}<span class="t">${esc(s.text||"Lepo")}</span></span>${markFor(s)}</button>`; }); }
+  $("week").innerHTML=`<div class="weekhead"><div><div class="eyebrow">${PHASE(w)}${(w<=21&&!(w>=8&&w<=10))?" · 🏠 sisäkausi":""}</div><h2>Viikko ${w}</h2></div><div class="navbtns"><button data-addev="" aria-label="Lisää meno" title="Lisää meno">＋</button><button id="wPrev" aria-label="Edellinen viikko" ${w<=1?"disabled":""}>‹</button><button id="wNow" aria-label="Tämä viikko">•</button><button id="wNext" aria-label="Seuraava viikko" ${w>=36?"disabled":""}>›</button></div></div>
     <div class="strip" role="group" aria-label="Viikon päivät">${strip}</div>
     <div class="kmbar"><div class="lbl"><span>Juostu <b class="num">${n1(act)}</b> km</span><span>Tavoite <b class="num">${tgt}</b> km</span></div><div class="track"><div class="fill" style="width:${pct}%"></div></div></div>${weekScaleControls(w,t)}
     <details class="fold" id="weekList"${weekListOpen?" open":""}><summary>Viikon treenit listana</summary><div class="days">${rows}</div></details>`;
@@ -535,8 +535,10 @@ function suggestSlots(i, moved){
   return out.sort((x,y)=>y.score-x.score).slice(0,3);
 }
 $("peEventBtn").onclick=()=>{ const i=edit.idx, name=$("peEvent").value.trim().slice(0,80)||"Meno"; const was=rawAt(i);
-  edits[isoOfIdx(i)]={code:"L",text:`${name}: ei treeniä.`,note:name}; persist();
+  edits[isoOfIdx(i)]={code:"L",text:`${name}: ei treeniä.`,note:name,ev:{name,kind:"off"}}; persist();
   if(was[0]==="L"){ closeEditor(); render(); toast(`Merkitty: ${name}.`); return; }
+  showMoveSuggest(i,was,name); };
+function showMoveSuggest(i,was,name){ $("planEdit").hidden=false; $("planEdit").open=true;
   const sug=suggestSlots(i,was);
   const best=sug.filter(x=>x.score>0);
   const drop = !isHardRaw(was) && was[0]!=="P";
@@ -547,7 +549,7 @@ $("peEventBtn").onclick=()=>{ const i=edit.idx, name=$("peEvent").value.trim().s
     ${sug.length?"":`<p class="tip">Viikossa ei ole sopivaa vapaata päivää. Jätä treeni pois tai harkitse viikon keventämistä.</p>`}`;
   $("peSuggest").dataset.from=i; $("peSuggest").dataset.was=JSON.stringify(was);
   render(); $("peSuggest").scrollIntoView({block:"nearest"});
-};
+}
 document.addEventListener("click",e=>{
   const m=e.target.closest("[data-moveto]"); if(m&&edit){ const j=+m.dataset.moveto, was=JSON.parse($("peSuggest").dataset.was); const keepNote=rawAt(j)[2];
     edits[isoOfIdx(j)]={code:was[0],text:was[1],note:keepNote}; persist(); closeEditor(); render(); toast(`${TYPES[was[0]].l} siirretty: ${fmt(j)}.`); return; }
@@ -555,12 +557,50 @@ document.addEventListener("click",e=>{
 });
 $("peReset").onclick=()=>{ delete edits[isoOfIdx(edit.idx)]; afterPlanEdit("Alkuperäinen ohjelma palautettu."); };
 function weekScaleControls(w,t){
-  if(w<weekOf(t)) return "";
-  return weekScale[w] ? `<div class="scalebar">Viikko kevennetty ${Math.round(weekScale[w]*100)} %. <button class="link" data-unscale="${w}">Palauta</button></div>`
-    : `<div class="scalebar"><button class="link" data-scale="${w}">Kevennä tämä viikko (80 %)</button></div>`;
+  if(w<weekOf(t)) return weekScale[w]?`<p class="tip">Viikko oli kevennetty ${Math.round(weekScale[w]*100)} %.</p>`:"";
+  const cur=weekScale[w]||1, orig=TARGET[w-1];
+  const opt=(f,l,sub)=>`<button data-scale="${w}" data-f="${f}" aria-pressed="${cur===f}"><b>${l}</b><small>${sub}</small></button>`;
+  return `<div class="loadctl"><div class="lch"><span>Viikon kuorma</span>${cur<1?`<span class="lcp">Kevennetty · tavoite ${TARGET_EFF[w-1]} km</span>`:""}</div>
+    <div class="seg3" role="group" aria-label="Viikon kuorma">${opt(1,"Normaali",`${orig} km`)}${opt(0.8,"Kevyt",`80 % · ${Math.round(orig*.8)} km`)}${opt(0.6,"Palautus",`60 % · ${Math.round(orig*.6)} km`)}</div>
+    <p class="tip">Juoksut lyhenevät. Testit, kisat ja lihaskunto pysyvät.${cur===1?" Kevennä, jos olet väsynyt, kipeä tai viikko on kiireinen.":""}</p></div>`;
 }
-document.addEventListener("click",e=>{ const a=e.target.closest("[data-scale]"); if(a){ weekScale[+a.dataset.scale]=0.8; persist(); render(); toast("Viikko kevennetty: juoksut 80 %, kisat ja testit ennallaan."); return; }
+
+document.addEventListener("click",e=>{ const a=e.target.closest("[data-scale]"); if(a){ const w=+a.dataset.scale, f=+(a.dataset.f||0.8), prev=weekScale[w]; if(f>=1) delete weekScale[w]; else weekScale[w]=f; persist(); render(); toast(f>=1?"Viikko palautettu normaaliksi.":`Viikko kevennetty ${Math.round(f*100)} %.`,{l:"Peru",fn:()=>{ if(prev) weekScale[w]=prev; else delete weekScale[w]; persist(); render(); }}); return; }
   const b=e.target.closest("[data-unscale]"); if(b){ delete weekScale[+b.dataset.unscale]; persist(); render(); } });
+
+/* ===== Menot ja suunnitelmat ===== */
+let evKind="note";
+function isoInput(i){ return isoOfIdx(Math.min(BASE.length-1,Math.max(0,i))); }
+function openEvent(i){ const d=i==null?(selDay==null?T0():selDay):i; $("evName").value=""; $("evFrom").value=isoInput(d); $("evTo").value=""; $("evFrom").min=isoInput(Math.max(0,todayIdx())); $("evFrom").max=$("evTo").max=isoInput(BASE.length-1); $("evTo").min=$("evFrom").value; evKind="note"; syncEvent(); $("evErr").hidden=true; renderEvList(); $("evBg").classList.add("open"); document.body.classList.add("locked"); setTimeout(()=>$("evName").focus(),50); }
+function closeEvent(){ $("evBg").classList.remove("open"); document.body.classList.remove("locked"); }
+function syncEvent(){ document.querySelectorAll("[data-evk]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.evk===evKind)));
+  const a=idxOfISO($("evFrom").value), z=$("evTo").value?idxOfISO($("evTo").value):a; let lost=[];
+  if(a>=0&&z>=a) for(let i=a;i<=Math.min(z,BASE.length-1);i++){ const r=rawAt(i); if(r[0]!=="L") lost.push(`${fmt(i)} ${TYPES[r[0]].l.toLowerCase()}`); }
+  $("evInfo").textContent = evKind==="note" ? "Treeni pysyy. Päivään tulee merkintä, joka näkyy kalenterissa ja Tulossa-listassa." :
+    lost.length ? `Päivä muuttuu lepopäiväksi. Poistuu: ${lost.join(", ")}.${lost.length===1&&z===a?" Saat ehdotukset, minne treeni siirretään.":""}` : "Päivä on jo lepopäivä: tulee vain merkintä.";
+  $("evTo").min=$("evFrom").value; }
+function renderEvList(){ const t=Math.max(0,todayIdx()); const it=Object.keys(edits).filter(d=>edits[d].ev&&idxOfISO(d)>=t).sort();
+  // ryhmittele peräkkäiset samannimiset
+  const groups=[]; it.forEach(d=>{ const e=edits[d], g=groups[groups.length-1]; if(g&&g.name===e.ev.name&&g.kind===e.ev.kind&&idxOfISO(d)===idxOfISO(g.days[g.days.length-1])+1) g.days.push(d); else groups.push({name:e.ev.name,kind:e.ev.kind,days:[d]}); });
+  $("evList").innerHTML=groups.length?groups.map(g=>{ const a=idxOfISO(g.days[0]), z=idxOfISO(g.days[g.days.length-1]); return `<li><span><b>${esc(g.name)}</b><small>${fmt(a)}${z>a?` – ${fmt(z)}`:""} · ${g.kind==="off"?"ei treeniä":"muistutus"}</small></span><button class="btn small ghost" data-evdel="${g.days.join(",")}">Poista</button></li>`; }).join(""):`<li class="note">Ei tulevia menoja.</li>`; }
+function saveEvent(){ const name=$("evName").value.trim().slice(0,60); const a=idxOfISO($("evFrom").value), z=$("evTo").value?idxOfISO($("evTo").value):a;
+  const err=m=>{ $("evErr").textContent=m; $("evErr").hidden=false; };
+  if(!name) return err("Anna menolle nimi."); if(a<0||a>=BASE.length) return err("Valitse päivä ohjelman ajalta."); if(z<a) return err("Loppupäivä on ennen alkua."); if(z-a>30) return err("Enintään 31 päivää kerralla.");
+  if(evKind==="off") for(let i=a;i<=z;i++) if(rawAt(i)[0]==="R") return err("Kisapäivää ei voi merkitä lepopäiväksi. Valitse Muistutus.");
+  const single=a===z, was=rawAt(a);
+  for(let i=a;i<=z;i++){ const d=isoOfIdx(i), r=rawAt(i);
+    if(evKind==="note") edits[d]={code:r[0],text:r[1],note:r[2]&&!r[2].includes(name)?`${name} · ${r[2]}`:name,ev:{name,kind:"note"}};
+    else edits[d]={code:"L",text:`${name}: ei treeniä.`,note:name,ev:{name,kind:"off"}}; }
+  persist(); closeEvent();
+  if(evKind==="off"&&single&&was[0]!=="L"){ render(); openEditor(isoOfIdx(a)); showMoveSuggest(a,was,name); return; }
+  render(); toast(`Lisätty: ${name}${single?` (${fmt(a)})`:` (${fmt(a)} – ${fmt(z)})`}.`);
+}
+$("evSave").onclick=saveEvent; $("evCancel").onclick=closeEvent; $("evX").onclick=closeEvent;
+$("evBg").onclick=e=>{ if(e.target.id==="evBg") closeEvent(); };
+$("evKinds").onclick=e=>{ const b=e.target.closest("[data-evk]"); if(!b) return; evKind=b.dataset.evk; syncEvent(); };
+$("evFrom").onchange=syncEvent; $("evTo").onchange=syncEvent;
+document.addEventListener("click",e=>{ const o=e.target.closest("[data-addev]"); if(o){ openEvent(o.dataset.addev?+o.dataset.addev:null); return; }
+  const d=e.target.closest("[data-evdel]"); if(d){ d.dataset.evdel.split(",").forEach(k=>delete edits[k]); persist(); render(); renderEvList(); toast("Meno poistettu, alkuperäinen ohjelma palautettu."); } });
 
 /* ===== v4: vinkit ja viikkokooste ===== */
 const TIPS = [
