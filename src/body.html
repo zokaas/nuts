@@ -8,6 +8,7 @@
 
 
   <div data-view="tanaan" class="view">
+    <section class="card maintcard" id="maint" hidden></section>
     <section class="card racecard" id="raceWeek" hidden></section>
     <section class="card hero">
       <div class="herotop"><button class="pill st-ok" id="pill" type="button"></button><span class="wchip" id="weather" hidden></span></div>
@@ -214,6 +215,17 @@
     </details>
     <p class="err" id="edErr" hidden></p>
     <div class="sheet-foot"><button class="btn primary" id="edSave">Tallenna</button><button class="btn ghost" id="edCancel">Peruuta</button><button class="btn ghost" id="edClear">Tyhjennä</button></div>
+  </div>
+</div>
+<div class="sheet-bg" id="swBg" role="dialog" aria-modal="true" aria-labelledby="swTitle">
+  <div class="sheet">
+    <div class="sheet-top"><div class="grab" aria-hidden="true"></div><div class="sheet-title"><div><div class="eyebrow" id="swEyebrow"></div><h3 id="swTitle">Vaihda laji</h3></div><button class="x" id="swX" aria-label="Sulje">×</button></div></div>
+    <p class="tip" id="swOrig"></p>
+    <div class="sports" id="swSports" role="group" aria-label="Laji"></div>
+    <div class="field" id="swMinRow" hidden><label for="swMin">Kesto (min)</label><input type="number" id="swMin" inputmode="numeric" min="5" max="600" step="5"></div>
+    <div id="swImpact"></div>
+    <p class="err" id="swErr" hidden></p>
+    <div class="sheet-foot"><button class="btn primary" id="swSave">Vaihda</button><button class="btn ghost" id="swCancel">Peruuta</button></div>
   </div>
 </div>
 <div class="sheet-bg" id="evBg" role="dialog" aria-modal="true" aria-labelledby="evTitle">

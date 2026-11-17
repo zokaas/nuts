@@ -6,13 +6,18 @@ const TYPES = {
   J:{l:"Juoksu",c:"t-run"}, JL:{l:"Juoksu + lihaskunto",c:"t-run"}, P:{l:"Pitkä lenkki",c:"t-long"},
   PT:{l:"Patikointi",c:"t-hike"}, YM:{l:"Ylämäkikävely",c:"t-hike"}, K:{l:"Kuntopiiri",c:"t-gym"}, T:{l:"Tribe",c:"t-gym"}, TL:{l:"Tribe tai lihaskunto",c:"t-gym"},
   S:{l:"Spinning",c:"t-bike"}, SH:{l:"Spinning tai hiihto",c:"t-bike"}, SL:{l:"Spinning tai lihaskunto",c:"t-bike"},
-  LH:{l:"Lihashuolto",c:"t-hike"}, X:{l:"Testi",c:"t-test"}, R:{l:"Kisa",c:"t-race"}, L:{l:"Lepo",c:"t-rest"}
+  LH:{l:"Lihashuolto",c:"t-hike"}, X:{l:"Testi",c:"t-test"}, R:{l:"Kisa",c:"t-race"}, L:{l:"Lepo",c:"t-rest"},
+  V:{l:"Vapaa laji",c:"t-free"}, UI:{l:"Uinti",c:"t-swim"}, PY:{l:"Pyöräily",c:"t-bike"}, HI:{l:"Hiihto",c:"t-bike"}, SK:{l:"Sauvakävely",c:"t-hike"}, KA:{l:"Kävely",c:"t-hike"},
+  SA:{l:"Sali / lihaskunto",c:"t-gym"}, JO:{l:"Jooga / liikkuvuus",c:"t-free"}, PA:{l:"Pallopeli",c:"t-gym"}, MU:{l:"Muu liikunta",c:"t-free"}
 };
+/* Lajit vaihtoon: [koodi, emoji, kerroin juoksuminuutteihin, rasittava?] */
+const SPORTS = [["UI","🏊",1.15,0],["PY","🚴",1.4,0],["S","🚲",1,1],["HI","⛷️",1.1,1],["SK","🥢",1.6,0],["KA","🚶",2,0],["SA","🏋️",1,0],["JO","🧘",1,0],["PA","⚽",1,1],["MU","✨",1,0],["J","🏃",1,1]];
+const VIG = new Set(["J","JL","P","X","R","S","SH","SL","T","TL","K","PA","HI"]);
 const FLAGS = [["sick","🤒 Sairas"],["pain","🩹 Kipu"],["tired","😮‍💨 Väsynyt"],["sleep","😴 Huono uni"],["stress","🧠 Stressi"],["hangover","🍾 Darra"],["travel","✈️ Matkalla"],["great","⚡ Huippufiilis"]];
 const FLAG_L = Object.fromEntries(FLAGS);
 const AREAS = ["sääri","polvi","akillesjänne","pohje","jalkapohja","nilkka","lonkka","reisi","selkä","muu"];
 const DOW = ["ma","ti","ke","to","pe","la","su"];
-const SHORT = {J:"Juoksu",JL:"Juoksu",P:"Pitkä",PT:"Patikka",YM:"Ylämäki",K:"Piiri",T:"Tribe",TL:"Tribe",S:"Spin",SH:"Spin",SL:"Spin",LH:"Huolto",X:"Testi",R:"Kisa",L:"Lepo"};
+const SHORT = {V:"Vapaa",UI:"Uinti",PY:"Pyörä",HI:"Hiihto",SK:"Sauva",KA:"Kävely",SA:"Sali",JO:"Jooga",PA:"Pallo",MU:"Muu",J:"Juoksu",JL:"Juoksu",P:"Pitkä",PT:"Patikka",YM:"Ylämäki",K:"Piiri",T:"Tribe",TL:"Tribe",S:"Spin",SH:"Spin",SL:"Spin",LH:"Huolto",X:"Testi",R:"Kisa",L:"Lepo"};
 const TITLES = {kalenteri:"Kalenteri",historia:"Historia",analyysi:"Analyysi",opas:"Opas",merkit:"Merkit",asetukset:"Asetukset"};
 let selDay=null, statusOpen=false, anaTab="matka";
 const FEEL = [["1","raskas"],["2","tahmea"],["3","ok"],["4","hyvä"],["5","kevyt"]];
@@ -50,7 +55,7 @@ const T0=()=>Math.min(Math.max(todayIdx(),0),BASE.length-1);
 const TOTAL_SESSIONS=PLAN.filter(p=>p[0]!=="L").length;
 
 /* ---------- johdetut tiedot ---------- */
-function entries(){ return Object.keys(logs).map(k=>({key:k,idx:idxOfISO(k),l:logs[k],code:logType(BASE,k,logs[k])})).filter(e=>e.idx>=0&&e.idx<BASE.length).sort((a,b)=>a.key<b.key?-1:1); }
+function entries(){ return Object.keys(logs).map(k=>({key:k,idx:idxOfISO(k),l:logs[k],code:logType(BASE,k,logs[k])})).filter(e=>e.idx>=0).sort((a,b)=>a.key<b.key?-1:1); }
 function stats(){
   const es=entries(); let done=0,km=0,longest=0,rMin=0,rKm=0;
   es.forEach(e=>{ if(e.l.status!=="done"||e.code==="L") return; done++; if(RUN.has(e.code)&&typeof e.l.km==="number"){ km+=e.l.km; longest=Math.max(longest,e.l.km); if(typeof e.l.min==="number"&&e.l.min>0){ rMin+=e.l.min; rKm+=e.l.km; } } });
@@ -99,7 +104,7 @@ function render(){
   document.querySelectorAll(".tabs a").forEach(a=>a.setAttribute("aria-current",a.getAttribute("href")==="#"+r?"page":"false"));
   const st=stats(), bs=badges(st); const ws=computeWarnings(BASE,logs,ADAPT,ti).concat(eventWarnings(ti));
   renderCount(ti,st,bs);
-  if(r==="tanaan"){ renderRaceWeek(ti); renderStatus(ws); renderToday(t,ti); renderTip(t); renderSummary(ti); renderWeek(t); renderUpcoming(t); }
+  if(r==="tanaan"){ renderMaint(); renderRaceWeek(ti); renderStatus(ws); renderToday(t,ti); renderTip(t); renderSummary(ti); renderWeek(t); renderUpcoming(t); }
   if(r==="historia"){ renderHistory(st); }
   if(r==="asetukset"){ renderStrava(); renderCloud(); renderPush(); renderZones(); renderLoc(); }
   if(r==="analyysi") renderAnalysis(ti,st,t);
@@ -160,7 +165,7 @@ function sessionBlock(s,first,ti){
   const l=logs[s.key]; const text=s.text||(s.code==="L"?pick(REST_LINES,s.idx):"");
   const adaptBox = (s.reason||SCALED[s.idx]) && !s.moved ? changeBlock(s) :
     (adjOff[isoOfIdx(s.idx)]&&first ? `<div class="adapt off"><span>Käytät alkuperäistä ohjelmaa tälle päivälle.</span><button class="link" data-adjon="${isoOfIdx(s.idx)}">Ota mukautus takaisin</button></div>`:"");
-  const editedBox = first && edits[isoOfIdx(s.idx)] && !edits[isoOfIdx(s.idx)].ev && !s.reason ? `<div class="adapt off"><span>✏️ Muokattu. Alkuperäinen: ${TYPES[PLAN[s.idx][0]].l}${PLAN[s.idx][1]?`, ${esc(PLAN[s.idx][1])}`:""}</span></div>` : "";
+  const editedBox = first && edits[isoOfIdx(s.idx)] && !edits[isoOfIdx(s.idx)].ev && !s.reason ? `<div class="adapt off"><span>${edits[isoOfIdx(s.idx)].sw?"⇄ Laji vaihdettu":"✏️ Muokattu"}. Alkuperäinen: ${TYPES[PLAN[s.idx][0]].l}${PLAN[s.idx][1]?`, ${esc(PLAN[s.idx][1])}`:""}</span><button class="link" data-unedit="${isoOfIdx(s.idx)}">Palauta</button></div>` : "";
   const prog = /lihaskunto|Tribe|Kuntopiiri/i.test(text)&&!(l&&l.strength) ? progFromText(text,weekOf(s.idx)) : null;
   const logged = l&&l.status&&l.status!=="note";
   const canMove = s.code!=="L" && !s.moved && s.idx<BASE.length-1 && !logged;
@@ -170,9 +175,9 @@ function sessionBlock(s,first,ti){
   if(logged){ const quick=l.status==="done"&&(l.quick||(l.km==null&&l.min==null));
     return `<div class="sess compact">${head}<div class="today-title"><h3>${TYPES[s.code].l}</h3>${stateLabel(l)}</div><p class="tip">${esc(text)}</p><div class="iconacts">${ia(`data-open="${s.key}"`,quick?"＋":"✎",quick?"Lisää tiedot":"Muokkaa")}${ia(`data-open="${s.key}" data-mode="vointi"`,"♥","Vointi")}${prog&&l.status==="done"?ia(`data-gostrength="${prog}"`,"💪",`Lihas ${prog}`):""}${l.status==="done"?ia(`data-undone="${s.key}"`,"↺","Peru"):""}</div></div>`; }
   let acts;
-  if(s.code==="L") acts=`<button class="btn wide" data-open="${s.key}" data-mode="vointi">♥ Kirjaa vointi</button>`;
-  else if(ti!=null && s.idx>ti) acts=`<div class="iconacts">${ia(`data-open="${s.key}"`,"✎","Avaa")}${canMove?ia(`data-move="${s.key}"`,"→","Huomiselle"):""}</div>`;
-  else acts=`<button class="btn primary big" data-quick="${s.key}">✓ Tehty</button><div class="iconacts">${ia(`data-open="${s.key}" data-pre="done"`,"✎","Tehty + tiedot")}${ia(`data-open="${s.key}" data-pre="skip"`,"✕","Väliin")}${canMove?ia(`data-move="${s.key}"`,"→","Huomiselle"):""}${prog?ia(`data-gostrength="${prog}"`,"💪",`Lihas ${prog}`):""}${ia(`data-open="${s.key}" data-mode="vointi"`,"♥","Vointi")}</div>`;
+  if(s.code==="L") acts=`<div class="iconacts">${ia(`data-open="${s.key}" data-mode="vointi"`,"♥","Vointi")}${ia(`data-logfree="${s.idx}"`,"＋","Kirjaa liikunta")}</div>`;
+  else if(ti!=null && s.idx>ti) acts=`<div class="iconacts">${ia(`data-open="${s.key}"`,"✎","Avaa")}${canMove?ia(`data-move="${s.key}"`,"→","Huomiselle"):""}${!s.moved&&s.code!=="R"?ia(`data-swap="${s.idx}"`,"⇄","Vaihda laji"):""}</div>`;
+  else acts=`<button class="btn primary big" data-quick="${s.key}">✓ Tehty</button><div class="iconacts">${ia(`data-open="${s.key}" data-pre="done"`,"✎","Tehty + tiedot")}${ia(`data-open="${s.key}" data-pre="skip"`,"✕","Väliin")}${canMove?ia(`data-move="${s.key}"`,"→","Huomiselle"):""}${!s.moved&&s.code!=="R"?ia(`data-swap="${s.idx}"`,"⇄","Vaihda laji"):""}${prog?ia(`data-gostrength="${prog}"`,"💪",`Lihas ${prog}`):""}${ia(`data-open="${s.key}" data-mode="vointi"`,"♥","Vointi")}</div>`;
   return `<div class="sess${first?"":" extra"}">${head}
     <div class="today-title"><h2>${TYPES[s.code].l}</h2>${stateLabel(l)}</div>${adaptBox}${editedBox}
     <p class="target">${esc(text)}</p>${zoneChip(s)}${s.note&&!s.moved?`<p class="tip">📌 ${esc(s.note)}</p>`:""}
@@ -237,9 +242,25 @@ function markFor(s){ const l=logs[s.key]; const fl=flagsOf(l);
   if(l.status==="done") return `<span class="mark done${fl.includes("pain")?" pain":""}" aria-label="tehty">✓</span>`;
   if(l.status==="skip") return `<span class="mark skip" aria-label="väliin">–</span>`;
   return `<span class="mark" aria-label="kirjattu">📝</span>`; }
-function extrasOn(i){ const d=isoOfIdx(i); return Object.keys(logs).filter(k=>k.startsWith(d+"~s")).sort().map(sessionByKey); }
+function extrasOn(i){ const d=isoOfIdx(i); return Object.keys(logs).filter(k=>k.startsWith(d+"~s")||k.startsWith(d+"~f")).sort().map(sessionByKey); }
 function extraBlock(s){ const l=logs[s.key]||{}; const bits=[typeof l.km==="number"?`${n1(l.km)} km`:"", l.min?`${l.min} min`:"", l.hr?`♥ ${l.hr}`:""].filter(Boolean).join(" · ");
-  return `<button class="xtra" data-open="${s.key}"><span class="type ${TYPES[s.code].c}">${TYPES[s.code].l}</span><span><b>Lisätreeni</b>${l.stravaName?` · ${esc(l.stravaName)}`:""}<small>${bits}</small></span><span aria-hidden="true">›</span></button>`; }
+  return `<button class="xtra" data-open="${s.key}"><span class="type ${TYPES[s.code].c}">${TYPES[s.code].l}</span><span><b>${TYPES[s.code]?TYPES[s.code].l:"Lisäliikunta"}</b>${l.stravaName?` · ${esc(l.stravaName)}`:""}<small>${bits}</small></span><span aria-hidden="true">›</span></button>`; }
+function estMin(code,text){ const m=(text||"").match(/(\d+)(?:[–-](\d+))?\s?min/); if(m) return +(m[2]||m[1]); const h=(text||"").match(/(\d+(?:[,.]\d+)?)(?:[–-](\d+(?:[,.]\d+)?))?\s?h\b/); if(h) return Math.round(parseFloat((h[2]||h[1]).replace(",","."))*60); const k=(text||"").match(/(\d+(?:[,.]\d+)?)\s?km/); if(k) return Math.round(parseFloat(k[1].replace(",","."))*7.5); return code==="L"?0:40; }
+function isKey(i){ const r=(BASE[i]||[]); return ["P","YM","X","R"].includes(r[0]) || (RUN.has(r[0])&&hasIntensity(r[1])); }
+function weekGoals(w){ const a0=(w-1)*7-1; let mod=0, vig=0, n=0; const sDays=new Set(); let keyN=0,keyD=0;
+  for(let i=Math.max(0,a0);i<=a0+6;i++){ if(i<BASE.length&&isKey(i)){ keyN++; const l=logs[isoOfIdx(i)]; if(l&&l.status==="done") keyD++; } }
+  for(const k in logs){ const i=idxOfISO(k); if(i<a0||i>a0+6||i<0) continue; const l=logs[k]; if(l.status!=="done") continue; const code=logType(BASE,k,l); if(code==="L") continue;
+    const txt=(BASE[i]&&!/~/.test(k))?BASE[i][1]:""; const min=(typeof l.min==="number"&&l.min>0)?l.min:estMin(code,txt); n++;
+    if(VIG.has(code)) vig+=min; else mod+=min;
+    if(l.strength||l.strengthStravaId||["K","SA","T","TL"].includes(code)||/lihaskunto/i.test(txt)) sDays.add(k.slice(0,10));
+    if(l.strengthMin) mod+=l.strengthMin; }
+  const act=mod+2*vig; return {act:Math.round(act), mod, vig, n, strength:sDays.size, keyN, keyD}; }
+function ring(pct,cls){ const r=17,c=2*Math.PI*r, p=Math.max(0,Math.min(1,pct)); return `<svg class="ring ${cls}" viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="22" r="${r}" class="rbg"/><circle cx="22" cy="22" r="${r}" class="rfg" stroke-dasharray="${(c*p).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 22 22)"/>${p>=1?`<text x="22" y="27" text-anchor="middle">✓</text>`:""}</svg>`; }
+function goalsHTML(w, act, tgt){ const G=weekGoals(w); const kmP=tgt?act/tgt:0;
+  return `<div class="goals">
+    <div class="goal"><div class="gh">${ring(kmP,"r-nuts")}<div><b>Nuts</b><span class="num">${n1(act)} / ${tgt} km</span></div></div><small>Avaintreenit ${G.keyD}/${G.keyN}</small></div>
+    <button class="goal" data-logfree="" aria-label="Terveys: kirjaa liikuntaa"><div class="gh">${ring(G.act/150,"r-health")}<div><b>Terveys</b><span class="num">${G.act} / 150 min</span></div></div><small>Lihaskunto ${Math.min(G.strength,2)}/2 · ＋ kirjaa</small></button>
+  </div>`; }
 function dayMark(ss){ const s=ss.find(x=>logs[x.key]&&logs[x.key].status!=="moved")||ss[0]; return markFor(s); }
 function renderWeek(t){
   const w=viewWeek,[a,b]=weekRange(w),act=weekKm(BASE,logs,w),tgt=TARGET_EFF[w-1],pct=Math.min(100,tgt?act/tgt*100:0); const sel=selDay==null?t:selDay; let rows="", strip="";
@@ -250,10 +271,10 @@ function renderWeek(t){
     strip+=`<button class="sd${i===t?" today":""}${i===sel?" sel":""}${ci?" chg":""}" data-sel="${i}" aria-pressed="${i===sel}" aria-label="${fmt(i)}: ${TYPES[s0.code].l}"><span class="dw">${DOW[dow(i)]}</span><span class="dn num">${d.getUTCDate()}</span><span class="ty ${TYPES[s0.code].c}">${SHORT[s0.code]||""}</span>${dayMark(ss)||`<span class="mark none"></span>`}${(ss.length-1+extrasOn(i).length)>0?`<i class="plus">+${ss.length-1+extrasOn(i).length}</i>`:""}</button>`;
   }
   for(let i=a;i<=b&&i<BASE.length;i++){ const d=new Date(START_UTC+i*864e5); sessionsOn(BASE,logs,ADAPT,i).concat(extrasOn(i)).forEach((s,k)=>{
-    const ci=changeInfo(s); rows+=`<button class="day${i===t?" is-today":""}${ci?` changed k-${ci.kind}`:""}" data-open="${s.key}"><span class="d">${k?"":DOW[dow(i)]}<small>${k?(s.key.includes("~s")?"lisä":"siirretty"):`${d.getUTCDate()}.${d.getUTCMonth()+1}.`}</small></span><span class="what">${typeChip(s.code)}${changeTag(s)||(edits[isoOfIdx(i)]&&!k&&!edits[isoOfIdx(i)].ev?`<span class="adtag">✏️ muokattu</span>`:"")}<span class="t">${esc(s.text||"Lepo")}</span></span>${markFor(s)}</button>`; }); }
+    const ci=changeInfo(s); rows+=`<button class="day${i===t?" is-today":""}${ci?` changed k-${ci.kind}`:""}" data-open="${s.key}"><span class="d">${k?"":DOW[dow(i)]}<small>${k?(/~[sf]/.test(s.key)?"lisä":"siirretty"):`${d.getUTCDate()}.${d.getUTCMonth()+1}.`}</small></span><span class="what">${typeChip(s.code)}${changeTag(s)||(edits[isoOfIdx(i)]&&!k&&!edits[isoOfIdx(i)].ev?`<span class="adtag">✏️ muokattu</span>`:"")}<span class="t">${esc(s.text||"Lepo")}</span></span>${markFor(s)}</button>`; }); }
   $("week").innerHTML=`<div class="weekhead"><div><div class="eyebrow">${PHASE(w)}${(w<=21&&!(w>=8&&w<=10))?" · 🏠 sisäkausi":""}</div><h2>Viikko ${w}</h2></div><div class="navbtns"><button data-addev="" aria-label="Lisää meno" title="Lisää meno">＋</button><button id="wPrev" aria-label="Edellinen viikko" ${w<=1?"disabled":""}>‹</button><button id="wNow" aria-label="Tämä viikko">•</button><button id="wNext" aria-label="Seuraava viikko" ${w>=36?"disabled":""}>›</button></div></div>
     <div class="strip" role="group" aria-label="Viikon päivät">${strip}</div>
-    <div class="kmbar"><div class="lbl"><span>Juostu <b class="num">${n1(act)}</b> km</span><span>Tavoite <b class="num">${tgt}</b> km</span></div><div class="track"><div class="fill" style="width:${pct}%"></div></div></div>${weekScaleControls(w,t)}
+    ${goalsHTML(w,act,tgt)}${weekScaleControls(w,t)}
     <details class="fold" id="weekList"${weekListOpen?" open":""}><summary>Viikon treenit listana</summary><div class="days">${rows}</div></details>`;
   $("weekList").ontoggle=e=>{ weekListOpen=e.target.open; };
   $("wPrev").onclick=()=>weekGo(-1); $("wNext").onclick=()=>weekGo(1);
@@ -380,7 +401,7 @@ function renderBackupNag(){ if(stravaConnected()){ $("backupNag").hidden=true; c
   $("backupNag").hidden=!(n>=3&&old); $("lastBackup").textContent=last?`Viimeisin varmuuskopio ${last.getDate()}.${last.getMonth()+1}.${last.getFullYear()}.`:"Varmuuskopiota ei ole vielä tehty."; }
 
 /* ---------- kirjausikkuna ---------- */
-function sessionByKey(key){ const i=idxOfISO(key); const f=sessionsOn(BASE,logs,ADAPT,i).find(s=>s.key===key); if(f) return f; if(key.includes("~s")&&logs[key]){ const l=logs[key]; return {key,idx:i,code:l.type||"J",text:l.stravaName?`Stravasta: ${l.stravaName}`:"Lisätreeni",note:"",moved:true}; } return {key,idx:i,...effective(BASE,ADAPT,i),moved:false}; }
+function sessionByKey(key){ const i=idxOfISO(key); const f=sessionsOn(BASE,logs,ADAPT,i).find(s=>s.key===key); if(f) return f; if(/~[sf]/.test(key)&&logs[key]){ const l=logs[key]; return {key,idx:i,code:l.type||"J",text:l.stravaName?`Stravasta: ${l.stravaName}`:"Lisäliikunta",note:"",moved:true}; } return {key,idx:i,...effective(BASE,ADAPT,i),moved:false}; }
 function openEditor(key,pre,mode){
   const s=sessionByKey(key); edit=s; const l=logs[key];
   draft=l?JSON.parse(JSON.stringify(l)):{status:null,km:null,min:null,hr:null,feel:null,flags:[],painArea:null,painLevel:null,rhr:null,sleepH:null,note:""};
@@ -493,7 +514,7 @@ function buildBase(){
   SCALED={}; for(const w in weekScale){ const f=weekScale[w]; const [a,z]=weekRange(+w); for(let i=a;i<=z&&i<b.length;i++){ const [c,t,n]=b[i]; if(RUN.has(c)&&c!=="R"&&c!=="X"){ b[i]=[c, scaleText(c,t,f,hasIntensity(t)?false:false), n]; SCALED[i]={f,w:+w}; } } }
   TARGET_EFF = TARGET.map((v,i)=>weekScale[i+1]?Math.round(v*weekScale[i+1]):v);
   // Menot ja muokkaukset: jos juoksu poistui ohjelmasta, viikon km-tavoite pienenee sen verran.
-  const delta={}; for(const d in edits){ const i=idxOfISO(d); if(i<0||i>=PLAN.length) continue; const o=PLAN[i], e=edits[d], w=weekOf(i);
+  const delta={}; for(const d in edits){ const i=idxOfISO(d); if(i<0||i>=PLAN.length) continue; const o=PLAN[i], e=edits[d], w=weekOf(i); if(e.sw) continue;
     delta[w]=(delta[w]||0) + (RUN.has(o[0])?estKm(o[1]):0) - (RUN.has(e.code)?estKm(e.text):0); }
   for(const w in delta){ if(Math.abs(delta[w])>=0.5) TARGET_EFF[w-1]=Math.max(0, Math.round(TARGET_EFF[w-1]-delta[w]*(weekScale[w]||1))); }
   return b;
@@ -567,6 +588,56 @@ function weekScaleControls(w,t){
 
 document.addEventListener("click",e=>{ const a=e.target.closest("[data-scale]"); if(a){ const w=+a.dataset.scale, f=+(a.dataset.f||0.8), prev=weekScale[w]; if(f>=1) delete weekScale[w]; else weekScale[w]=f; persist(); render(); toast(f>=1?"Viikko palautettu normaaliksi.":`Viikko kevennetty ${Math.round(f*100)} %.`,{l:"Peru",fn:()=>{ if(prev) weekScale[w]=prev; else delete weekScale[w]; persist(); render(); }}); return; }
   const b=e.target.closest("[data-unscale]"); if(b){ delete weekScale[+b.dataset.unscale]; persist(); render(); } });
+
+/* ===== Vaihda laji / kirjaa vapaa liikunta ===== */
+let sw=null; // {mode:"swap"|"log", i, code, min, moveTo}
+function sportBtns(sel){ return SPORTS.filter(x=>sw.mode==="log"||x[0]!==rawAt(sw.i)[0]).map(([c,e])=>`<button type="button" data-sp="${c}" aria-pressed="${c===sel}"><span>${e}</span>${TYPES[c].l.replace(" / "," /<br>")}</button>`).join(""); }
+function openSwap(i,mode){ const r=mode==="swap"?rawAt(i):null; sw={mode,i,code:null,min:null,moveTo:null};
+  $("swTitle").textContent= mode==="swap"?"Vaihda laji":"Kirjaa liikunta"; $("swEyebrow").textContent=fmt(i);
+  $("swOrig").innerHTML= mode==="swap"?`Ohjelmassa: <b>${TYPES[r[0]].l}</b>${r[1]?` · ${esc(r[1])}`:""}`:"Mikä tahansa liikunta lasketaan Terveys-tavoitteeseen.";
+  $("swSave").textContent= mode==="swap"?"Vaihda":"Kirjaa"; $("swMin").value=""; $("swErr").hidden=true; syncSwap();
+  $("swBg").classList.add("open"); document.body.classList.add("locked"); }
+function closeSwap(){ $("swBg").classList.remove("open"); document.body.classList.remove("locked"); sw=null; }
+function swImpact(){ if(sw.mode!=="swap"||!sw.code) return {html:"",key:false};
+  const i=sw.i, r=rawAt(i), w=weekOf(i), [a,z]=weekRange(w); const key=["P","YM","X"].includes(r[0])||(RUN.has(r[0])&&hasIntensity(r[1]));
+  const mNow=parseInt($("swMin").value)||estMin(r[0],r[1]); let runKm=0; for(let j=a;j<=z&&j<BASE.length;j++){ const rr= j===i?[sw.code,`${mNow} min`]: j===sw.moveTo? r : rawAt(j); if(RUN.has(rr[0])) runKm+=estKm(rr[1]); }
+  const tgt=Math.round(TARGET[w-1]*(weekScale[w]||1)); const share=tgt?runKm/tgt:1;
+  let msg=[], cls="ok";
+  if(key&&sw.moveTo==null){ cls="warn"; msg.push(`<b>${TYPES[r[0]].l} on avaintreeni Nutsia varten.</b> Siirrä se toiselle päivälle, niin ${TYPES[sw.code].l.toLowerCase()} mahtuu tähän.`); }
+  else if(!RUN.has(r[0])) msg.push("Hyvä vaihto: juoksumäärä ei muutu.");
+  else if(sw.moveTo!=null) msg.push(`${TYPES[r[0]].l} siirtyy päivälle ${fmt(sw.moveTo)}.`);
+  else msg.push(`Hyvä vaihto kevyelle päivälle.${["UI","PY","JO"].includes(sw.code)?" Lepuuttaa jalkoja.":""}`);
+  if(RUN.has(r[0])&&tgt>0){ if(share<0.7){ cls="warn"; msg.push(`Viikon juoksu jäisi noin ${Math.round(runKm)} km:iin (${Math.round(share*100)} % tavoitteesta). Nutsia varten vähintään 70 % kannattaa juosta.`); } else msg.push(`Viikon suunniteltu juoksu vaihdon jälkeen noin ${Math.round(runKm)} km (tavoite ${tgt} km).`); }
+  const sug = key ? suggestSlots(i,r).filter(x=>x.score>-1) : [];
+  return {html:`<div class="swimp ${cls}">${msg.map(m=>`<p>${m}</p>`).join("")}${sug.length?`<div class="sugs">${sug.map(x=>`<button type="button" class="btn${sw.moveTo===x.j?" primary":""}" data-swto="${x.j}">Siirrä: ${esc(x.label)}${x.why.length?`<small>${esc(x.why.join(", "))}</small>`:""}</button>`).join("")}</div>`:""}</div>`, key};
+}
+function syncSwap(){ if(!sw) return; $("swSports").innerHTML=sportBtns(sw.code);
+  if(sw.code&&!$("swMin").dataset.touched){ const r=sw.mode==="swap"?rawAt(sw.i):null; const base=r?estMin(r[0],r[1]):30; const f=(SPORTS.find(x=>x[0]===sw.code)||[])[2]||1; $("swMin").value= r&&RUN.has(r[0]) ? Math.round(base*f/5)*5 : base; }
+  $("swImpact").innerHTML=swImpact().html; $("swMinRow").hidden=!sw.code; }
+$("swSports").onclick=e=>{ const b=e.target.closest("[data-sp]"); if(!b) return; sw.code=b.dataset.sp; delete $("swMin").dataset.touched; syncSwap(); };
+$("swMin").oninput=()=>{ $("swMin").dataset.touched="1"; };
+$("swImpact").onclick=e=>{ const b=e.target.closest("[data-swto]"); if(!b) return; const j=+b.dataset.swto; sw.moveTo= sw.moveTo===j?null:j; syncSwap(); };
+$("swX").onclick=closeSwap; $("swCancel").onclick=closeSwap; $("swBg").onclick=e=>{ if(e.target.id==="swBg") closeSwap(); };
+$("swSave").onclick=()=>{ const err=m=>{ $("swErr").textContent=m; $("swErr").hidden=false; }; if(!sw.code) return err("Valitse laji."); const min=Math.max(5,Math.min(600,parseInt($("swMin").value)||0)); if(!parseInt($("swMin").value)) return err("Anna kesto minuutteina.");
+  const i=sw.i, d=isoOfIdx(i), lbl=TYPES[sw.code].l;
+  if(sw.mode==="log"){ const k=`${d}~f${Date.now().toString(36)}`; logs[k]={status:"done",type:sw.code,min,km:null,flags:[],note:"",manual:true,updatedAt:new Date().toISOString()}; persist(); closeSwap(); render(); celebrate(); toast(`${lbl} ${min} min kirjattu.`,{l:"Peru",fn:()=>{ delete logs[k]; persist(); render(); }}); return; }
+  const r=rawAt(i), prev={[d]:edits[d]}; const imp=swImpact();
+  if(sw.moveTo!=null){ const dj=isoOfIdx(sw.moveTo); prev[dj]=edits[dj]; edits[dj]={code:r[0],text:r[1],note:rawAt(sw.moveTo)[2],sw:{from:rawAt(sw.moveTo)[0]}}; }
+  edits[d]={code:sw.code,text:`${lbl} ${min} min${VIG.has(sw.code)?"":" rauhallisesti"}.`,note:r[2],sw:{from:r[0]}};
+  persist(); closeSwap(); render(); toast(`Vaihdettu: ${lbl} ${min} min.`,{l:"Peru",fn:()=>{ for(const k in prev){ if(prev[k]) edits[k]=prev[k]; else delete edits[k]; } persist(); render(); }}); };
+document.addEventListener("click",e=>{ const a=e.target.closest("[data-swap]"); if(a){ openSwap(+a.dataset.swap,"swap"); return; }
+  const f=e.target.closest("[data-logfree]"); if(f){ openSwap(f.dataset.logfree!==""?+f.dataset.logfree:todayIdx(),"log"); return; }
+  const u=e.target.closest("[data-unedit]"); if(u){ const d=u.dataset.unedit, prev=edits[d]; delete edits[d]; persist(); render(); toast("Alkuperäinen palautettu.",{l:"Peru",fn:()=>{ edits[d]=prev; persist(); render(); }}); } });
+
+/* ===== Ylläpitotila (Nutsin jälkeen) ===== */
+function renderMaint(){ const ti=todayIdx(), on=ti>NUTS; document.body.classList.toggle("maint",on); $("maint").hidden=!on; if(!on) return;
+  const w=weekOf(ti), G=weekGoals(w), a0=(w-1)*7-1; const items=[]; for(let i=a0;i<=a0+6;i++){ const d=isoOfIdx(i); for(const k of Object.keys(logs).filter(k=>k.startsWith(d)).sort()){ const l=logs[k]; if(l.status!=="done") continue; items.push(`<li><time>${DOW[dow(i)]} ${new Date(START_UTC+i*864e5).getUTCDate()}.</time><span>${typeChip(l.type||"MU")} ${l.min?`${l.min} min`:""}${l.km?` · ${n1(l.km)} km`:""}${l.stravaName?` · ${esc(l.stravaName)}`:""}</span></li>`); } }
+  $("maint").innerHTML=`<div class="eyebrow">Ylläpitotila · ${ti-NUTS} pv Nutsista</div><h2>Liiku 3–4 kertaa viikossa, mitä tahansa</h2>
+    <div class="goals"><div class="goal"><div class="gh">${ring(G.n/3,"r-nuts")}<div><b>Kerrat</b><span class="num">${G.n} / 3–4</span></div></div><small>${G.n>=3?"Viikon tavoite täynnä":`${3-G.n} kertaa vielä`}</small></div>
+    <div class="goal"><div class="gh">${ring(G.act/150,"r-health")}<div><b>Terveys</b><span class="num">${G.act} / 150 min</span></div></div><small>Lihaskunto ${Math.min(G.strength,2)}/2</small></div></div>
+    <button class="btn primary big" data-logfree="${ti}">＋ Kirjaa liikunta</button>
+    <ul class="up">${items.join("")||`<li class="note">Ei vielä liikuntaa tällä viikolla. Strava-treenit tulevat tähän automaattisesti.</li>`}</ul>
+    <p class="tip">Seuraava tavoite? Kerro, niin teen uuden ohjelman.</p>`; }
 
 /* ===== Menot ja suunnitelmat ===== */
 let evKind="note";
@@ -687,9 +758,10 @@ $("shoeAdd").onclick=()=>{ const name=$("shoeName").value.trim(); if(!name){ $("
 const LS_STRAVA="pallas.strava.v1";
 let strava = load(LS_STRAVA, {});   // {worker, a, r, e, name, lastSync, after}
 function saveStrava(){ try{ localStorage.setItem(LS_STRAVA, JSON.stringify(strava)); }catch(e){} }
-const CAT = t => ["Run","TrailRun","VirtualRun"].includes(t)?"run": ["Walk","Hike"].includes(t)?"hike": ["Ride","VirtualRide","EBikeRide","GravelRide","MountainBikeRide","Velomobile"].includes(t)?"bike": ["NordicSki","BackcountrySki","RollerSki"].includes(t)?"ski": "gym";
-const CODE_CAT = c => RUN.has(c)?"run": (c==="PT"||c==="YM")?"hike": ["S","SH","SL"].includes(c)?"bike": ["T","TL","K","LH"].includes(c)?"gym": null;
-const CAT_CODE = {run:"J", hike:"PT", bike:"S", ski:"SH", gym:"K"};
+const CAT = t => ["Run","TrailRun","VirtualRun"].includes(t)?"run": ["Walk","Hike","Snowshoe"].includes(t)?"hike": t==="Swim"?"swim": ["Yoga","Pilates"].includes(t)?"yoga":
+  ["Soccer","Basketball","Tennis","Badminton","Squash","Padel","Pickleball","Volleyball","TableTennis","Racquetball"].includes(t)?"ball": ["Ride","VirtualRide","EBikeRide","GravelRide","MountainBikeRide","Velomobile"].includes(t)?"bike": ["NordicSki","BackcountrySki","RollerSki"].includes(t)?"ski": "gym";
+const CODE_CAT = c => RUN.has(c)?"run": (c==="PT"||c==="YM"||c==="SK"||c==="KA")?"hike": ["S","SH","SL","PY"].includes(c)?"bike": c==="HI"?"ski": ["T","TL","K","LH","SA"].includes(c)?"gym": c==="UI"?"swim": c==="JO"?"yoga": c==="PA"?"ball": null;
+const CAT_CODE = {run:"J", hike:"KA", bike:"PY", ski:"HI", gym:"SA", swim:"UI", yoga:"JO", ball:"PA"};
 function workerBase(){ return (strava.worker||"").replace(/\/+$/,""); }
 function stravaConnected(){ return !!(strava.r && strava.worker); }
 function connectStrava(){
@@ -740,7 +812,8 @@ function importActivities(acts){
   let added=0, updated=0; BASE=buildBase(); ADAPT=buildAdapt(BASE,logs,adjOff,todayIdx());
   acts.sort((x,y)=>x.start_date<y.start_date?-1:1);
   for(const a of acts){
-    const date=(a.start_date_local||a.start_date||"").slice(0,10); const i=idxOfISO(date); if(!date||i<0||i>=PLAN.length) continue;
+    const date=(a.start_date_local||a.start_date||"").slice(0,10); const i=idxOfISO(date); if(!date||i<0) continue;
+    if(i>=PLAN.length){ if(Object.keys(logs).some(k=>logs[k].stravaId===a.id)) continue; const c=CAT(a.sport_type||a.type); logs[`${date}~s${a.id}`]={status:"done",type:CAT_CODE[c]||"MU",km:(c==="run"||c==="hike")?Math.round(a.distance/100)/10:null,min:Math.round((a.moving_time||0)/60),hr:a.average_heartrate?Math.round(a.average_heartrate):null,stravaId:a.id,stravaName:a.name||"",flags:[],note:"",updatedAt:new Date().toISOString()}; added++; continue; }
     const cat=CAT(a.sport_type||a.type);
     if(Object.keys(logs).some(k=>logs[k].strengthStravaId===a.id)) continue;
     const already=Object.keys(logs).find(k=>logs[k].stravaId===a.id);
@@ -750,7 +823,7 @@ function importActivities(acts){
     if(cat==="gym"){ const s0=sessionsOn(BASE,logs,ADAPT,i).find(s=>RUN.has(s.code)&&(s.code==="JL"||/lihaskunto/i.test(s.text||""))&&!(logs[s.key]&&logs[s.key].strengthStravaId));
       if(s0){ const prev=logs[s0.key]||{}; logs[s0.key]={...prev, type:prev.type||s0.code, status:prev.status||"note", flags:prev.flags||[], note:prev.note||"", strength:prev.strength||progFromText(s0.text,weekOf(i)), strengthMin:Math.round((a.moving_time||0)/60), strengthStravaId:a.id, updatedAt:new Date().toISOString()}; added++; continue; } }
     let key=null;
-    for(const s of sessionsOn(BASE,logs,ADAPT,i)){ const l=logs[s.key]; if(l&&l.stravaId) continue; if(l&&l.status==="done"&&!l.quick) continue; if(CODE_CAT(s.code)===cat || (cat==="run"&&s.code==="JL") || (cat==="gym"&&s.code==="SL") || (cat==="bike"&&s.code==="TL")){ key=s.key; break; } }
+    for(const s of sessionsOn(BASE,logs,ADAPT,i)){ const l=logs[s.key]; if(l&&l.stravaId) continue; if(l&&l.status==="done"&&!l.quick) continue; if(CODE_CAT(s.code)===cat || (cat==="run"&&s.code==="JL") || (cat==="gym"&&s.code==="SL") || (cat==="bike"&&s.code==="TL") || s.code==="V"){ key=s.key; break; } }
     let type;
     if(key){ type=sessionByKey(key).code; } else { key=`${date}~s${a.id}`; type=CAT_CODE[cat]; }
     const prev=logs[key]||{};
