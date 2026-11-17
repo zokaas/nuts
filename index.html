@@ -547,6 +547,17 @@ body.maint .hero, body.maint #week, body.maint #status, body.maint #summary, bod
 .mtg{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); font-size:14px}
 .mtg b{font-size:11px; text-transform:uppercase; color:var(--muted); padding:4px 2px}
 .mtg span{padding:6px 2px; border-top:1px solid var(--line)}
+.mss{display:flex; gap:6px; flex-wrap:wrap}
+.ms{font-size:12px; font-weight:700; padding:3px 9px; border-radius:999px; border:1px solid var(--line); color:var(--muted)}
+.ms.on{background:var(--ok-bg); color:var(--ok); border-color:transparent}
+.cps{list-style:none; margin:0; padding:0; display:flex; flex-direction:column}
+.cps li{display:grid; grid-template-columns:28px 1fr; gap:8px; align-items:start; padding:8px 0; border-bottom:1px solid var(--line)}
+.cps small{display:block; color:var(--muted); font-size:13px}
+.cpi{width:24px; height:24px; border-radius:50%; display:grid; place-items:center; font-size:12px; font-weight:800; border:2px solid var(--line); color:var(--muted)}
+.cp-ok .cpi{background:var(--ok); border-color:var(--ok); color:#fff} .cp-miss .cpi{background:var(--crit); border-color:var(--crit); color:#fff}
+.cp-near .cpi{border-color:var(--warn); color:var(--warn)}
+.wxwarn{background:var(--warn-bg); border-radius:10px; padding:10px 12px; display:flex; flex-direction:column; gap:8px; font-size:14px}
+.wxwarn p{margin:0}
 </style>
 </head>
 <body>
@@ -593,7 +604,9 @@ body.maint .hero, body.maint #week, body.maint #status, body.maint #summary, bod
       <a href="#merkit" class="card linkcard"><span>🏅 Taso ja merkit</span><span aria-hidden="true">›</span></a>
     </div>
     <div class="agroup" data-agroup="kunto" hidden>
-      <section class="card"><div class="eyebrow">Belgradin aika-arvio</div><div id="aPred"></div></section>
+      <section class="card"><div class="eyebrow">Belgradin välitarkistukset</div><div id="aCps"></div></section>
+      <section class="card"><div class="eyebrow">Yhtäjaksoinen juoksu</div><div id="aCont"></div></section>
+      <section class="card"><div class="eyebrow" id="aPredT">Belgradin aika-arvio</div><div id="aPred"></div></section>
       <section class="card"><div class="eyebrow">Kuorma</div><div id="aLoad"></div></section>
       <section class="card"><div class="eyebrow">Trendit 30 päivää</div><div id="aTrends"></div></section>
       <section class="card"><div class="eyebrow">Havainnot</div><div id="aInsights"></div></section>
@@ -743,6 +756,7 @@ body.maint .hero, body.maint #week, body.maint #status, body.maint #summary, bod
         <div class="field"><label for="edMin">Kesto (min)</label><input type="text" id="edMin" inputmode="numeric" placeholder="35"></div>
         <div class="field"><label for="edHr">Keskisyke</label><input type="text" id="edHr" inputmode="numeric" placeholder="142"></div>
       </div>
+      <div class="field" id="contField" hidden><label for="edCont">Pisin yhtäjaksoinen juoksu (min)</label><input type="text" id="edCont" inputmode="numeric"><small class="tip" id="contHint"></small></div>
       <label id="feelLbl">Miltä treeni tuntui?</label>
       <div class="feel" id="edFeel" role="group" aria-labelledby="feelLbl"></div>
     </div>
@@ -945,6 +959,7 @@ const TITLES = {kalenteri:"Kalenteri",historia:"Historia",analyysi:"Analyysi",op
 let selDay=null, statusOpen=false, anaTab="matka";
 const FEEL = [["1","raskas"],["2","tahmea"],["3","ok"],["4","hyvä"],["5","kevyt"]];
 const BELGRADE = idxOfISO("2027-04-18"), NUTS = idxOfISO("2027-07-23");
+const bHalf=()=>meta.bGoal==="half", bIdx=()=>bHalf()?BELGRADE-1:BELGRADE;
 const CHEERS = ["Poro nyökkää hyväksyvästi.","Tunturi on taas askeleen lähempänä.","Lakka kypsyy, sinä myös.","Pallas kuuli tämän.","Yksi tiili lisää kisakuntoon.","Kaamos ei pysäytä.","Hetta jää taakse, Pallas lähestyy.","Jalat kiittävät huomenna. Ehkä."];
 const REST_LINES = ["Lepopäivä. Kunto kehittyy nyt, kun lepäät.","Lepo on treeniä, jota ei tarvitse hikoilla.","Sohva on tänään virallinen harjoituspaikka.","Kävely ja venyttely ok, muuten jalat ylös."];
 const LEVELS = [[0,"Jänis","🐇"],[250,"Kettu","🦊"],[600,"Poro","🦌"],[1100,"Ahma","🦡"],[1800,"Kotka","🦅"],[2600,"Tunturisusi","🐺"]];
@@ -1025,7 +1040,7 @@ function render(){
   BASE = buildBase(); ADAPT = buildAdapt(BASE, logs, adjOff, ti);
   const r=route(); document.body.dataset.route=r; $("pageTitle").textContent=TITLES[r]||""; document.querySelectorAll("[data-view]").forEach(v=>v.hidden=v.dataset.view!==r);
   document.querySelectorAll(".tabs a").forEach(a=>a.setAttribute("aria-current",a.getAttribute("href")==="#"+r?"page":"false"));
-  const st=stats(), bs=badges(st); const ws=computeWarnings(BASE,logs,ADAPT,ti).concat(eventWarnings(ti));
+  const st=stats(), bs=badges(st); const ws=computeWarnings(BASE,logs,ADAPT,ti).concat(eventWarnings(ti)).concat(cpWarnings(ti)); checkCont30();
   renderCount(ti,st,bs);
   if(r==="tanaan"){ renderMaint(); renderRaceWeek(ti); renderStatus(ws); renderToday(t,ti); renderTip(t); renderSummary(ti); renderWeek(t); renderUpcoming(t); }
   if(r==="historia"){ renderHistory(st); }
@@ -1038,7 +1053,7 @@ function render(){
   const n=ws.filter(w=>w.level!=="info").length; try{ if(navigator.setAppBadge){ n?navigator.setAppBadge(n):navigator.clearAppBadge(); } }catch(e){}
   renderBackupNag();
 }
-function renderCount(ti,st,bs){ const b=BELGRADE-ti,n=NUTS-ti; const {L}=levelOf(xpOf(st,bs));
+function renderCount(ti,st,bs){ const b=bIdx()-ti,n=NUTS-ti; const {L}=levelOf(xpOf(st,bs));
   $("count").innerHTML=`<a href="#merkit" class="chip lvl">${L[2]} <b>${L[1]}</b> ›</a>`+(b>=0?`<span class="chip">Belgrad <b class="num">${b}</b> pv</span>`:"")+(n>=0?`<span class="chip">Nuts <b class="num">${n}</b> pv</span>`:"")+(st.cur>=2?`<span class="chip">🔥 <b class="num">${st.cur}</b> putki</span>`:""); }
 function renderStatus(ws){
   const lvl=ws.some(w=>w.level==="crit")?"crit":ws.some(w=>w.level==="warn")?"warn":"ok";
@@ -1103,10 +1118,10 @@ function sessionBlock(s,first,ti){
   else acts=`<button class="btn primary big" data-quick="${s.key}">✓ Tehty</button><div class="iconacts">${ia(`data-open="${s.key}" data-pre="skip"`,"✕","Väliin")}${canMove?ia(`data-move="${s.key}"`,"→","Huomiselle"):""}${!s.moved&&s.code!=="R"?ia(`data-swap="${s.idx}"`,"⇄","Vaihda laji"):""}${prog?ia(`data-gostrength="${prog}"`,"💪",`Lihas ${prog}`):""}${ia(`data-open="${s.key}" data-mode="vointi"`,"♥","Vointi")}</div>`;
   return `<div class="sess${first?"":" extra"}">${head}
     <div class="today-title"><h2>${TYPES[s.code].l}</h2>${stateLabel(l)}</div>${adaptBox}${editedBox}
-    <p class="target">${esc(text)}</p>${zoneChip(s)}${millChip(s)}${s.note&&!s.moved?`<p class="tip">📌 ${esc(s.note)}</p>`:""}
+    ${wxBox(s)}<p class="target">${esc(text)}</p>${zoneChip(s)}${millChip(s)}${s.note&&!s.moved?`<p class="tip">📌 ${esc(s.note)}</p>`:""}
     <div class="acts">${acts}</div></div>`;
 }
-const RACES={B:{idx:()=>BELGRADE,name:"Belgradin maraton",start:"su 18.4. klo 8.00",lat:44.8125,lon:20.4612,place:"Belgrad",
+const RACES={B:{idx:()=>bIdx(),get name(){ return bHalf()?"Belgradin puolimaraton":"Belgradin maraton"; },get start(){ return bHalf()?"la 17.4. klo 9.00":"su 18.4. klo 8.00"; },lat:44.8125,lon:20.4612,place:"Belgrad",
     chk:["Numerolappu noudettu expolta","Kengät ja sukat testattu pitkällä lenkillä","Geelit + 1 varalle","Kisa-asu valmiina sään mukaan","Hiertymävoide ja teipit","Aamupala sovittu klo 5","Lähtöalue ja kulku katsottu","Kello ladattu","Palautumisvaatteet ja juoma maaliin"],
     plan:[[7,4,"Kevyet lenkit. Ei uusia kenkiä, ruokia tai treenejä."],[3,1,"Hiilaritankkaus: pasta, riisi, leipä, vähemmän kuitua. Juo tasaisesti."],[1,1,"15 min hölkkä + 3 lyhyttä vetoa. Varusteet esille, numerolappu paitaan, nukkumaan ajoissa."],[0,0,"Herätys 5.00, aamupala klo 5, lähtöalueella 7.30. 5 min juoksu / 1 min kävely alusta asti."]]},
   N:{idx:()=>NUTS,name:"Nuts 66 km",start:"pe 23.7. klo 15.00 Hetta",lat:68.383,lon:23.633,place:"Hetta",
@@ -1289,7 +1304,7 @@ function renderAnalysis(ti,st,t0){
   const lr=loadRatio(BASE,logs,ti); const lw=weekOf(ti)-1; const last4=[]; for(let w=Math.max(1,lw-3);w<=Math.max(1,lw);w++) last4.push([w,weekKm(BASE,logs,w),TARGET[w-1]]);
   const comp = last4.length? Math.round(last4.reduce((a,x)=>a+x[1],0)/Math.max(1,last4.reduce((a,x)=>a+x[2],0))*100):0;
   const elevW=w=>{ const [a,z]=weekRange(w); let s2=0; for(const k in logs){ const i=idxOfISO(k); if(i>=a&&i<=z&&logs[k].status==="done"&&typeof logs[k].elev==="number") s2+=logs[k].elev; } return Math.round(s2); };
-  $("aPred").innerHTML=predictionHTML(ti,true);
+  $("aPred").innerHTML=predictionHTML(ti,true); $("aPredT").textContent=bHalf()?"Puolimaratonin aika-arvio":"Belgradin aika-arvio"; $("aCont").innerHTML=contHTML(ti); $("aCps").innerHTML=cpHTML(ti);
   $("aLoad").innerHTML=`<div class="tiles"><div class="tile"><span>Nousu tällä vk</span><b class="num">${elevW(weekOf(ti))} m</b></div><div class="tile"><span>Nousu viime vk</span><b class="num">${elevW(Math.max(1,weekOf(ti)-1))} m</b></div><div class="tile"><span>Toteuma 4 vk</span><b class="num">${comp} %</b></div><div class="tile"><span>Kuorma&shy;suhde</span><b class="num">${lr?String(Math.round(lr.ratio*100)/100).replace(".",","):"–"}</b></div><div class="tile"><span>7 pv km</span><b class="num">${lr?lr.acute:"–"}</b></div></div>
     <p class="tip">${lr? (lr.ratio>1.5?"Kuorma nousi viime viikolla jyrkästi suhteessa edellisiin viikkoihin. Pidä seuraavat päivät kevyinä.": lr.ratio<0.8?"Viime viikko oli kevyempi kuin edelliset. Hyvä palautumiseen, mutta älä jää pitkäksi aikaa alas.":"Kuorma nousee tasaisesti. Juuri näin pitääkin."):"Kuormasuhde (7 pv / 4 vk keskiarvo) näkyy, kun kirjauksia on 3 viikolta. Turvallinen alue 0,8–1,3."}</p>`;
   // trendit 30 pv
@@ -1331,7 +1346,8 @@ function openEditor(key,pre,mode){
   $("edDate").textContent=`${fmt(s.idx)} · vk ${weekOf(s.idx)}${s.moved?" · siirretty":""}`; $("edTitle").textContent=TYPES[s.code].l; $("edTarget").textContent=s.text||"Lepopäivä";
   const train=s.code!=="L"||(s.orig&&s.orig.code!=="L"); $("statusRow").hidden=!train; $("trainFields").hidden=!train;
   $("kmField").hidden=!hasKm(s.code);
-  [["edKm","km"],["edMin","min"],["edHr","hr"],["edRhr","rhr"],["edSleep","sleepH"]].forEach(([id,f])=>$(id).value=typeof draft[f]==="number"?String(draft[f]).replace(".",","):"");
+  { const pc=plannedCont(s.text); $("contField").hidden=!(RUN.has(s.code)&&(pc!=null||weekOf(s.idx)<=12)); $("edCont").placeholder= pc!=null?String(pc):"30"; $("contHint").textContent= pc!=null?`Ohjelmassa ${pc} min. Jätä tyhjäksi, jos juoksit ohjelman mukaan.`:""; }
+  [["edKm","km"],["edMin","min"],["edHr","hr"],["edRhr","rhr"],["edSleep","sleepH"],["edCont","cont"]].forEach(([id,f])=>$(id).value=typeof draft[f]==="number"?String(draft[f]).replace(".",","):"");
   $("edNote").value=draft.note||""; $("edErr").hidden=true; $("edClear").hidden=!l;
   const runish=RUN.has(s.code)||s.code==="PT"; const act=shoes.filter(x=>!x.retired||x.id===draft.shoeId);
   $("shoeField").hidden=!(runish&&act.length); $("edShoe").innerHTML=`<option value="">–</option>`+act.map(x=>`<option value="${x.id}">${esc(x.name)}</option>`).join(""); $("edShoe").value = draft.shoeId ?? (l?"":(meta.defaultShoe||""));
@@ -1368,13 +1384,13 @@ $("edCancel").onclick=closeEditor; $("sheetBg").onclick=e=>{ if(e.target.id==="s
 document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&edit) closeEditor(); });
 $("edSave").onclick=()=>{
   const s=edit; const num=(id,lo,hi,msg)=>{ const v=$(id).value.trim().replace(",","."); if(v==="") return null; const n=Number(v); if(isNaN(n)||n<lo||n>hi) throw msg; return n; };
-  let km,min,hr,rhr,sleepH; try{ km=num("edKm",0,150,"Tarkista kilometrit (0–150)."); min=num("edMin",0,900,"Tarkista kesto (0–900 min)."); hr=num("edHr",40,220,"Tarkista keskisyke (40–220)."); rhr=num("edRhr",30,120,"Tarkista leposyke (30–120)."); sleepH=num("edSleep",0,16,"Tarkista unen määrä (0–16 h)."); var carbsH=num("edCarb",0,150,"Tarkista hiilihydraatit (0–150 g/h)."); }catch(m){ showErr(m); return; }
+  let km,min,hr,rhr,sleepH; try{ km=num("edKm",0,150,"Tarkista kilometrit (0–150)."); min=num("edMin",0,900,"Tarkista kesto (0–900 min)."); hr=num("edHr",40,220,"Tarkista keskisyke (40–220)."); rhr=num("edRhr",30,120,"Tarkista leposyke (30–120)."); var cont=num("edCont",0,600,"Tarkista yhtäjaksoinen juoksu (min)."); sleepH=num("edSleep",0,16,"Tarkista unen määrä (0–16 h)."); var carbsH=num("edCarb",0,150,"Tarkista hiilihydraatit (0–150 g/h)."); }catch(m){ showErr(m); return; }
   const note=$("edNote").value.trim().slice(0,500); const pain=draft.flags.includes("pain");
   if(pain&&!draft.painArea){ showErr("Valitse, missä kipu tuntuu."); return; }
   const anyInfo=draft.flags.length||note||rhr!=null||sleepH!=null||draft.feel;
   if(!draft.status&&!anyInfo){ showErr(edMode==="vointi"?"Valitse jokin vointi tai kirjaa leposyke, uni tai muistiinpano.":s.code==="L"?"Kirjaa jotain: vointi, leposyke, uni tai muistiinpano.":"Valitse Tehty tai Jäi väliin, tai kirjaa vointi."); return; }
   const was=logs[s.key]?.status==="done";
-  const doc={status:draft.status||"note",type:s.code,km:hasKm(s.code)?km:null,min,hr,feel:draft.feel??null,flags:draft.flags,painArea:pain?draft.painArea:null,painLevel:pain?draft.painLevel:null,rhr,sleepH,note,shoeId:$("edShoe").value||null,fuel:$("edFuel").value.trim().slice(0,300)||null,carbsH,gut:draft.gut||null,updatedAt:new Date().toISOString()};
+  const doc={status:draft.status||"note",type:s.code,km:hasKm(s.code)?km:null,min,hr,feel:draft.feel??null,flags:draft.flags,painArea:pain?draft.painArea:null,painLevel:pain?draft.painLevel:null,rhr,sleepH,cont:(typeof cont==="number"?cont:null),note,shoeId:$("edShoe").value||null,fuel:$("edFuel").value.trim().slice(0,300)||null,carbsH,gut:draft.gut||null,updatedAt:new Date().toISOString()};
   logs[s.key]=doc; persist(); const sick=draft.flags.includes("sick")&&!(logs[s.key]&&was); closeEditor(); render();
   if(doc.status==="done"&&!was) celebrate(); else if(doc.flags.includes("sick")||doc.flags.includes("pain")) toast("Kirjattu. Ohjelma mukautuu: katso Tänään- ja Analyysi-näkymä.");
 };
@@ -1434,6 +1450,10 @@ function parseQty(text){ const m=(text||"").match(/(\d+(?:[,.]\d+)?)(?:[–-](\d
 function rawAt(i){ const d=isoOfIdx(i), e=edits[d]; return e?[e.code,e.text,e.note??PLAN[i][2]]:PLAN[i].slice(); }
 function buildBase(){
   const b=PLAN.map((r,i)=>rawAt(i));
+  if(bHalf()){ for(let i=110;i<BELGRADE-3;i++){ const [c,t,n]=b[i]; if(c==="P"&&!edits[isoOfIdx(i)]&&estKm(t)>21) b[i]=[c,"18–21 km rauhallisesti. Juokse 5 min / kävele 1 min, tankkaa kuten kisassa.",n]; }
+    if(!edits[isoOfIdx(BELGRADE-2)]) b[BELGRADE-2]=["J","Matka Belgradiin. 3 km hölkkä + 3×20 s. Hae numerolappu expolta (vain paikan päältä).",""];
+    if(!edits[isoOfIdx(BELGRADE-1)]) b[BELGRADE-1]=["R","BELGRADIN PUOLIMARATON klo 9. Juokse 5 min / kävele 1 min alusta asti, geeli 40 min välein, aloita hitaammin kuin tuntuu.","Puolimaraton"];
+    if(!edits[isoOfIdx(BELGRADE)]) b[BELGRADE]=["L","Kävele kaupungilla ja kannusta maratoonareita.",""]; }
   SCALED={}; for(const w in weekScale){ const f=weekScale[w]; const [a,z]=weekRange(+w); for(let i=a;i<=z&&i<b.length;i++){ const [c,t,n]=b[i]; if(RUN.has(c)&&c!=="R"&&c!=="X"){ b[i]=[c, scaleText(c,t,f,hasIntensity(t)?false:false), n]; SCALED[i]={f,w:+w}; } } }
   TARGET_EFF = TARGET.map((v,i)=>weekScale[i+1]?Math.round(v*weekScale[i+1]):v);
   // Menot ja muokkaukset: jos juoksu poistui ohjelmasta, viikon km-tavoite pienenee sen verran.
@@ -1866,7 +1886,7 @@ let cloudTimer=null, cloudState={busy:false, last: meta.cloudSaved||null, err:nu
 function weeksStatus(){ const t=Math.max(0,todayIdx()), w=weekOf(t), o={}; for(const x of [w,w+1]){ if(x>36) continue; o[isoOfIdx((x-1)*7-1)]={w:x,tgt:TARGET_EFF[x-1]}; } return o; }
 function upcomingStatus(){ const t0=Math.max(0,todayIdx()); const t=Math.max(0,(weekOf(t0)-1)*7-1); const up={}; for(let i=t;i<=Math.min(BASE.length-1,t+21);i++){ const e=effective(BASE,ADAPT,i); up[isoOfIdx(i)]={code:e.code,label:TYPES[e.code].l,text:(e.text||"").slice(0,120),note:(BASE[i][2]||"").slice(0,40)}; } return up; }
 function cloudPayload(){
-  const ti=todayIdx(); let ws=[]; try{ ws=computeWarnings(BASE,logs,ADAPT,ti).concat(eventWarnings(ti)).map(w=>({level:w.level,title:w.title})); }catch(e){}
+  const ti=todayIdx(); let ws=[]; try{ ws=computeWarnings(BASE,logs,ADAPT,ti).concat(eventWarnings(ti)).concat(cpWarnings(ti)).map(w=>({level:w.level,title:w.title})); }catch(e){}
   return { data:{app:"matka-pallakselle",version:3,logs,adjOff,edits,weekScale,shoes,gear,hr:meta.hr||null,defaultShoe:meta.defaultShoe||null}, status:{upcoming:upcomingStatus(),weeks:weeksStatus(),warnings:ws,at:new Date().toISOString()}, refresh:strava.r||null };
 }
 function scheduleCloud(){ if(!stravaConnected()) return; clearTimeout(cloudTimer); cloudTimer=setTimeout(()=>cloudSave(false),8000); }
@@ -1932,6 +1952,52 @@ function zones(){ const mx=maxHR(), rs=restHR()||60; if(!mx) return null; const 
   return [{n:"Palauttava",a:z(.5),b:z(.6)},{n:"Kevyt",a:z(.6),b:z(.7)},{n:"Maratonvauhti",a:z(.7),b:z(.8)},{n:"Kynnys",a:z(.8),b:z(.88)},{n:"Kova",a:z(.88),b:mx}]; }
 function zoneFor(code,text){ const t=(text||"").toLowerCase(); if(!RUN.has(code)&&code!=="YM") return null;
   if(/kynnys/.test(t)) return 3; if(/maratonvauh/.test(t)) return 2; if(/vedo|veto|testi|kisa|maraton|nuts/.test(t)&&code!=="P") return null; if(code==="YM") return 2; return 1; }
+/* Yhtäjaksoinen juoksu */
+function plannedCont(text){ const t=text||""; let m=t.match(/(\d+)\s?min juoksu \+/); if(m) return +m[1]; m=t.match(/(\d+)\s?min yhtäjaksoista/); if(m) return +m[1]; return null; }
+function contOf(e){ const l=e.l; if(typeof l.cont==="number") return l.cont; if(l.status!=="done"||!RUN.has(e.code)) return null; const txt=(BASE[e.idx]||[])[1]||""; const pc=plannedCont(txt); if(pc!=null) return pc;
+  if(/kävel/i.test(txt)) return null; return typeof l.min==="number"&&l.min>0 ? l.min : null; }
+function contStats(){ const es=entries().filter(e=>RUN.has(e.code)); let max=0, maxAt=null, first30=null; const byW={};
+  es.sort((a,b)=>a.idx-b.idx).forEach(e=>{ const c=contOf(e); if(c==null) return; if(c>max){ max=c; maxAt=e.idx; } if(c>=30&&first30==null) first30=e.idx; const w=weekOf(e.idx); byW[w]=Math.max(byW[w]||0,c); });
+  return {max,maxAt,first30,byW}; }
+function contHTML(ti){ const C=contStats(); const cw=weekOf(Math.max(0,ti)); const arr=[]; for(let w=1;w<=Math.min(cw,12);w++) arr.push(C.byW[w]??null);
+  const pct=Math.min(100,C.max/30*100); const ms=[10,20,30].map(m=>`<span class="ms${C.max>=m?" on":""}">${C.max>=m?"✓ ":""}${m} min</span>`).join("");
+  return `<div class="pred"><b class="num">${C.max} min</b><span>pisin yhtäjaksoinen juoksu${C.maxAt!=null?` · ${fmtShort(C.maxAt)}`:""}</span></div>
+    <div class="kmbar"><div class="track"><div class="fill" style="width:${pct}%"></div></div></div><div class="mss">${ms}</div>
+    ${C.first30!=null?`<p class="tip">🎉 30 min putkeen saavutettu ${fmt(C.first30)}</p>`:`<p class="tip">Tavoite: 30 min putkeen testissä pe 4.12. Merkitse kirjaukseen, jos juoksit pidempään tai lyhyemmin kuin ohjelmassa.</p>`}
+    ${arr.filter(v=>v!=null).length>=2?spark(arr,{min:0,max:Math.max(30,...arr.filter(v=>v!=null)),color:"var(--accent)",label:"Pisin putki viikoittain"}):""}`; }
+function checkCont30(){ const C=contStats(); if(C.first30!=null&&!meta.cont30){ meta.cont30=isoOfIdx(C.first30); persist(); setTimeout(()=>{ celebrate(); toast("🎉 30 minuuttia putkeen! Iso virstanpylväs."); },400); } }
+
+/* ===== 2. Belgradin välitarkistukset ===== */
+function maxLongKm(upto){ let m=0; for(const e of entries()){ if(e.idx>upto) continue; if(e.l.status==="done"&&RUN.has(e.code)&&typeof e.l.km==="number") m=Math.max(m,e.l.km); } return m; }
+const CPS=[
+  {id:"c30",by:17,t:"30 min yhtäjaksoista juoksua",v:()=>contStats().max,goal:30,u:"min"},
+  {id:"c45",by:48,t:"45 min yhtäjaksoista juoksua",v:()=>contStats().max,goal:45,u:"min"},
+  {id:"l17",by:95,t:"Pitkä lenkki 17 km",v:ti=>maxLongKm(ti),goal:17,u:"km"},
+  {id:"l24",by:116,t:"Pitkä lenkki 24 km · päätöspiste",v:ti=>maxLongKm(ti),goal:24,u:"km"},
+  {id:"l30",by:130,t:"Pitkä lenkki 30 km",v:ti=>maxLongKm(ti),goal:30,u:"km"}];
+function cpState(ti){ return CPS.map(c=>{ const v=c.v(ti), ok=v>=c.goal; const st= ok?"ok": ti>c.by+2?"miss": ti>=c.by-14?"near":"later"; return {...c,val:v,st}; }); }
+function planBNeeded(ti){ if(meta.bGoal) return false; const S=cpState(ti); return S.filter(x=>x.st==="miss").length>=2 || S.some(x=>(x.id==="l17"||x.id==="l24")&&x.st==="miss"); }
+function cpWarnings(ti){ if(meta.bGoal==="half") return []; const S=cpState(ti).filter(x=>x.st==="miss"&&ti-x.by<=21); return S.map(x=>({level:"warn",title:`Välitarkistus jäi: ${x.t}`,detail:`Paras tähän asti ${n1(x.val)} ${x.u}. Katso Analyysi → Kunto.`})); }
+function cpHTML(ti){ const S=cpState(ti); const half=meta.bGoal==="half";
+  const ic={ok:"✓",miss:"✕",near:"●",later:"○"};
+  return `${half?`<p class="note">Tavoitteena puolimaraton la 17.4. Välitarkistukset ovat suuntaa antavia.</p>`:""}<ul class="cps">${S.map(x=>`<li class="cp-${x.st}"><span class="cpi">${ic[x.st]}</span><span><b>${x.t}</b><small>${fmt(x.by)} mennessä · ${x.st==="ok"?"tehty":`nyt ${n1(x.val)} ${x.u}`}</small></span></li>`).join("")}</ul>
+    ${planBNeeded(ti)?`<div class="swimp warn"><p><b>Belgrad: maraton vai puolimaraton?</b> Tarkistuksia on jäänyt. Puolimaraton on lauantaina 17.4. klo 9. Nuts-ohjelma jatkuu samana kummassakin tapauksessa. Ilmoittautuminen sulkeutuu 31.3.</p><div class="row"><button class="btn small" data-bgoal="full">Jatka maratonia</button><button class="btn small primary" data-bgoal="half">Vaihda puolimaratoniin</button></div></div>`:""}
+    <p class="tip">Tavoite: <b>${half?"puolimaraton la 17.4.":"maraton su 18.4."}</b> · <button class="link" data-bgoal="${half?"full":"half"}">Vaihda ${half?"maratoniin":"puolimaratoniin"}</button></p>`; }
+document.addEventListener("click",e=>{ const b=e.target.closest("[data-bgoal]"); if(!b) return; const g=b.dataset.bgoal; const prev=meta.bGoal; meta.bGoal= g==="half"?"half":"keep"; if(g==="full"&&prev==="half") meta.bGoal="keep"; persist(); BASE=buildBase(); render(); toast(g==="half"?"Belgradin tavoite: puolimaraton la 17.4. Pitkät lenkit enintään 21 km.":"Belgradin tavoite: maraton su 18.4."); });
+
+/* ===== 3. Säävaroitus ulkotreeneihin ===== */
+const OUTDOOR=c=>RUN.has(c)||["PT","YM","SK","KA","PY","HI"].includes(c);
+function wxDay(i){ const c=load("pallas.weather.v1",null); const D=c&&c.d&&c.d.daily; if(!D||!D.time) return null; const k=D.time.indexOf(isoOfIdx(i)); if(k<0) return null;
+  return {code:D.weather_code[k],tmax:D.temperature_2m_max[k],amin:D.apparent_temperature_min[k],rain:D.precipitation_sum[k],pp:D.precipitation_probability_max[k],wind:D.wind_speed_10m_max[k]}; }
+function wxRisk(d){ if(!d) return null; const r=[];
+  if(d.code>=95) r.push("ukkosta"); if([56,57,66,67].includes(d.code)) r.push("jäätävää sadetta");
+  if(d.rain>=10&&(d.pp??100)>=60) r.push(`rankkasadetta ${Math.round(d.rain)} mm`); if([75,86].includes(d.code)) r.push("runsasta lumisadetta");
+  if(d.wind>=14) r.push(`kovaa tuulta ${Math.round(d.wind)} m/s`); if(d.amin<=-18) r.push(`kovaa pakkasta (tuntuu ${Math.round(d.amin)} °C)`);
+  const heat=d.tmax>=27; if(heat) r.push(`hellettä ${Math.round(d.tmax)} °C`); return r.length?{txt:r.join(", "),heat:heat&&r.length===1}:null; }
+function wxBox(s){ const ti=todayIdx(); if(s.idx<ti||s.idx>ti+1||!OUTDOOR(s.code)||isIndoor(s.idx)||s.code==="R") return ""; const l=logs[s.key]; if(l&&l.status&&l.status!=="note") return "";
+  const R=wxRisk(wxDay(s.idx)); if(!R) return "";
+  return `<div class="wxwarn"><p>⚠️ ${s.idx===ti?"Tänään":"Huomenna"} ${R.txt}. ${R.heat?"Juokse aamulla tai illalla ja juo enemmän.":"Siirrä, vaihda lajia tai juokse matolla."}</p>${R.heat?"":`<div class="row">${s.idx<BASE.length-1&&!s.moved?`<button class="btn small" data-move="${s.key}">→ Huomiselle</button>`:""}<button class="btn small" data-swap="${s.idx}">⇄ Vaihda laji</button></div>`}</div>`; }
+
 /* Juoksumatto */
 const isIndoor = i => { const w=weekOf(i); return w<=21 && !(w>=8&&w<=10); };
 const kmh = p => (60/p).toFixed(1).replace(".",",");
@@ -1982,8 +2048,8 @@ function predictMarathon(upto){
   return {t, lo:t*(1-spread), hi:t*(1+spread), basis, pace:t/42.195, maxLong};
 }
 function predictTrend(ti){ const out=[]; const cw=weekOf(Math.max(0,ti)); for(let w=1;w<=Math.min(cw,22);w++){ const end=Math.min(weekRange(w)[1],ti); const p=predictMarathon(end); out.push(p?p.t:null); } return out; }
-function predictionHTML(ti, big){ const P=predictMarathon(ti); if(!P) return `<p class="note">Arvio syntyy, kun olet kirjannut vähintään 3 juoksua kilometreineen ja aikoineen.</p>`;
-  const tr=predictTrend(ti); const prev=[...tr].slice(0,-1).reverse().find(v=>v!=null); const diff=prev?Math.round(P.t-prev):null;
+function predictionHTML(ti, big){ const P0=predictMarathon(ti); const hf=bHalf()?Math.pow(0.5,1.06):1; const P=P0&&{...P0,t:P0.t*hf,lo:P0.lo*hf,hi:P0.hi*hf,pace:P0.t*hf/(bHalf()?21.0975:42.195)}; if(!P) return `<p class="note">Arvio syntyy, kun olet kirjannut vähintään 3 juoksua kilometreineen ja aikoineen.</p>`;
+  const tr=predictTrend(ti).map(v=>v==null?v:v*hf); const prev=[...tr].slice(0,-1).reverse().find(v=>v!=null); const diff=prev?Math.round(P.t-prev):null;
   return `<div class="pred"><b class="num">${hm(P.t)}</b><span>${hm(P.lo)} – ${hm(P.hi)} · ${pace(1,P.pace)}/km</span></div>
     ${diff!=null&&diff!==0?`<p class="tip">${diff<0?`▼ ${-diff} min nopeampi`:`▲ ${diff} min hitaampi`} kuin viime viikolla</p>`:""}
     ${big&&tr.filter(v=>v!=null).length>=2?spark(tr,{min:Math.min(...tr.filter(Boolean))*0.97,max:Math.max(...tr.filter(Boolean))*1.03,color:"var(--fell)",label:"Aika-arvio viikoittain",fmtv:v=>hm(v).replace(" min","")}):""}
@@ -2015,8 +2081,8 @@ const WCODE={0:"selkeää",1:"enimmäkseen selkeää",2:"puolipilvistä",3:"pilv
 async function loadWeather(){
   const c=load("pallas.weather.v1",null); if(c&&Date.now()-c.t<60*60000){ showWeather(c.d); return; }
   const loc=meta.loc||{lat:60.17,lon:24.94,name:"Helsinki"};
-  try{ const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}&current=temperature_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m&wind_speed_unit=ms&timezone=auto`); if(!r.ok) return;
-    const j=await r.json(); if(!j||!j.current) return; const d={...j.current,name:loc.name}; try{ localStorage.setItem("pallas.weather.v1",JSON.stringify({t:Date.now(),d})); }catch(e){} showWeather(d); }catch(e){}
+  try{ const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}&current=temperature_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,apparent_temperature_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max&forecast_days=3&wind_speed_unit=ms&timezone=auto`); if(!r.ok) return;
+    const j=await r.json(); if(!j||!j.current) return; const d={...j.current,name:loc.name,daily:j.daily||null}; try{ localStorage.setItem("pallas.weather.v1",JSON.stringify({t:Date.now(),d})); }catch(e){} showWeather(d); if(route()==="tanaan") render(); }catch(e){}
 }
 function weatherTip(d){ const t=d.temperature_2m, f=d.apparent_temperature, w=d.weather_code;
   if([56,57,66,67].includes(w)||(t>-3&&t<2&&d.precipitation>0)) return "Liukasta: juokse sisällä tai nastoilla.";

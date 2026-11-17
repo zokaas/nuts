@@ -547,5 +547,16 @@ body.maint .hero, body.maint #week, body.maint #status, body.maint #summary, bod
 .mtg{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); font-size:14px}
 .mtg b{font-size:11px; text-transform:uppercase; color:var(--muted); padding:4px 2px}
 .mtg span{padding:6px 2px; border-top:1px solid var(--line)}
+.mss{display:flex; gap:6px; flex-wrap:wrap}
+.ms{font-size:12px; font-weight:700; padding:3px 9px; border-radius:999px; border:1px solid var(--line); color:var(--muted)}
+.ms.on{background:var(--ok-bg); color:var(--ok); border-color:transparent}
+.cps{list-style:none; margin:0; padding:0; display:flex; flex-direction:column}
+.cps li{display:grid; grid-template-columns:28px 1fr; gap:8px; align-items:start; padding:8px 0; border-bottom:1px solid var(--line)}
+.cps small{display:block; color:var(--muted); font-size:13px}
+.cpi{width:24px; height:24px; border-radius:50%; display:grid; place-items:center; font-size:12px; font-weight:800; border:2px solid var(--line); color:var(--muted)}
+.cp-ok .cpi{background:var(--ok); border-color:var(--ok); color:#fff} .cp-miss .cpi{background:var(--crit); border-color:var(--crit); color:#fff}
+.cp-near .cpi{border-color:var(--warn); color:var(--warn)}
+.wxwarn{background:var(--warn-bg); border-radius:10px; padding:10px 12px; display:flex; flex-direction:column; gap:8px; font-size:14px}
+.wxwarn p{margin:0}
 </style>
 </head>

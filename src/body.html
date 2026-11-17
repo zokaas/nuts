@@ -42,7 +42,9 @@
       <a href="#merkit" class="card linkcard"><span>🏅 Taso ja merkit</span><span aria-hidden="true">›</span></a>
     </div>
     <div class="agroup" data-agroup="kunto" hidden>
-      <section class="card"><div class="eyebrow">Belgradin aika-arvio</div><div id="aPred"></div></section>
+      <section class="card"><div class="eyebrow">Belgradin välitarkistukset</div><div id="aCps"></div></section>
+      <section class="card"><div class="eyebrow">Yhtäjaksoinen juoksu</div><div id="aCont"></div></section>
+      <section class="card"><div class="eyebrow" id="aPredT">Belgradin aika-arvio</div><div id="aPred"></div></section>
       <section class="card"><div class="eyebrow">Kuorma</div><div id="aLoad"></div></section>
       <section class="card"><div class="eyebrow">Trendit 30 päivää</div><div id="aTrends"></div></section>
       <section class="card"><div class="eyebrow">Havainnot</div><div id="aInsights"></div></section>
@@ -192,6 +194,7 @@
         <div class="field"><label for="edMin">Kesto (min)</label><input type="text" id="edMin" inputmode="numeric" placeholder="35"></div>
         <div class="field"><label for="edHr">Keskisyke</label><input type="text" id="edHr" inputmode="numeric" placeholder="142"></div>
       </div>
+      <div class="field" id="contField" hidden><label for="edCont">Pisin yhtäjaksoinen juoksu (min)</label><input type="text" id="edCont" inputmode="numeric"><small class="tip" id="contHint"></small></div>
       <label id="feelLbl">Miltä treeni tuntui?</label>
       <div class="feel" id="edFeel" role="group" aria-labelledby="feelLbl"></div>
     </div>
