@@ -1,0 +1,7 @@
+# Cloudflare Worker: Strava-välipalvelin (vain strava-worker/worker.js, ei sovellusta)
+name = "nuts"
+main = "strava-worker/worker.js"
+compatibility_date = "2026-11-01"
+workers_dev = true
+# Säilytä Cloudflaren hallintapaneelissa asetetut muuttujat (APP_URL, STRAVA_CLIENT_ID).
+keep_vars = true
