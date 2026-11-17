@@ -468,6 +468,25 @@ body[data-route="asetukset"] .mast{display:none}
 .cc.dim{opacity:.28}
 .cc.race{background:color-mix(in srgb, var(--accent) 18%, transparent)}
 .cc.empty{visibility:hidden}
+
+/* ===== v7 ===== */
+.xtra{display:grid; grid-template-columns:auto 1fr auto; gap:10px; align-items:center; text-align:left; width:100%; border:1px dashed var(--line); background:transparent; border-radius:10px; padding:8px 10px}
+.xtra small{display:block; color:var(--muted); font-size:13px}
+.sd.mvfrom{background:var(--accent); color:#fff} .sd.mvfrom .dw,.sd.mvfrom .dn{color:#fff}
+.sd.mvok{border:1.5px dashed var(--accent)}
+.strip{touch-action:pan-y; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none}
+.pred{display:flex; flex-direction:column; gap:2px}
+.pred b{font-family:var(--display); font-stretch:115%; font-weight:900; font-size:34px; line-height:1}
+.pred span{color:var(--muted); font-size:14px}
+.racecard{border:2px solid var(--accent); background:linear-gradient(180deg, color-mix(in srgb, var(--accent) 10%, var(--surface)), var(--surface) 60%)}
+.rwhead{display:flex; justify-content:space-between; gap:12px; align-items:flex-start}
+.rwhead h2{font-size:24px; font-stretch:112%}
+.rwcount{display:flex; flex-direction:column; align-items:center; min-width:64px; background:var(--accent); color:#fff; border-radius:12px; padding:6px 8px}
+.rwcount b{font-family:var(--display); font-size:30px; font-weight:900; line-height:1}
+.rwcount span{font-size:11px; font-weight:700}
+.rchk{display:flex; flex-direction:column; gap:8px}
+.rchk .chk{display:flex; gap:10px; align-items:flex-start; font-size:15px}
+.rchk input{width:20px; height:20px; flex:none; accent-color:var(--accent)}
 </style>
 </head>
 <body>
@@ -480,6 +499,7 @@ body[data-route="asetukset"] .mast{display:none}
 
 
   <div data-view="tanaan" class="view">
+    <section class="card racecard" id="raceWeek" hidden></section>
     <section class="card hero">
       <div class="herotop"><button class="pill st-ok" id="pill" type="button"></button><span class="wchip" id="weather" hidden></span></div>
       <div id="today"></div>
@@ -512,6 +532,7 @@ body[data-route="asetukset"] .mast{display:none}
       <a href="#merkit" class="card linkcard"><span>🏅 Taso ja merkit</span><span aria-hidden="true">›</span></a>
     </div>
     <div class="agroup" data-agroup="kunto" hidden>
+      <section class="card"><div class="eyebrow">Belgradin aika-arvio</div><div id="aPred"></div></section>
       <section class="card"><div class="eyebrow">Kuorma</div><div id="aLoad"></div></section>
       <section class="card"><div class="eyebrow">Trendit 30 päivää</div><div id="aTrends"></div></section>
       <section class="card"><div class="eyebrow">Havainnot</div><div id="aInsights"></div></section>
@@ -805,7 +826,7 @@ function computeWarnings(plan, logs, adapt, today){
   return out;
 }
 function recentFlag(logs,today,flag,win){ for(let k=today;k>=Math.max(0,today-win);k--){ if(flagsOf(logs[isoOfIdx(k)]).includes(flag)) return true; } return false; }
-function loadRatio(plan,logs,today){ const kmDay=k=>{ let s=0; for(const key of [isoOfIdx(k),isoOfIdx(k)+"~m"]){ const l=logs[key]; if(l&&l.status==="done"&&RUN.has(logType(plan,key,l))&&typeof l.km==="number") s+=l.km; } return s; };
+function loadRatio(plan,logs,today){ const kmDay=k=>{ let s=0; const d=isoOfIdx(k); for(const key in logs){ if(key.slice(0,10)!==d) continue; const l=logs[key]; if(l&&l.status==="done"&&RUN.has(logType(plan,key,l))&&typeof l.km==="number") s+=l.km; } return s; };
   if(today<21) return null; let a=0,c=0; for(let k=today-6;k<=today;k++) a+=kmDay(k); for(let k=today-27;k<=today;k++) c+=kmDay(k); c=c/4; if(c<5) return null; return {acute:Math.round(a), chronic:Math.round(c), ratio:a/c}; }
 
 /* ===== Matka Pallakselle – sovellus ===== */
@@ -909,7 +930,7 @@ function render(){
   document.querySelectorAll(".tabs a").forEach(a=>a.setAttribute("aria-current",a.getAttribute("href")==="#"+r?"page":"false"));
   const st=stats(), bs=badges(st); const ws=computeWarnings(BASE,logs,ADAPT,ti).concat(eventWarnings(ti));
   renderCount(ti,st,bs);
-  if(r==="tanaan"){ renderStatus(ws); renderToday(t,ti); renderTip(t); renderSummary(ti); renderWeek(t); renderUpcoming(t); }
+  if(r==="tanaan"){ renderRaceWeek(ti); renderStatus(ws); renderToday(t,ti); renderTip(t); renderSummary(ti); renderWeek(t); renderUpcoming(t); }
   if(r==="historia"){ renderHistory(st); }
   if(r==="asetukset"){ renderStrava(); renderCloud(); renderPush(); renderZones(); renderLoc(); }
   if(r==="analyysi") renderAnalysis(ti,st,t);
@@ -988,10 +1009,35 @@ function sessionBlock(s,first,ti){
     <p class="target">${esc(text)}</p>${zoneChip(s)}${s.note&&!s.moved?`<p class="tip">📌 ${esc(s.note)}</p>`:""}
     <div class="acts">${acts}</div></div>`;
 }
+const RACES={B:{idx:()=>BELGRADE,name:"Belgradin maraton",start:"su 18.4. klo 8.00",lat:44.8125,lon:20.4612,place:"Belgrad",
+    chk:["Numerolappu noudettu expolta","Kengät ja sukat testattu pitkällä lenkillä","Geelit + 1 varalle","Kisa-asu valmiina sään mukaan","Hiertymävoide ja teipit","Aamupala sovittu klo 5","Lähtöalue ja kulku katsottu","Kello ladattu","Palautumisvaatteet ja juoma maaliin"],
+    plan:[[7,4,"Kevyet lenkit. Ei uusia kenkiä, ruokia tai treenejä."],[3,1,"Hiilaritankkaus: pasta, riisi, leipä, vähemmän kuitua. Juo tasaisesti."],[1,1,"15 min hölkkä + 3 lyhyttä vetoa. Varusteet esille, numerolappu paitaan, nukkumaan ajoissa."],[0,0,"Herätys 5.00, aamupala klo 5, lähtöalueella 7.30. 5 min juoksu / 1 min kävely alusta asti."]]},
+  N:{idx:()=>NUTS,name:"Nuts 66 km",start:"pe 23.7. klo 15.00 Hetta",lat:68.383,lon:23.633,place:"Hetta",
+    chk:["Pakolliset varusteet pakattu (Opas → Nutsin varusteet)","Juomareppu: 1,5 l pullot/pussit testattu","Tankkaus: noin 50 g/h × 10 h ≈ 500 g hiilaria","Kuljetus Hettaan ja majoitus","Nouto Pallakselta sovittu","Hyttyskarkote ja aurinkorasva","Varavaatteet maaliin","Kello ja puhelin ladattu, varavirta"],
+    plan:[[7,3,"Kevyet lenkit ja kävelyt. Ei mäkivetoja."],[2,1,"Matka Lappiin. Hiilaripainotteinen ruoka, juo hyvin."],[0,0,"Lounas klo 11–12, välipala klo 14, lähtö klo 15. Ylämäet kävellen, ensimmäinen tunti liian helposti."]]}};
+function raceSoon(ti){ for(const k of ["B","N"]){ const d=RACES[k].idx()-ti; if(d>=0&&d<=7) return {k,d,R:RACES[k]}; } return null; }
+function renderRaceWeek(ti){ const el=$("raceWeek"); const rs=raceSoon(ti); if(!rs){ el.hidden=true; return; } el.hidden=false; const {k,d,R}=rs;
+  const done=(meta.rck&&meta.rck[k])||{}; const n=R.chk.filter((_,i)=>done[i]).length;
+  const today=R.plan.find(([a,b])=>d<=a&&d>=b);
+  const P=k==="B"?predictMarathon(ti):null;
+  el.innerHTML=`<div class="rwhead"><div><div class="eyebrow">Kisaviikko</div><h2>${R.name}</h2><p class="tip">${R.start}</p></div><div class="rwcount"><b class="num">${d}</b><span>${d===0?"tänään!":d===1?"päivä":"päivää"}</span></div></div>
+    ${today?`<p class="target">${esc(today[2])}</p>`:""}
+    ${P?`<p class="tip">Arvio ${hm(P.lo)} – ${hm(P.hi)} · tavoitevauhti ${pace(1,P.pace)}/km</p>`:""}
+    <div class="rwwx" id="raceWx"><span class="tip">Sää: ${R.place}…</span></div>
+    <details class="fold"${n<R.chk.length?" open":""}><summary>Tarkistuslista ${n}/${R.chk.length}</summary><div class="rchk">${R.chk.map((x,i)=>`<label class="chk"><input type="checkbox" data-rck="${k}:${i}" ${done[i]?"checked":""}> ${esc(x)}</label>`).join("")}</div></details>
+    <details class="fold"><summary>Aikataulu</summary><ul class="up">${R.plan.map(([a,b,txt])=>`<li><time>${a===0?"Kisapäivä":a===b?`${a} pv ennen`:`${a}–${b} pv ennen`}</time><span>${esc(txt)}</span></li>`).join("")}</ul></details>`;
+  loadRaceWx(R, RACES[k].idx());
+}
+document.addEventListener("change",e=>{ const c=e.target.closest("[data-rck]"); if(!c) return; const [k,i]=c.dataset.rck.split(":"); meta.rck=meta.rck||{}; meta.rck[k]=meta.rck[k]||{}; meta.rck[k][i]=c.checked; persist(); render(); });
+async function loadRaceWx(R, ridx){ const day=isoOfIdx(ridx); const ck="pallas.racewx."+day; const c=load(ck,null); const show=d=>{ const el=$("raceWx"); if(!el) return; if(!d){ el.innerHTML=`<span class="tip">Kisapäivän ennuste tulee näkyviin lähempänä.</span>`; return; }
+    el.innerHTML=`<span class="tip">Ennuste ${R.place} ${fmt(ridx)}: <b>${Math.round(d.tmin)}–${Math.round(d.tmax)} °C</b> · ${WCODE[d.code]||""} · sade ${d.pp??"–"} % · tuuli ${Math.round(d.wind)} m/s</span>`; };
+  if(c&&Date.now()-c.t<3*3600e3){ show(c.d); return; }
+  try{ const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${R.lat}&longitude=${R.lon}&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code,wind_speed_10m_max&wind_speed_unit=ms&timezone=auto&start_date=${day}&end_date=${day}`); if(!r.ok){ show(null); return; } const j=await r.json(); const D=j.daily; if(!D||!D.time||!D.time.length){ show(null); return; }
+    const d={tmin:D.temperature_2m_min[0],tmax:D.temperature_2m_max[0],pp:D.precipitation_probability_max[0],code:D.weather_code[0],wind:D.wind_speed_10m_max[0]}; if(typeof d.tmax!=="number"){ show(null); return; } try{ localStorage.setItem(ck,JSON.stringify({t:Date.now(),d})); }catch(e){} show(d); }catch(e){ show(null); } }
 function renderToday(t,ti){ const d=selDay==null?t:selDay; const w=weekOf(d);
   const label = d!==t ? fmt(d) : ti<0?"Ohjelma alkaa":ti>t?"Viimeinen päivä":`Tänään · ${fmt(d)}`;
   $("today").closest(".hero").classList.toggle("other", d!==t);
-  $("today").innerHTML=`<div class="herohead"><div class="eyebrow">${label} · vk ${w} · ${PHASE(w)}</div>${d!==t?`<button class="link" data-seltoday>‹ Tänään</button>`:""}</div>`+sessionsOn(BASE,logs,ADAPT,d).map((s,k)=>sessionBlock(s,k===0,ti)).join(""); }
+  $("today").innerHTML=`<div class="herohead"><div class="eyebrow">${label} · vk ${w} · ${PHASE(w)}</div>${d!==t?`<button class="link" data-seltoday>‹ Tänään</button>`:""}</div>`+sessionsOn(BASE,logs,ADAPT,d).map((s,k)=>sessionBlock(s,k===0,ti)).join("")+extrasOn(d).map(extraBlock).join(""); }
 let keepSel=false;
 function quickDone(key){ const s=sessionByKey(key), l=logs[key]||{}; logs[key]={...l,status:"done",type:s.code,km:l.km??null,min:l.min??null,flags:l.flags||[],note:l.note||"",quick:true,updatedAt:new Date().toISOString()}; persist(); render(); celebrate(); toast(stravaConnected()?"Tehty ✓ Strava täydentää km:t.":"Tehty ✓",{l:"Peru",fn:()=>undone(key)}); }
 function undone(key){ const l=logs[key]; if(!l) return; const keep=flagsOf(l).length||l.rhr!=null||l.sleepH!=null||l.note; if(l.stravaId){ toast("Stravasta tullutta treeniä ei voi perua tästä. Avaa treeni ja tyhjennä."); return; } if(keep){ logs[key]={flags:l.flags||[],rhr:l.rhr??null,sleepH:l.sleepH??null,note:l.note||"",feel:null,status:"note",type:l.type,updatedAt:new Date().toISOString()}; } else delete logs[key]; persist(); render(); }
@@ -1003,7 +1049,9 @@ document.addEventListener("click",e=>{
   const um=e.target.closest("[data-unmove]"); if(um){ unmove(um.dataset.unmove); return; }
   const ud=e.target.closest("[data-undone]"); if(ud){ undone(ud.dataset.undone); return; }
   const cl=e.target.closest("[data-cal]"); if(cl){ const i=+cl.dataset.cal; selDay=i===T0()?null:i; viewWeek=weekOf(i); keepSel=true; location.hash="#tanaan"; return; }
-  const sd=e.target.closest("[data-sel]"); if(sd){ const i=+sd.dataset.sel; selDay = i===T0()?null:i; render(); const h=document.querySelector(".hero"); if(h&&h.getBoundingClientRect().top<0) h.scrollIntoView({behavior:"smooth",block:"start"}); return; }
+  const sd=e.target.closest("[data-sel]"); if(sd&&lpFired){ lpFired=false; return; }
+  if(sd&&moveFrom!=null){ const j=+sd.dataset.sel; if(j===moveFrom){ moveFrom=null; render(); toast("Siirto peruttu."); } else if(canSwap(j)) doSwap(moveFrom,j); else toast("Tähän päivään ei voi siirtää."); return; }
+  if(sd){ const i=+sd.dataset.sel; selDay = i===T0()?null:i; render(); const h=document.querySelector(".hero"); if(h&&h.getBoundingClientRect().top<0) h.scrollIntoView({behavior:"smooth",block:"start"}); return; }
   if(e.target.closest("[data-seltoday]")){ selDay=null; viewWeek=weekOf(T0()); render(); }
 });
 function renderTrail(st){
@@ -1020,6 +1068,9 @@ function markFor(s){ const l=logs[s.key]; const fl=flagsOf(l);
   if(l.status==="done") return `<span class="mark done${fl.includes("pain")?" pain":""}" aria-label="tehty">✓</span>`;
   if(l.status==="skip") return `<span class="mark skip" aria-label="väliin">–</span>`;
   return `<span class="mark" aria-label="kirjattu">📝</span>`; }
+function extrasOn(i){ const d=isoOfIdx(i); return Object.keys(logs).filter(k=>k.startsWith(d+"~s")).sort().map(sessionByKey); }
+function extraBlock(s){ const l=logs[s.key]||{}; const bits=[typeof l.km==="number"?`${n1(l.km)} km`:"", l.min?`${l.min} min`:"", l.hr?`♥ ${l.hr}`:""].filter(Boolean).join(" · ");
+  return `<button class="xtra" data-open="${s.key}"><span class="type ${TYPES[s.code].c}">${TYPES[s.code].l}</span><span><b>Lisätreeni</b>${l.stravaName?` · ${esc(l.stravaName)}`:""}<small>${bits}</small></span><span aria-hidden="true">›</span></button>`; }
 function dayMark(ss){ const s=ss.find(x=>logs[x.key]&&logs[x.key].status!=="moved")||ss[0]; return markFor(s); }
 function renderWeek(t){
   const w=viewWeek,[a,b]=weekRange(w),act=weekKm(BASE,logs,w),tgt=TARGET_EFF[w-1],pct=Math.min(100,tgt?act/tgt*100:0); const sel=selDay==null?t:selDay; let rows="", strip="";
@@ -1027,19 +1078,31 @@ function renderWeek(t){
   for(let i=a0;i<=a0+6;i++){
     if(i<0||i>=BASE.length){ strip+=`<span class="sd empty" aria-hidden="true"><span class="dw">${DOW[dow(i)]}</span></span>`; continue; }
     const d=new Date(START_UTC+i*864e5), ss=sessionsOn(BASE,logs,ADAPT,i), s0=ss[0], ci=changeInfo(s0);
-    strip+=`<button class="sd${i===t?" today":""}${i===sel?" sel":""}${ci?" chg":""}" data-sel="${i}" aria-pressed="${i===sel}" aria-label="${fmt(i)}: ${TYPES[s0.code].l}"><span class="dw">${DOW[dow(i)]}</span><span class="dn num">${d.getUTCDate()}</span><span class="ty ${TYPES[s0.code].c}">${SHORT[s0.code]||""}</span>${dayMark(ss)||`<span class="mark none"></span>`}${ss.length>1?`<i class="plus">+${ss.length-1}</i>`:""}</button>`;
+    strip+=`<button class="sd${i===t?" today":""}${i===sel?" sel":""}${ci?" chg":""}" data-sel="${i}" aria-pressed="${i===sel}" aria-label="${fmt(i)}: ${TYPES[s0.code].l}"><span class="dw">${DOW[dow(i)]}</span><span class="dn num">${d.getUTCDate()}</span><span class="ty ${TYPES[s0.code].c}">${SHORT[s0.code]||""}</span>${dayMark(ss)||`<span class="mark none"></span>`}${(ss.length-1+extrasOn(i).length)>0?`<i class="plus">+${ss.length-1+extrasOn(i).length}</i>`:""}</button>`;
   }
-  for(let i=a;i<=b&&i<BASE.length;i++){ const d=new Date(START_UTC+i*864e5); sessionsOn(BASE,logs,ADAPT,i).forEach((s,k)=>{
-    const ci=changeInfo(s); rows+=`<button class="day${i===t?" is-today":""}${ci?` changed k-${ci.kind}`:""}" data-open="${s.key}"><span class="d">${k?"":DOW[dow(i)]}<small>${k?"siirretty":`${d.getUTCDate()}.${d.getUTCMonth()+1}.`}</small></span><span class="what">${typeChip(s.code)}${changeTag(s)||(edits[isoOfIdx(i)]&&!k?`<span class="adtag">✏️ muokattu</span>`:"")}<span class="t">${esc(s.text||"Lepo")}</span></span>${markFor(s)}</button>`; }); }
+  for(let i=a;i<=b&&i<BASE.length;i++){ const d=new Date(START_UTC+i*864e5); sessionsOn(BASE,logs,ADAPT,i).concat(extrasOn(i)).forEach((s,k)=>{
+    const ci=changeInfo(s); rows+=`<button class="day${i===t?" is-today":""}${ci?` changed k-${ci.kind}`:""}" data-open="${s.key}"><span class="d">${k?"":DOW[dow(i)]}<small>${k?(s.key.includes("~s")?"lisä":"siirretty"):`${d.getUTCDate()}.${d.getUTCMonth()+1}.`}</small></span><span class="what">${typeChip(s.code)}${changeTag(s)||(edits[isoOfIdx(i)]&&!k?`<span class="adtag">✏️ muokattu</span>`:"")}<span class="t">${esc(s.text||"Lepo")}</span></span>${markFor(s)}</button>`; }); }
   $("week").innerHTML=`<div class="weekhead"><div><div class="eyebrow">${PHASE(w)}${(w<=21&&!(w>=8&&w<=10))?" · 🏠 sisäkausi":""}</div><h2>Viikko ${w}</h2></div><div class="navbtns"><button id="wPrev" aria-label="Edellinen viikko" ${w<=1?"disabled":""}>‹</button><button id="wNow" aria-label="Tämä viikko">•</button><button id="wNext" aria-label="Seuraava viikko" ${w>=36?"disabled":""}>›</button></div></div>
     <div class="strip" role="group" aria-label="Viikon päivät">${strip}</div>
     <div class="kmbar"><div class="lbl"><span>Juostu <b class="num">${n1(act)}</b> km</span><span>Tavoite <b class="num">${tgt}</b> km</span></div><div class="track"><div class="fill" style="width:${pct}%"></div></div></div>${weekScaleControls(w,t)}
     <details class="fold" id="weekList"${weekListOpen?" open":""}><summary>Viikon treenit listana</summary><div class="days">${rows}</div></details>`;
   $("weekList").ontoggle=e=>{ weekListOpen=e.target.open; };
-  const go=dw=>{ const nw=Math.min(36,Math.max(1,viewWeek+dw)); if(nw===viewWeek) return; const off=sel-((viewWeek-1)*7-1); viewWeek=nw; const ns=Math.min(BASE.length-1,Math.max(0,(nw-1)*7-1+off)); selDay= ns===t?null:ns; render(); };
-  $("wPrev").onclick=()=>go(-1); $("wNext").onclick=()=>go(1); $("wNow").onclick=()=>{ viewWeek=weekOf(t); selDay=null; render(); };
+  $("wPrev").onclick=()=>weekGo(-1); $("wNext").onclick=()=>weekGo(1);
+  if(moveFrom!=null) $("week").querySelectorAll(".sd[data-sel]").forEach(b=>{ const j=+b.dataset.sel; b.classList.toggle("mvfrom",j===moveFrom); b.classList.toggle("mvok",j!==moveFrom&&canSwap(j)); }); $("wNow").onclick=()=>{ viewWeek=weekOf(t); selDay=null; render(); };
 }
-let weekListOpen=false;
+let weekListOpen=false, moveFrom=null, lpT=null, lpFired=false, tx=null;
+function weekGo(dw){ const t=T0(), sel=selDay==null?t:selDay; const nw=Math.min(36,Math.max(1,viewWeek+dw)); if(nw===viewWeek) return; const off=sel-((viewWeek-1)*7-1); viewWeek=nw; const ns=Math.min(BASE.length-1,Math.max(0,(nw-1)*7-1+off)); selDay= ns===t?null:ns; render(); }
+function canSwap(j){ if(j<todayIdx()||j<0||j>=BASE.length) return false; const r=rawAt(j); if(r[0]==="R") return false; const l=logs[isoOfIdx(j)]; return !(l&&(l.status==="done"||l.status==="skip")); }
+function startMove(i){ if(!canSwap(i)){ toast("Tätä päivää ei voi siirtää."); return; } moveFrom=i; if(navigator.vibrate) navigator.vibrate(25); render(); toast(`Siirrä ${fmt(i)}: napauta uutta päivää.`,{l:"Peru",fn:()=>{ moveFrom=null; render(); }}); }
+function doSwap(i,j){ const di=isoOfIdx(i), dj=isoOfIdx(j), prev={[di]:edits[di],[dj]:edits[dj]}; const A=rawAt(i), B=rawAt(j);
+  edits[di]={code:B[0],text:B[1],note:B[2]}; edits[dj]={code:A[0],text:A[1],note:A[2]}; moveFrom=null; persist(); render();
+  toast(`Vaihdettu ${fmt(i)} ↔ ${fmt(j)}`,{l:"Peru",fn:()=>{ for(const k in prev){ if(prev[k]) edits[k]=prev[k]; else delete edits[k]; } persist(); render(); }}); }
+(function(){ const W=$("week");
+  W.addEventListener("touchstart",e=>{ const t=e.touches[0]; tx={x:t.clientX,y:t.clientY,strip:!!e.target.closest(".strip")}; const sd=e.target.closest(".sd[data-sel]"); lpFired=false; clearTimeout(lpT); if(sd) lpT=setTimeout(()=>{ lpFired=true; startMove(+sd.dataset.sel); },550); },{passive:true});
+  W.addEventListener("touchmove",e=>{ if(!tx) return; const t=e.touches[0]; if(Math.abs(t.clientX-tx.x)>10||Math.abs(t.clientY-tx.y)>10) clearTimeout(lpT); },{passive:true});
+  W.addEventListener("touchend",e=>{ clearTimeout(lpT); if(!tx) return; const t=e.changedTouches[0], dx=t.clientX-tx.x, dy=t.clientY-tx.y; if(tx.strip&&Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)*1.5){ lpFired=true; weekGo(dx<0?1:-1); } tx=null; });
+  W.addEventListener("contextmenu",e=>{ if(e.target.closest(".sd")) e.preventDefault(); });
+})();
 let calScrolled=false, calFilter="all";
 function renderCalendar(t){
   const cw=weekOf(t); let h="", lastPh=null;
@@ -1050,7 +1113,7 @@ function renderCalendar(t){
     for(let i=a0;i<=a0+6;i++){
       if(i<0||i>=BASE.length){ cells+=`<span class="cc empty"></span>`; continue; }
       const ss=sessionsOn(BASE,logs,ADAPT,i), s0=ss[0], note=BASE[i][2], c=s0.code, dim=!want(c);
-      cells+=`<button class="cc${i===t?" today":""}${i<t?" past":""}${dim?" dim":""}${c==="R"?" race":""}" data-cal="${i}" aria-label="${fmt(i)}: ${TYPES[c].l}${note?`, ${esc(note)}`:""}"><span class="dn num">${new Date(START_UTC+i*864e5).getUTCDate()}</span><span class="ty ${TYPES[c].c}">${SHORT[c]||""}</span>${i<=t?dayMark(ss)||`<span class="mark none"></span>`:note?`<span class="cn" aria-hidden="true">📌</span>`:`<span class="mark none"></span>`}</button>`;
+      cells+=`<button class="cc${i===t?" today":""}${i<t?" past":""}${dim?" dim":""}${c==="R"?" race":""}" data-cal="${i}" aria-label="${fmt(i)}: ${TYPES[c].l}${note?`, ${esc(note)}`:""}"><span class="dn num">${new Date(START_UTC+i*864e5).getUTCDate()}</span><span class="ty ${TYPES[c].c}">${SHORT[c]||""}</span>${i<=t?dayMark(ss)||`<span class="mark none"></span>`:note?`<span class="cn" aria-hidden="true">📌</span>`:`<span class="mark none"></span>`}${extrasOn(i).length?`<i class="plus">+${extrasOn(i).length}</i>`:""}</button>`;
     }
     const past=w<cw, pct=tgt?Math.round(act/tgt*100):0;
     h+=`<div class="calwk${w===cw?" cur":""}" id="cw${w}"><div class="cwh"><b>Vk ${w}</b><span>${fmtShort(Math.max(0,a0))}–${fmtShort(Math.min(BASE.length-1,a0+6))}</span><span class="cwk num${past&&pct<70?" low":""}">${w<=cw?`${n1(act)} / `:""}${tgt} km</span></div><div class="calgrid">${cells}</div></div>`;
@@ -1114,6 +1177,7 @@ function renderAnalysis(ti,st,t0){
   const lr=loadRatio(BASE,logs,ti); const lw=weekOf(ti)-1; const last4=[]; for(let w=Math.max(1,lw-3);w<=Math.max(1,lw);w++) last4.push([w,weekKm(BASE,logs,w),TARGET[w-1]]);
   const comp = last4.length? Math.round(last4.reduce((a,x)=>a+x[1],0)/Math.max(1,last4.reduce((a,x)=>a+x[2],0))*100):0;
   const elevW=w=>{ const [a,z]=weekRange(w); let s2=0; for(const k in logs){ const i=idxOfISO(k); if(i>=a&&i<=z&&logs[k].status==="done"&&typeof logs[k].elev==="number") s2+=logs[k].elev; } return Math.round(s2); };
+  $("aPred").innerHTML=predictionHTML(ti,true);
   $("aLoad").innerHTML=`<div class="tiles"><div class="tile"><span>Nousu tällä vk</span><b class="num">${elevW(weekOf(ti))} m</b></div><div class="tile"><span>Nousu viime vk</span><b class="num">${elevW(Math.max(1,weekOf(ti)-1))} m</b></div><div class="tile"><span>Toteuma 4 vk</span><b class="num">${comp} %</b></div><div class="tile"><span>Kuorma&shy;suhde</span><b class="num">${lr?String(Math.round(lr.ratio*100)/100).replace(".",","):"–"}</b></div><div class="tile"><span>7 pv km</span><b class="num">${lr?lr.acute:"–"}</b></div></div>
     <p class="tip">${lr? (lr.ratio>1.5?"Kuorma nousi viime viikolla jyrkästi suhteessa edellisiin viikkoihin. Pidä seuraavat päivät kevyinä.": lr.ratio<0.8?"Viime viikko oli kevyempi kuin edelliset. Hyvä palautumiseen, mutta älä jää pitkäksi aikaa alas.":"Kuorma nousee tasaisesti. Juuri näin pitääkin."):"Kuormasuhde (7 pv / 4 vk keskiarvo) näkyy, kun kirjauksia on 3 viikolta. Turvallinen alue 0,8–1,3."}</p>`;
   // trendit 30 pv
@@ -1469,12 +1533,15 @@ function importActivities(acts){
   for(const a of acts){
     const date=(a.start_date_local||a.start_date||"").slice(0,10); const i=idxOfISO(date); if(!date||i<0||i>=PLAN.length) continue;
     const cat=CAT(a.sport_type||a.type);
+    if(Object.keys(logs).some(k=>logs[k].strengthStravaId===a.id)) continue;
     const already=Object.keys(logs).find(k=>logs[k].stravaId===a.id);
     const fields={status:"done", km: (cat==="run"||cat==="hike")? Math.round(a.distance/100)/10 : null, min: Math.round((a.moving_time||0)/60), hr: a.average_heartrate?Math.round(a.average_heartrate):null,
       elev: a.total_elevation_gain!=null?Math.round(a.total_elevation_gain):null, stravaId:a.id, stravaName:a.name||"", updatedAt:new Date().toISOString()};
     if(already){ const l=logs[already]; if(l.km!==fields.km||l.min!==fields.min||l.elev!==fields.elev){ logs[already]={...l,...fields,status:l.status==="skip"?"done":l.status}; updated++; } continue; }
+    if(cat==="gym"){ const s0=sessionsOn(BASE,logs,ADAPT,i).find(s=>RUN.has(s.code)&&(s.code==="JL"||/lihaskunto/i.test(s.text||""))&&!(logs[s.key]&&logs[s.key].strengthStravaId));
+      if(s0){ const prev=logs[s0.key]||{}; logs[s0.key]={...prev, type:prev.type||s0.code, status:prev.status||"note", flags:prev.flags||[], note:prev.note||"", strength:prev.strength||progFromText(s0.text,weekOf(i)), strengthMin:Math.round((a.moving_time||0)/60), strengthStravaId:a.id, updatedAt:new Date().toISOString()}; added++; continue; } }
     let key=null;
-    for(const s of sessionsOn(BASE,logs,ADAPT,i)){ const l=logs[s.key]; if(l&&l.stravaId) continue; if(l&&l.status==="done"&&!l.quick) continue; if(CODE_CAT(s.code)===cat || (cat==="run"&&s.code==="JL")){ key=s.key; break; } }
+    for(const s of sessionsOn(BASE,logs,ADAPT,i)){ const l=logs[s.key]; if(l&&l.stravaId) continue; if(l&&l.status==="done"&&!l.quick) continue; if(CODE_CAT(s.code)===cat || (cat==="run"&&s.code==="JL") || (cat==="gym"&&s.code==="SL") || (cat==="bike"&&s.code==="TL")){ key=s.key; break; } }
     let type;
     if(key){ type=sessionByKey(key).code; } else { key=`${date}~s${a.id}`; type=CAT_CODE[cat]; }
     const prev=logs[key]||{};
@@ -1669,11 +1736,35 @@ $("hrSave").onclick=()=>{ const n=id=>{ const v=Number($(id).value.trim()); retu
 /* ===== Kisasuunnitelmat ===== */
 function longPace(){ const ps=entries().filter(e=>e.l.status==="done"&&e.code==="P"&&e.l.km>=8&&e.l.min).slice(-3); if(!ps.length) return null; return ps.reduce((a,e)=>a+e.l.min,0)/ps.reduce((a,e)=>a+e.l.km,0); }
 function hm(min){ const h=Math.floor(min/60), m=Math.round(min%60); return `${h} h ${String(m).padStart(2,"0")} min`; }
+/* Maratonennuste: Riegel testeistä ja reippaista juoksuista, pitkien lenkkien vauhti */
+function predictMarathon(upto){
+  const es=entries().filter(e=>e.idx<=upto&&e.idx>upto-56&&e.l.status==="done"&&RUN.has(e.code)&&e.l.km>=3&&e.l.min>0&&e.code!=="R");
+  const hard=es.filter(e=>e.code==="X"||hasIntensity((BASE[e.idx]||[])[1])).map(e=>({t:e.l.min*Math.pow(42.195/e.l.km,1.07),km:e.l.km}));
+  const longs=es.filter(e=>e.code==="P"&&e.l.km>=8).slice(-3);
+  const fromLong= longs.length? longs.reduce((a,e)=>a+e.l.min,0)/longs.reduce((a,e)=>a+e.l.km,0)*42.195*1.02 : null;
+  const fromHard= hard.length? Math.min(...hard.map(x=>x.t)) : null;
+  // Riegel ylilupaa lyhyistä matkoista, kun pisin lenkki on lyhyt: korjaa
+  const maxLong=Math.max(0,...es.map(e=>e.l.km)); const endur = maxLong>=28?1:maxLong>=21?1.04:maxLong>=15?1.08:1.12;
+  let t=null, basis="";
+  if(fromHard&&fromLong){ t=(fromHard*endur+fromLong)/2; basis="testit ja pitkät lenkit"; }
+  else if(fromHard){ t=fromHard*endur; basis="testit ja reippaat juoksut"; }
+  else if(fromLong){ t=fromLong; basis="pitkät lenkit"; }
+  else { const any=es.slice(-6); if(any.length>=3){ t=any.reduce((a,e)=>a+e.l.min,0)/any.reduce((a,e)=>a+e.l.km,0)*42.195*1.1; basis="kevyet juoksut (karkea)"; } }
+  if(!t) return null; const spread= basis.includes("karkea")?0.1: maxLong>=21?0.04:0.07;
+  return {t, lo:t*(1-spread), hi:t*(1+spread), basis, pace:t/42.195, maxLong};
+}
+function predictTrend(ti){ const out=[]; const cw=weekOf(Math.max(0,ti)); for(let w=1;w<=Math.min(cw,22);w++){ const end=Math.min(weekRange(w)[1],ti); const p=predictMarathon(end); out.push(p?p.t:null); } return out; }
+function predictionHTML(ti, big){ const P=predictMarathon(ti); if(!P) return `<p class="note">Arvio syntyy, kun olet kirjannut vähintään 3 juoksua kilometreineen ja aikoineen.</p>`;
+  const tr=predictTrend(ti); const prev=[...tr].slice(0,-1).reverse().find(v=>v!=null); const diff=prev?Math.round(P.t-prev):null;
+  return `<div class="pred"><b class="num">${hm(P.t)}</b><span>${hm(P.lo)} – ${hm(P.hi)} · ${pace(1,P.pace)}/km</span></div>
+    ${diff!=null&&diff!==0?`<p class="tip">${diff<0?`▼ ${-diff} min nopeampi`:`▲ ${diff} min hitaampi`} kuin viime viikolla</p>`:""}
+    ${big&&tr.filter(v=>v!=null).length>=2?spark(tr,{min:Math.min(...tr.filter(Boolean))*0.97,max:Math.max(...tr.filter(Boolean))*1.03,color:"var(--fell)",label:"Aika-arvio viikoittain",fmtv:v=>hm(v).replace(" min","")}):""}
+    <p class="tip">Perusta: ${P.basis}${P.maxLong<21?". Tarkentuu, kun pisin lenkki ylittää 21 km":""}.</p>`; }
 function renderRacePlans(){
-  const p=longPace(); const bTime = p? 42.2*p*1.02 : null;
+  const P=predictMarathon(todayIdx()); const bTime = P? P.t : null;
   const gels = bTime? Math.max(4, Math.round(bTime/35)) : 7;
   $("raceB").innerHTML=`<ul class="ins">
-    <li><b>Aika-arvio:</b> ${bTime?`${hm(bTime*0.97)} – ${hm(bTime*1.08)} (pitkien lenkkien vauhdista)`:"tarkentuu pitkistä lenkeistä"}</li>
+    <li><b>Aika-arvio:</b> ${P?`${hm(P.lo)} – ${hm(P.hi)}, tavoitevauhti ${pace(1,P.pace)}/km (${P.basis})`:"tarkentuu kirjatuista juoksuista"}</li>
     <li><b>Taktiikka:</b> 5 min juoksu / 1 min kävely alusta asti, alku hitaammin kuin tuntuu</li>
     <li><b>Tankkaus:</b> geeli 35 min välein (noin ${gels} kpl), juo jokaisella juomapisteellä</li>
     <li><b>Edellinen ilta:</b> pasta tai riisi, varusteet valmiiksi, numerolappu paitaan</li>
