@@ -531,5 +531,12 @@ input[type="date"]{min-height:44px}
 .swimp p{margin:0}
 .maintcard{border:2px solid var(--ok)}
 body.maint .hero, body.maint #week, body.maint #status, body.maint #summary, body.maint section:has(#upcoming){display:none}
+.loadctl{gap:0}
+.loadctl summary{list-style:none; display:flex; justify-content:space-between; align-items:center; cursor:pointer; font-family:var(--display); font-stretch:110%; font-weight:800; font-size:14px}
+.loadctl summary::-webkit-details-marker{display:none}
+.loadctl[open] summary{margin-bottom:8px}
+.loadctl[open]{gap:8px}
+.lcp{font-family:var(--body); font-weight:700; font-size:13px; color:var(--muted); border:1px solid var(--line); border-radius:999px; padding:3px 10px}
+.lcp.on{color:var(--fell); background:var(--info-bg); border-color:transparent}
 </style>
 </head>

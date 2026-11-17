@@ -261,6 +261,8 @@ function goalsHTML(w, act, tgt){ const G=weekGoals(w); const kmP=tgt?act/tgt:0;
     <div class="goal"><div class="gh">${ring(kmP,"r-nuts")}<div><b>Nuts</b><span class="num">${n1(act)} / ${tgt} km</span></div></div><small>Avaintreenit ${G.keyD}/${G.keyN}</small></div>
     <button class="goal" data-logfree="" aria-label="Terveys: kirjaa liikuntaa"><div class="gh">${ring(G.act/150,"r-health")}<div><b>Terveys</b><span class="num">${G.act} / 150 min</span></div></div><small>Lihaskunto ${Math.min(G.strength,2)}/2 · ＋ kirjaa</small></button>
   </div>`; }
+function slimGoal(w,act,tgt){ const G=weekGoals(w), pct=Math.min(100,tgt?act/tgt*100:0);
+  return `<div class="kmbar"><div class="lbl"><span><b class="num">${n1(act)}</b> / ${tgt} km</span><span>${G.keyN?`Avaintreenit ${G.keyD}/${G.keyN}`:""}</span></div><div class="track"><div class="fill" style="width:${pct}%"></div></div></div>`; }
 function dayMark(ss){ const s=ss.find(x=>logs[x.key]&&logs[x.key].status!=="moved")||ss[0]; return markFor(s); }
 function renderWeek(t){
   const w=viewWeek,[a,b]=weekRange(w),act=weekKm(BASE,logs,w),tgt=TARGET_EFF[w-1],pct=Math.min(100,tgt?act/tgt*100:0); const sel=selDay==null?t:selDay; let rows="", strip="";
@@ -268,15 +270,15 @@ function renderWeek(t){
   for(let i=a0;i<=a0+6;i++){
     if(i<0||i>=BASE.length){ strip+=`<span class="sd empty" aria-hidden="true"><span class="dw">${DOW[dow(i)]}</span></span>`; continue; }
     const d=new Date(START_UTC+i*864e5), ss=sessionsOn(BASE,logs,ADAPT,i), s0=ss[0], ci=changeInfo(s0);
-    strip+=`<button class="sd${i===t?" today":""}${i===sel?" sel":""}${ci?" chg":""}" data-sel="${i}" aria-pressed="${i===sel}" aria-label="${fmt(i)}: ${TYPES[s0.code].l}"><span class="dw">${DOW[dow(i)]}</span><span class="dn num">${d.getUTCDate()}</span><span class="ty ${TYPES[s0.code].c}">${SHORT[s0.code]||""}</span>${dayMark(ss)||`<span class="mark none"></span>`}${(ss.length-1+extrasOn(i).length)>0?`<i class="plus">+${ss.length-1+extrasOn(i).length}</i>`:""}</button>`;
+    strip+=`<button class="sd${i===t?" today":""}${i===sel?" sel":""}${ci?" chg":""}" data-sel="${i}" aria-pressed="${i===sel}" aria-label="${fmt(i)}: ${TYPES[s0.code].l}"><span class="dw">${DOW[dow(i)]}</span><span class="dn num">${d.getUTCDate()}</span><span class="ty ${TYPES[s0.code].c}">${SHORT[s0.code]||""}</span>${i<=t?(dayMark(ss)||`<span class="mark none"></span>`):`<span class="mark none"></span>`}${(ss.length-1+extrasOn(i).length)>0?`<i class="plus">+${ss.length-1+extrasOn(i).length}</i>`:""}</button>`;
   }
   for(let i=a;i<=b&&i<BASE.length;i++){ const d=new Date(START_UTC+i*864e5); sessionsOn(BASE,logs,ADAPT,i).concat(extrasOn(i)).forEach((s,k)=>{
     const ci=changeInfo(s); rows+=`<button class="day${i===t?" is-today":""}${ci?` changed k-${ci.kind}`:""}" data-open="${s.key}"><span class="d">${k?"":DOW[dow(i)]}<small>${k?(/~[sf]/.test(s.key)?"lisä":"siirretty"):`${d.getUTCDate()}.${d.getUTCMonth()+1}.`}</small></span><span class="what">${typeChip(s.code)}${changeTag(s)||(edits[isoOfIdx(i)]&&!k&&!edits[isoOfIdx(i)].ev?`<span class="adtag">✏️ muokattu</span>`:"")}<span class="t">${esc(s.text||"Lepo")}</span></span>${markFor(s)}</button>`; }); }
   $("week").innerHTML=`<div class="weekhead"><div><div class="eyebrow">${PHASE(w)}${(w<=21&&!(w>=8&&w<=10))?" · 🏠 sisäkausi":""}</div><h2>Viikko ${w}</h2></div><div class="navbtns"><button data-addev="" aria-label="Lisää meno" title="Lisää meno">＋</button><button id="wPrev" aria-label="Edellinen viikko" ${w<=1?"disabled":""}>‹</button><button id="wNow" aria-label="Tämä viikko">•</button><button id="wNext" aria-label="Seuraava viikko" ${w>=36?"disabled":""}>›</button></div></div>
     <div class="strip" role="group" aria-label="Viikon päivät">${strip}</div>
-    ${goalsHTML(w,act,tgt)}${weekScaleControls(w,t)}
+    ${slimGoal(w,act,tgt)}${weekScaleControls(w,t)}
     <details class="fold" id="weekList"${weekListOpen?" open":""}><summary>Viikon treenit listana</summary><div class="days">${rows}</div></details>`;
-  $("weekList").ontoggle=e=>{ weekListOpen=e.target.open; };
+  $("weekList").ontoggle=e=>{ weekListOpen=e.target.open; }; if($("loadCtl")) $("loadCtl").ontoggle=e=>{ loadOpen=e.target.open; };
   $("wPrev").onclick=()=>weekGo(-1); $("wNext").onclick=()=>weekGo(1);
   if(moveFrom!=null) $("week").querySelectorAll(".sd[data-sel]").forEach(b=>{ const j=+b.dataset.sel; b.classList.toggle("mvfrom",j===moveFrom); b.classList.toggle("mvok",j!==moveFrom&&canSwap(j)); }); $("wNow").onclick=()=>{ viewWeek=weekOf(t); selDay=null; render(); };
 }
@@ -577,13 +579,14 @@ document.addEventListener("click",e=>{
   const d=e.target.closest("[data-dropmoved]"); if(d&&edit){ closeEditor(); render(); toast("Treeni jätetty pois. Viikon km-tavoite päivitetty."); }
 });
 $("peReset").onclick=()=>{ delete edits[isoOfIdx(edit.idx)]; afterPlanEdit("Alkuperäinen ohjelma palautettu."); };
+let loadOpen=false;
 function weekScaleControls(w,t){
   if(w<weekOf(t)) return weekScale[w]?`<p class="tip">Viikko oli kevennetty ${Math.round(weekScale[w]*100)} %.</p>`:"";
-  const cur=weekScale[w]||1, orig=TARGET[w-1];
+  const cur=weekScale[w]||1, orig=TARGET[w-1], name=cur===1?"Normaali":cur>=0.8?"Kevyt 80 %":"Palautus 60 %";
   const opt=(f,l,sub)=>`<button data-scale="${w}" data-f="${f}" aria-pressed="${cur===f}"><b>${l}</b><small>${sub}</small></button>`;
-  return `<div class="loadctl"><div class="lch"><span>Viikon kuorma</span>${cur<1?`<span class="lcp">Kevennetty · tavoite ${TARGET_EFF[w-1]} km</span>`:""}</div>
+  return `<details class="loadctl" id="loadCtl"${loadOpen?" open":""}><summary><span>Viikon kuorma</span><span class="lcp${cur<1?" on":""}">${name} ›</span></summary>
     <div class="seg3" role="group" aria-label="Viikon kuorma">${opt(1,"Normaali",`${orig} km`)}${opt(0.8,"Kevyt",`80 % · ${Math.round(orig*.8)} km`)}${opt(0.6,"Palautus",`60 % · ${Math.round(orig*.6)} km`)}</div>
-    <p class="tip">Juoksut lyhenevät. Testit, kisat ja lihaskunto pysyvät.${cur===1?" Kevennä, jos olet väsynyt, kipeä tai viikko on kiireinen.":""}</p></div>`;
+    <p class="tip">Juoksut lyhenevät, testit, kisat ja lihaskunto pysyvät. Kevennä, jos olet väsynyt, kipeä tai viikko on kiireinen.</p></details>`;
 }
 
 document.addEventListener("click",e=>{ const a=e.target.closest("[data-scale]"); if(a){ const w=+a.dataset.scale, f=+(a.dataset.f||0.8), prev=weekScale[w]; if(f>=1) delete weekScale[w]; else weekScale[w]=f; persist(); render(); toast(f>=1?"Viikko palautettu normaaliksi.":`Viikko kevennetty ${Math.round(f*100)} %.`,{l:"Peru",fn:()=>{ if(prev) weekScale[w]=prev; else delete weekScale[w]; persist(); render(); }}); return; }
