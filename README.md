@@ -46,3 +46,8 @@ Workerin **Settings → Variables and Secrets → Add**:
 Historia → Strava → liitä Workerin osoite → **Yhdistä Strava** → hyväksy Stravassa. Valmis.
 
 Suunto-sovelluksessa: Profiili → Yhteydet → Strava päälle, niin treenit kulkevat Suunnosta Stravaan automaattisesti.
+
+## Kehitys
+- Lähdekoodi: `src/` (head.html, body.html, app.js, logic.js, plan.json). Rakenna: `python3 build.py` → `index.html`.
+- Testit: `node --test tests/*.test.*`
+- Välipalvelin: `strava-worker/worker.js` (Strava, pilvivarmuuskopio KV:hen, ilmoitukset, iltatarkistus cron).

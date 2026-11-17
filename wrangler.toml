@@ -10,3 +10,7 @@ keep_vars = true
 APP_URL = "https://zokaas.github.io/nuts/"
 STRAVA_CLIENT_ID = "298237"
 # STRAVA_CLIENT_SECRET on asetettu Cloudflaressa salaisuutena (Secret), ei koskaan tähän tiedostoon.
+
+# Iltatarkistus klo 20.45 Suomen aikaa (kaksi aikaa kattavat kesä- ja talviajan; koodi valitsee oikean)
+[triggers]
+crons = ["45 17 * * *", "45 18 * * *"]

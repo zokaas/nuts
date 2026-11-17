@@ -284,6 +284,16 @@ details.wk summary{font-weight:700; cursor:pointer}
 details.wk[open]{display:flex; flex-direction:column; gap:8px}
 
 /* ===== Mobiili ===== */
+.zchip{display:inline-block; margin-top:-4px; font-size:13px; font-weight:700; color:var(--crit); background:var(--crit-bg); border-radius:999px; padding:3px 10px; align-self:flex-start}
+.zones{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:4px}
+.z{display:flex; justify-content:space-between; padding:8px 12px; border-radius:8px; font-size:15px}
+.z1{background:#e6eef3} .z2{background:#dcefe3} .z3{background:#f8eed2} .z4{background:#fbe1cf} .z5{background:#f7d6d3}
+.z{color:#16211f}
+.weather{display:flex; flex-wrap:wrap; gap:4px 10px; align-items:baseline; font-size:14px; color:var(--muted); padding:0 4px}
+.weather b{color:var(--warn)}
+.warn details summary{cursor:pointer; list-style:none}
+.warn details summary::-webkit-details-marker{display:none}
+.warn details[open] span{display:block; margin-top:4px}
 .sheet-bg{z-index:30}
 body.locked .tabs{display:none}
 :root{--nav-h:62px}
@@ -349,11 +359,12 @@ input,select,textarea{font-size:16px !important} /* estää iOS-zoomauksen */
     <button class="x" id="installX" aria-label="Sulje">×</button><b>Asenna sovellukseksi:</b>
     <ol><li>Avaa tämä sivu Safarissa.</li><li>Napauta Jaa-painiketta (neliö ja nuoli ylös).</li><li>Valitse <b>Lisää Koti-valikkoon</b>.</li></ol>
   </div>
-  <div class="nag" id="backupNag" hidden><span>Varmuuskopiosta on yli viikko. Puhelimen vaihtuessa kirjaukset palautetaan siitä.</span><button class="btn small primary" data-backup>Tallenna</button></div>
+  <div class="nag" id="backupNag" hidden><span>Varmuuskopiosta yli viikko.</span><button class="btn small primary" data-backup>Tallenna</button></div>
 
 
   <div data-view="tanaan" class="view">
     <section class="status" id="status" aria-live="polite"></section>
+    <div class="weather" id="weather" hidden></div>
     <section class="card" id="today"></section>
     <section class="card" id="summary" hidden></section>
     <section class="card tipcard" id="tip"></section>
@@ -372,7 +383,6 @@ input,select,textarea{font-size:16px !important} /* estää iOS-zoomauksen */
       <div class="row"><input type="search" id="hSearch" placeholder="Hae muistiinpanoista" aria-label="Hae muistiinpanoista"><select id="hSort" aria-label="Järjestys"><option value="date">Uusin ensin</option><option value="km">Pisin ensin</option><option value="feel">Raskain ensin</option></select></div>
       <div class="tablewrap" id="hTable"></div>
       <ul class="hcards" id="hCards"></ul>
-      <p class="tip">Napauta riviä muokataksesi.</p>
     </section>
     <section class="card" id="stravaCard">
       <div class="weekhead"><h2>Strava</h2><span class="stv big">S</span></div>
@@ -390,15 +400,22 @@ input,select,textarea{font-size:16px !important} /* estää iOS-zoomauksen */
         <div class="field"><label for="stCode">Yhdistämiskoodi</label><textarea id="stCode" rows="3" placeholder="Liitä koodi tähän"></textarea></div>
         <button class="btn" id="stUseCode">Ota käyttöön</button>
       </details>
-      <p class="tip">Tuodut treenit kohdistetaan päivän suunniteltuun treeniin: juoksu juoksuun, pyöräily spinningiin, kävely patikointiin. Ylimääräiset treenit tulevat historiaan omina riveinään. Fiilis, vointi ja muistiinpanot säilyvät, kun haet uudelleen.</p>
+    </section>
+    <section class="card">
+      <div class="weekhead"><h2>Ilmoitukset</h2></div>
+      <p class="tip" id="pushStatus"></p>
+      <div class="row"><button class="btn primary" id="pushOn">Ota ilmoitukset käyttöön</button><button class="btn" id="pushTest" hidden>Testaa</button><button class="btn ghost" id="pushOff" hidden>Poista käytöstä</button></div>
+      <p class="tip" id="pushMsg"></p>
     </section>
     <section class="card backup">
       <h2>Varmuuskopio</h2>
+      <p class="tip" id="cloudStatus"></p>
+      <div class="row"><button class="btn" id="cloudRestore" hidden>Palauta pilvestä</button></div>
+      <details class="fold" id="fileBackup" open><summary>Varmuuskopio tiedostoon</summary>
       <p class="tip" id="lastBackup"></p>
-      <p class="tip">Kirjaukset tallentuvat tähän puhelimeen. Tallenna varmuuskopio iCloud Driveen, niin saat kaiken talteen, jos puhelin vaihtuu.</p>
-      <div class="row"><button class="btn primary" data-backup>Tallenna varmuuskopio</button>
-        <label class="btn file" for="restoreFile">Palauta varmuuskopiosta<input type="file" id="restoreFile" accept="application/json,.json"></label></div>
-      <p class="tip" id="restoreMsg"></p>
+      <div class="row"><button class="btn" data-backup>Tallenna tiedostoon</button>
+        <label class="btn file" for="restoreFile">Palauta tiedostosta<input type="file" id="restoreFile" accept="application/json,.json"></label></div>
+      <p class="tip" id="restoreMsg"></p></details>
     </section>
   </div>
 
@@ -409,7 +426,7 @@ input,select,textarea{font-size:16px !important} /* estää iOS-zoomauksen */
     <section class="card"><div class="eyebrow">Trendit 30 päivää</div><div id="aTrends"></div></section>
     <section class="card"><div class="eyebrow">Vointi 30 päivää</div><div id="aHealth"></div></section>
     <section class="card"><div class="eyebrow">Havainnot</div><div id="aInsights"></div></section>
-    <section class="card"><div class="eyebrow">Näin ohjelma mukautuu</div>
+    <section class="card"><details class="fold"><summary>Näin ohjelma mukautuu</summary>
       <ul class="ins">
         <li><b>Sairas:</b> sinä ja seuraava päivä lepoa, sitten kevyt paluu (50 → 75 %, ei vetoja). Paluu kestää kaksi kertaa niin monta päivää kuin sairastit, 3–10 pv.</li>
         <li><b>Kova kipu tai kipua 2 päivänä:</b> 3 päivää ilman juoksua (spinning tai kävely, jos kivutonta), sitten 50 % ilman vetoja.</li>
@@ -417,7 +434,7 @@ input,select,textarea{font-size:16px !important} /* estää iOS-zoomauksen */
         <li><b>Väsymys, huono uni, stressi tai darra</b> (2 merkintää 3 päivässä), <b>leposyke 7 lyöntiä normaalia korkeampi</b> tai kolme raskasta treeniä: kovat treenit vaihtuvat kevyeksi.</li>
         <li><b>3 treeniä väliin viikossa:</b> seuraava viikko 80 %.</li>
         <li>Kisapäiviä ei koskaan muuteta. Mukautuksen voi ohittaa päiväkohtaisesti valinnalla "Palauta alkuperäinen".</li>
-      </ul></section>
+      </ul></details></section>
   </div>
 
 
@@ -434,16 +451,31 @@ input,select,textarea{font-size:16px !important} /* estää iOS-zoomauksen */
       <p class="tip" id="sCount"></p>
     </section>
     <section class="card">
+      <div class="weekhead"><h2>Kisat</h2></div>
+      <details class="fold" open><summary>Belgradin maraton · su 18.4. klo 8</summary><div id="raceB"></div></details>
+      <details class="fold"><summary>Nuts 66 km · pe 23.7. klo 15</summary><div id="raceN"></div></details>
+    </section>
+    <section class="card">
+      <div class="weekhead"><h2>Sykealueet</h2></div>
+      <ul class="zones" id="zoneList"></ul>
+      <div class="grid3">
+        <div class="field"><label for="hrMax">Maksimisyke</label><input type="text" id="hrMax" inputmode="numeric" placeholder="185"></div>
+        <div class="field"><label for="hrAge">tai ikä</label><input type="text" id="hrAge" inputmode="numeric" placeholder="35"></div>
+        <div class="field"><label for="hrRest">Leposyke</label><input type="text" id="hrRest" inputmode="numeric" placeholder="auto"></div>
+      </div>
+      <p class="tip" id="hrRestAuto"></p>
+      <div class="row"><button class="btn" id="hrSave">Tallenna</button></div>
+    </section>
+    <section class="card">
       <div class="weekhead"><h2>Kengät</h2></div>
       <div id="shoeList" class="shoes"></div>
       <div class="grid2"><div class="field"><label for="shoeName">Uudet kengät</label><input type="text" id="shoeName" placeholder="Esim. Speedgoat 6"></div>
       <div class="field"><label for="shoeStart">Jo juostu (km)</label><input type="text" id="shoeStart" inputmode="decimal" placeholder="0"></div></div>
       <div class="row"><button class="btn" id="shoeAdd">Lisää kengät</button></div>
-      <p class="tip">Valitse kengät kirjausikkunassa. Kilometrit kertyvät automaattisesti, ja sovellus muistuttaa noin 600 km:n kohdalla.</p>
     </section>
     <section class="card">
       <div class="weekhead"><h2>Nutsin varusteet</h2><span class="tip" id="gearHead"></span></div>
-      <p class="tip">Tyypillinen tunturiultran varustelista. Järjestäjä julkaisee viralliset pakolliset varusteet myöhemmin: tarkista silloin. Merkitse "testattu", kun olet käyttänyt varustetta pitkällä lenkillä.</p>
+      <p class="tip">Tyypillinen lista; viralliset varusteet tarkistetaan kesällä.</p>
       <div id="gearList" class="gearlist"></div>
     </section>
     <section class="card">
@@ -455,7 +487,6 @@ input,select,textarea{font-size:16px !important} /* estää iOS-zoomauksen */
     <section class="card levelcard" id="level"></section>
     <section class="card"><div class="weekhead"><h2>Merkit</h2><span class="tip" id="badgeCount"></span></div><div class="badges" id="badgeGrid"></div></section>
   </div>
-  <footer>Matka Pallakselle · tiedot pysyvät tässä puhelimessa · muista varmuuskopio</footer>
 </div>
 
 <div class="sheet-bg" id="sheetBg" role="dialog" aria-modal="true" aria-labelledby="edTitle">
@@ -653,7 +684,7 @@ const LS_EDITS="pallas.edits.v1", LS_SCALE="pallas.weekscale.v1", LS_SHOES="pall
 let logs = load(LS_LOGS,{}), adjOff = load(LS_ADJ,{}), meta = load(LS_META,{});
 let edits = load(LS_EDITS,{}), weekScale = load(LS_SCALE,{}), shoes = load(LS_SHOES,[]), gear = load(LS_GEAR,{});
 let storageOk = true;
-function persist(){ try{ localStorage.setItem(LS_LOGS,JSON.stringify(logs)); localStorage.setItem(LS_ADJ,JSON.stringify(adjOff)); localStorage.setItem(LS_META,JSON.stringify(meta)); localStorage.setItem(LS_EDITS,JSON.stringify(edits)); localStorage.setItem(LS_SCALE,JSON.stringify(weekScale)); localStorage.setItem(LS_SHOES,JSON.stringify(shoes)); localStorage.setItem(LS_GEAR,JSON.stringify(gear)); storageOk=true; }catch(e){ storageOk=false; } }
+function persist(){ try{ localStorage.setItem(LS_LOGS,JSON.stringify(logs)); localStorage.setItem(LS_ADJ,JSON.stringify(adjOff)); localStorage.setItem(LS_META,JSON.stringify(meta)); localStorage.setItem(LS_EDITS,JSON.stringify(edits)); localStorage.setItem(LS_SCALE,JSON.stringify(weekScale)); localStorage.setItem(LS_SHOES,JSON.stringify(shoes)); localStorage.setItem(LS_GEAR,JSON.stringify(gear)); storageOk=true; }catch(e){ storageOk=false; } if(typeof scheduleCloud==="function") scheduleCloud(); }
 if(navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(()=>{});
 
 /* ---------- apurit ---------- */
@@ -724,10 +755,10 @@ function render(){
   const st=stats(), bs=badges(st); const ws=computeWarnings(BASE,logs,ADAPT,ti).concat(eventWarnings(ti));
   renderCount(ti,st,bs);
   if(r==="tanaan"){ renderStatus(ws); renderToday(t,ti); renderTip(t); renderSummary(ti); renderTrail(st); renderWeek(t); renderProfile(t); renderUpcoming(t); }
-  if(r==="historia"){ renderHistory(st); renderStrava(); }
+  if(r==="historia"){ renderHistory(st); renderStrava(); renderCloud(); renderPush(); }
   if(r==="analyysi") renderAnalysis(ti);
   if(r==="merkit") renderBadges(st,bs);
-  if(r==="opas"){ renderStrength(); renderRace(); }
+  if(r==="opas"){ renderStrength(); renderRace(); renderZones(); renderRacePlans(); }
   const n=ws.filter(w=>w.level!=="info").length; try{ if(navigator.setAppBadge){ n?navigator.setAppBadge(n):navigator.clearAppBadge(); } }catch(e){}
   renderBackupNag();
 }
@@ -736,9 +767,9 @@ function renderCount(ti,st,bs){ const b=BELGRADE-ti,n=NUTS-ti; const {L}=levelOf
 function renderStatus(ws){
   const lvl=ws.some(w=>w.level==="crit")?"crit":ws.some(w=>w.level==="warn")?"warn":"ok";
   const sickNow=ws.some(w=>w.title==="Sairastuminen kirjattu");
-  const head=sickNow&&lvl==="ok"?"Lepää ja parane":{ok:"Aikataulussa",warn:"Pientä lipsumista",crit:"Nyt on pielessä"}[lvl], sub=sickNow&&lvl==="ok"?"Ohjelma odottaa. Poro tuo teetä.":{ok:"Poro on tyytyväinen.",warn:"Ei hätää, korjataan suuntaa.",crit:"Pysähdy hetkeksi ja lue tämä."}[lvl];
+  const head=sickNow&&lvl==="ok"?"Lepää ja parane":{ok:"Aikataulussa",warn:"Pientä lipsumista",crit:"Nyt on pielessä"}[lvl], sub="";
   $("status").className="status st-"+lvl;
-  $("status").innerHTML=`<div class="status-head"><span class="dot"></span><div><h2>${head}</h2><p class="note">${sub}</p></div></div>`+(ws.length?`<ul class="warns">${ws.map(w=>`<li class="warn w-${w.level}"><b>${esc(w.title)}</b><span>${esc(w.detail)}</span></li>`).join("")}</ul>`:"")+(storageOk?"":`<p class="note">Tallennus ei onnistu tässä selaimessa. Lisää sovellus kotinäytölle.</p>`);
+  $("status").innerHTML=`<div class="status-head"><span class="dot"></span><div><h2>${head}</h2></div></div>`+(ws.length?`<ul class="warns">${ws.map(w=>`<li class="warn w-${w.level}"><details><summary><b>${esc(w.title)}</b></summary><span>${esc(w.detail)}</span></details></li>`).join("")}</ul>`:"")+(storageOk?"":`<p class="note">Tallennus ei onnistu tässä selaimessa. Lisää sovellus kotinäytölle.</p>`);
 }
 function stateLabel(l){ if(!l) return ""; const fl=flagsOf(l).filter(f=>f!=="great").map(f=>FLAG_L[f].split(" ")[0]).join("");
   const base = l.status==="moved"?`<span class="state">→ Siirretty</span>`: l.status==="done"?`<span class="state done">✓ Tehty${typeof l.km==="number"?` · ${n1(l.km)} km`:""}</span>`: l.status==="skip"?`<span class="state skip">Jäi väliin</span>`:`<span class="state">📝 Kirjattu</span>`;
@@ -768,8 +799,7 @@ function changeBlock(s){
     <div class="chg-head"><span class="pill">${esc(c.head)}</span></div>
     <div class="chg-grid"><div class="was"><small>Alun perin</small><s>${esc(was)}</s></div><div class="arr" aria-hidden="true">→</div><div class="now"><small>Tänään</small><b>${esc(now)}</b></div></div>
     ${c.chips.length?`<div class="chips static">${c.chips.map(x=>`<span>${esc(x)}</span>`).join("")}</div>`:""}
-    <p class="why"><b>Miksi:</b> ${esc(c.reasons.join(" + "))}.</p>
-    ${c.last>s.idx?`<p class="why">Kevennys jatkuu ${fmt(c.last)} asti, sen jälkeen normaali ohjelma.</p>`:`<p class="why">Huomenna palataan normaaliin ohjelmaan.</p>`}
+    <p class="why">${esc(c.reasons.join(" + "))}${c.last>s.idx?` · ${fmt(c.last)} asti`:""}</p>
     ${undo}</div>`;
 }
 function changeTag(s){ const c=changeInfo(s); if(!c) return ""; return `<span class="adtag k-${c.kind}">${esc(c.chips[0]&&c.chips[0].includes("→")?c.chips[0]:c.head)}</span>`; }
@@ -783,8 +813,8 @@ function sessionBlock(s,first){
     (/lihaskunto|Tribe|Kuntopiiri/i.test(text)&&!l?.strength?`<button class="btn" data-gostrength="${progFromText(text,weekOf(s.idx))}">💪 Lihaskunto ${progFromText(text,weekOf(s.idx))}</button>`:"")+`<button class="btn primary" data-open="${s.key}" data-pre="done">Kirjaa tehdyksi</button><button class="btn" data-open="${s.key}" data-pre="skip">Jäi väliin</button><button class="btn ghost" data-open="${s.key}">Vointi</button>`;
   return `<div class="sess${first?"":" extra"}">${first?"":`<div class="eyebrow">Lisäksi: siirretty eiliseltä</div>`}
     <div class="today-title"><h2>${TYPES[s.code].l}</h2>${stateLabel(l)}</div>${adaptBox}${editedBox}
-    ${(s.reason||SCALED[s.idx])&&!s.moved?`<div class="eyebrow">Näin teet tänään</div>`:""}<p class="target">${esc(text)}</p>${s.note&&!s.moved?`<p class="tip">📌 ${esc(s.note)}</p>`:""}
-    ${l&&l.status==="done"?`<p class="tip cheer">${pick(CHEERS,s.idx)}</p>`:""}<div class="row">${btns}</div></div>`;
+    <p class="target">${esc(text)}</p>${zoneChip(s)}${s.note&&!s.moved?`<p class="tip">📌 ${esc(s.note)}</p>`:""}
+<div class="row">${btns}</div></div>`;
 }
 function renderToday(t,ti){ const w=weekOf(t); const label=ti<0?"Ohjelma alkaa":ti>t?"Ohjelman viimeinen päivä":"Tänään";
   $("today").innerHTML=`<div class="eyebrow">${label} · ${fmt(t)} · vk ${w} · ${PHASE(w)}</div>`+sessionsOn(BASE,logs,ADAPT,t).map((s,k)=>sessionBlock(s,k===0)).join(""); }
@@ -835,10 +865,10 @@ function renderHistory(st){
   $("hTiles").innerHTML=[["Juostu",`${n1(st.km)} km`],["Treenejä",st.done],["Pisin",st.longest?`${n1(st.longest)} km`:"–"],["Keskivauhti",st.avgPace?`${st.avgPace}/km`:"–"],["Nousua",`${Math.round(st.elev)} m`],["Paras putki",st.best]].map(([a,b])=>`<div class="tile"><span>${a}</span><b class="num">${b}</b></div>`).join("");
   document.querySelectorAll("#hFilters button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.f===f));
   const body=es.map(e=>{ const l=e.l,fl=flagsOf(l); return `<tr data-open="${e.key}" tabindex="0"><td class="num">${fmtShort(e.idx)}${e.key.endsWith("~m")?"→":""}</td><td>${typeChip(e.code)}${l.stravaId?' <span class="stv" title="Strava">S</span>':""}${l.strength?` 💪${l.strength}`:""}${l.stravaName?`<br><small class="sn">${esc(l.stravaName)}</small>`:""}</td><td>${l.status==="done"?"✓":l.status==="skip"?"väliin":"📝"}</td><td class="num r">${typeof l.km==="number"?n1(l.km):""}</td><td class="num r">${typeof l.min==="number"?l.min:""}</td><td class="num r">${pace(l.km,l.min)}</td><td class="num r">${l.hr||""}</td><td class="num r">${l.elev??""}</td><td>${l.feel?FEEL[l.feel-1][1]:""}</td><td>${fl.map(x=>FLAG_L[x].split(" ")[0]).join("")}${l.painArea?` ${esc(l.painArea)}`:""}</td><td class="num r">${l.rhr||""}</td><td class="num r">${l.sleepH?n1(l.sleepH):""}</td><td class="nt">${esc(l.note||"")}</td></tr>`; }).join("");
-  const cards=es.map(e=>{ const l=e.l,fl=flagsOf(l); const bits=[l.status==="done"?"✓ tehty":l.status==="skip"?"väliin":"📝", typeof l.km==="number"?`${n1(l.km)} km`:"", typeof l.min==="number"?`${l.min} min`:"", pace(l.km,l.min)?`${pace(l.km,l.min)}/km`:"", l.hr?`♥ ${l.hr}`:"", l.elev?`↗ ${l.elev} m`:""].filter(Boolean).join(" · ");
+  const cards=es.map(e=>{ const l=e.l,fl=flagsOf(l); const bits=[l.status==="done"?"✓ tehty":l.status==="skip"?"väliin":"📝", typeof l.km==="number"?`${n1(l.km)} km`:"", typeof l.min==="number"?`${l.min} min`:"", pace(l.km,l.min)?`${pace(l.km,l.min)}/km`:"", l.hr?`♥ ${l.hr}${tooHard(e)?" ⚠︎":""}`:"", l.elev?`↗ ${l.elev} m`:""].filter(Boolean).join(" · ");
     return `<li class="hcard" data-open="${e.key}" tabindex="0"><span class="hd">${fmtShort(e.idx)}<small>${DOW[dow(e.idx)]}</small></span><span class="hm"><span>${typeChip(e.code)}${l.stravaId?' <span class="stv">S</span>':""}${l.strength?` 💪${l.strength}`:""} ${fl.map(x=>FLAG_L[x].split(" ")[0]).join("")}</span><span class="hs">${bits}</span>${l.stravaName||l.note?`<span class="hn">${esc(l.stravaName||"")}${l.stravaName&&l.note?" · ":""}${esc(l.note||"")}</span>`:""}</span></li>`; }).join("");
   $("hCards").innerHTML=cards;
-  $("hTable").innerHTML=es.length?`<table><thead><tr><th>Pvm</th><th>Treeni</th><th>Tila</th><th class="r">km</th><th class="r">min</th><th class="r">min/km</th><th class="r">syke</th><th class="r">nousu m</th><th>Fiilis</th><th>Vointi</th><th class="r">leposyke</th><th class="r">uni h</th><th>Muistiinpano</th></tr></thead><tbody>${body}</tbody></table>`:`<p class="note">${Object.keys(logs).length?"Ei osumia tällä suodatuksella.":"Ei vielä kirjauksia. Ensimmäinen treeni odottaa Tänään-välilehdellä."}</p>`;
+  $("hTable").innerHTML=es.length?`<table><thead><tr><th>Pvm</th><th>Treeni</th><th>Tila</th><th class="r">km</th><th class="r">min</th><th class="r">min/km</th><th class="r">syke</th><th class="r">nousu m</th><th>Fiilis</th><th>Vointi</th><th class="r">leposyke</th><th class="r">uni h</th><th>Muistiinpano</th></tr></thead><tbody>${body}</tbody></table>`:`<p class="note">${Object.keys(logs).length?"Ei osumia tällä suodatuksella.":"Ei vielä kirjauksia."}</p>`;
 }
 function spark(vals,{min,max,w=320,h=60,color="var(--accent)",label}){ const pts=vals.map((v,i)=>v==null?null:[i/(vals.length-1)*w, h-(v-min)/(max-min||1)*h]); let d="",on=false;
   pts.forEach(p=>{ if(!p){on=false;return;} d+=(on?"L":"M")+p[0].toFixed(1)+","+p[1].toFixed(1)+" "; on=true; });
@@ -850,13 +880,13 @@ function renderAnalysis(ti){
   // mukautukset
   const ad=Object.keys(ADAPT).map(Number).filter(i=>i>=t&&i<=t+14).sort((a,b)=>a-b);
   const ad2=[...new Set(ad.concat(Object.keys(SCALED).map(Number).filter(i=>i>=t&&i<=t+14)))].sort((a,b)=>a-b);
-  $("aAdapt").innerHTML=ad2.length?`<ul class="up">${ad2.map(i=>{ const s0=sessionsOn(BASE,logs,ADAPT,i)[0]; const c=changeInfo(s0); return c?`<li><time>${fmt(i)}</time><span><span class="adtag k-${c.kind}">${esc(c.head)}</span> ${esc(c.chips.join(" · "))}<br><small class="sn">${esc(c.reasons.join(" + "))}</small></span></li>`:""; }).join("")}</ul>`:`<p class="note">Ohjelma etenee alkuperäisen suunnitelman mukaan. Kun kirjaat sairauden, kivun, väsymyksen tai korkean leposykkeen, tulevat päivät mukautuvat tähän automaattisesti.</p>`;
+  $("aAdapt").innerHTML=ad2.length?`<ul class="up">${ad2.map(i=>{ const s0=sessionsOn(BASE,logs,ADAPT,i)[0]; const c=changeInfo(s0); return c?`<li><time>${fmt(i)}</time><span><span class="adtag k-${c.kind}">${esc(c.head)}</span> ${esc(c.chips.join(" · "))}<br><small class="sn">${esc(c.reasons.join(" + "))}</small></span></li>`:""; }).join("")}</ul>`:`<p class="note">Ei muutoksia.</p>`;
   // kuorma
   const lr=loadRatio(BASE,logs,ti); const lw=weekOf(ti)-1; const last4=[]; for(let w=Math.max(1,lw-3);w<=Math.max(1,lw);w++) last4.push([w,weekKm(BASE,logs,w),TARGET[w-1]]);
   const comp = last4.length? Math.round(last4.reduce((a,x)=>a+x[1],0)/Math.max(1,last4.reduce((a,x)=>a+x[2],0))*100):0;
   const elevW=w=>{ const [a,z]=weekRange(w); let s2=0; for(const k in logs){ const i=idxOfISO(k); if(i>=a&&i<=z&&logs[k].status==="done"&&typeof logs[k].elev==="number") s2+=logs[k].elev; } return Math.round(s2); };
   $("aLoad").innerHTML=`<div class="tiles"><div class="tile"><span>Nousu tällä vk</span><b class="num">${elevW(weekOf(ti))} m</b></div><div class="tile"><span>Nousu viime vk</span><b class="num">${elevW(Math.max(1,weekOf(ti)-1))} m</b></div><div class="tile"><span>Toteuma 4 vk</span><b class="num">${comp} %</b></div><div class="tile"><span>Kuormasuhde</span><b class="num">${lr?String(Math.round(lr.ratio*100)/100).replace(".",","):"–"}</b></div><div class="tile"><span>7 pv km</span><b class="num">${lr?lr.acute:"–"}</b></div></div>
-    <p class="tip">${lr? (lr.ratio>1.5?"Kuorma nousi viime viikolla jyrkästi suhteessa edellisiin viikkoihin. Pidä seuraavat päivät kevyinä.": lr.ratio<0.8?"Viime viikko oli kevyempi kuin edelliset. Hyvä palautumiseen, mutta älä jää pitkäksi aikaa alas.":"Kuorma nousee tasaisesti. Juuri näin pitääkin."):"Kuormasuhde lasketaan, kun kirjauksia on vähintään kolmelta viikolta. Se vertaa viimeisen 7 päivän kilometrejä 4 viikon keskiarvoon. Turvallinen alue on noin 0,8–1,3."}</p>`;
+    <p class="tip">${lr? (lr.ratio>1.5?"Kuorma nousi viime viikolla jyrkästi suhteessa edellisiin viikkoihin. Pidä seuraavat päivät kevyinä.": lr.ratio<0.8?"Viime viikko oli kevyempi kuin edelliset. Hyvä palautumiseen, mutta älä jää pitkäksi aikaa alas.":"Kuorma nousee tasaisesti. Juuri näin pitääkin."):"Kuormasuhde (7 pv / 4 vk keskiarvo) näkyy, kun kirjauksia on 3 viikolta. Turvallinen alue 0,8–1,3."}</p>`;
   // trendit 30 pv
   const days=[...Array(30)].map((_,k)=>ti-29+k); const g=f=>days.map(i=>{ const l=logs[isoOfIdx(i)]; return l&&typeof l[f]==="number"?l[f]:null; });
   const feel=g("feel"), rhr=g("rhr"), sleep=g("sleepH"); const has=a=>a.filter(v=>v!=null).length>=2;
@@ -868,7 +898,7 @@ function renderAnalysis(ti){
   $("aTrends").innerHTML=tr;
   // vointi 30 pv
   const cnt={}, areas={}; days.forEach(i=>{ const l=logs[isoOfIdx(i)]; flagsOf(l).forEach(f=>cnt[f]=(cnt[f]||0)+1); if(l&&l.painArea&&flagsOf(l).includes("pain")) areas[l.painArea]=(areas[l.painArea]||0)+1; });
-  $("aHealth").innerHTML=Object.keys(cnt).length?`<div class="flagcounts">${FLAGS.filter(([k])=>cnt[k]).map(([k,l])=>`<span class="chip">${l} <b class="num">${cnt[k]}</b></span>`).join("")}</div>${Object.keys(areas).length?`<p class="tip">Kipu kirjattu: ${Object.entries(areas).map(([a,n])=>`${a} ${n}×`).join(", ")}.${Object.values(areas).some(n=>n>=3)?" Sama paikka toistuu: käy fysioterapeutilla.":""}</p>`:""}`:`<p class="note">Ei vointimerkintöjä 30 päivään. Hyvä merkki, tai sitten kirjaamatta.</p>`;
+  $("aHealth").innerHTML=Object.keys(cnt).length?`<div class="flagcounts">${FLAGS.filter(([k])=>cnt[k]).map(([k,l])=>`<span class="chip">${l} <b class="num">${cnt[k]}</b></span>`).join("")}</div>${Object.keys(areas).length?`<p class="tip">Kipu kirjattu: ${Object.entries(areas).map(([a,n])=>`${a} ${n}×`).join(", ")}.${Object.values(areas).some(n=>n>=3)?" Sama paikka toistuu: käy fysioterapeutilla.":""}</p>`:""}`:`<p class="note">Ei merkintöjä.</p>`;
   // oivallukset
   const ins=[]; const es=entries();
   const doneW=es.filter(e=>e.l.status==="done"&&e.idx>ti-28&&e.idx<=ti).length; let plannedW=0; for(let i=Math.max(0,ti-27);i<=Math.min(ti,BASE.length-1);i++) if(BASE[i][0]!=="L") plannedW++;
@@ -877,12 +907,13 @@ function renderAnalysis(ti){
   if(runs.length>=6){ const h=Math.floor(runs.length/2); const p=a=>a.reduce((s,e)=>s+e.l.min,0)/a.reduce((s,e)=>s+e.l.km,0); const p1=p(runs.slice(0,h)),p2=p(runs.slice(h)); ins.push(p2<p1?`Keskivauhti on parantunut: ${pace(1,p1)} → ${pace(1,p2)} min/km.`:`Keskivauhti ${pace(1,p2)} min/km. Rauhallinen vauhti on oikea valinta pohjakaudella.`); }
   const lowSleepDays=days.filter(i=>{ const l=logs[isoOfIdx(i)]; return l&&(flagsOf(l).includes("sleep")||(l.sleepH&&l.sleepH<6.5)); }).length; if(lowSleepDays>=4) ins.push(`Huonoja yöunia ${lowSleepDays} kertaa 30 päivässä. Uni on palautumisen tärkein tekijä.`);
   if(cnt.hangover>=2) ins.push(`Darrapäiviä ${cnt.hangover}. Poro ei tuomitse, mutta pitkä lenkki kulkee paremmin selvin päin.`);
-  $("aInsights").innerHTML=ins.length?`<ul class="ins">${ins.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:`<p class="note">Oivalluksia tulee, kun kirjauksia kertyy pari viikkoa.</p>`;
+  { const easy=es.filter(e=>e.l.status==="done"&&e.l.hr&&zoneFor(e.code,(BASE[e.idx]||[])[1])===1&&e.idx>ti-28); if(zones()&&easy.length>=4){ const hard=easy.filter(tooHard).length; if(hard/easy.length>=0.4) ins.push(`${hard}/${easy.length} kevyestä lenkistä meni yli kevyen sykealueen. Hidasta: kevyen pitää tuntua helpolta.`); } }
+  $("aInsights").innerHTML=ins.length?`<ul class="ins">${ins.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:`<p class="note">Tulee, kun kirjauksia kertyy.</p>`;
 }
 function renderBadges(st,bs){ const xp=xpOf(st,bs),{L,next}=levelOf(xp),pct=next?Math.round((xp-L[0])/(next[0]-L[0])*100):100;
-  $("level").innerHTML=`<div class="lvlbig">${L[2]}</div><div class="lvlinfo"><div class="eyebrow">Taso</div><h2>${L[1]}</h2><div class="kmbar"><div class="lbl"><span><b class="num">${xp}</b> XP</span><span>${next?`${next[2]} ${next[1]}: ${next[0]} XP`:"Huipulla!"}</span></div><div class="track"><div class="fill" style="width:${pct}%"></div></div></div><p class="tip">10 XP treenistä, 1 XP kilometristä, 25 XP merkistä.</p></div>`;
+  $("level").innerHTML=`<div class="lvlbig">${L[2]}</div><div class="lvlinfo"><div class="eyebrow">Taso</div><h2>${L[1]}</h2><div class="kmbar"><div class="lbl"><span><b class="num">${xp}</b> XP</span><span>${next?`${next[2]} ${next[1]}: ${next[0]} XP`:"Huipulla!"}</span></div><div class="track"><div class="fill" style="width:${pct}%"></div></div></div></div>`;
   $("badgeGrid").innerHTML=bs.map(b=>`<div class="badge${b.got?" got":""}"><span class="bi" aria-hidden="true">${b.icon}</span><b>${b.name}</b><span>${b.desc}</span></div>`).join(""); $("badgeCount").textContent=`${bs.filter(b=>b.got).length}/${bs.length} merkkiä`; }
-function renderBackupNag(){ const n=Object.keys(logs).length; const last=meta.lastBackup?new Date(meta.lastBackup):null; const old=!last||(Date.now()-last.getTime())>7*864e5;
+function renderBackupNag(){ if(stravaConnected()){ $("backupNag").hidden=true; const fb=$("fileBackup"); if(fb) fb.open=false; return; } const n=Object.keys(logs).length; const last=meta.lastBackup?new Date(meta.lastBackup):null; const old=!last||(Date.now()-last.getTime())>7*864e5;
   $("backupNag").hidden=!(n>=3&&old); $("lastBackup").textContent=last?`Viimeisin varmuuskopio ${last.getDate()}.${last.getMonth()+1}.${last.getFullYear()}.`:"Varmuuskopiota ei ole vielä tehty."; }
 
 /* ---------- kirjausikkuna ---------- */
@@ -1117,7 +1148,7 @@ function summaryHTML(S, full){
 function renderSummary(ti){ const d=dow(ti); const el=$("summary"); if(ti<5||ti>=BASE.length||!(d===6||d===0)){ el.hidden=true; return; }
   const w = d===6?weekOf(ti):weekOf(ti)-1; el.hidden=false; el.innerHTML=`<div class="eyebrow">Viikkokooste · viikko ${w}</div>`+summaryHTML(weekSummary(w),true); }
 function renderWeeklyList(ti){ const cw=weekOf(ti); const ws=[]; for(let w=cw-1;w>=Math.max(1,cw-4);w--) ws.push(w);
-  $("aWeeks").innerHTML=ws.length?ws.map(w=>`<details class="wk"><summary>Viikko ${w} · ${PHASE(w)}</summary>${summaryHTML(weekSummary(w),false)}</details>`).join(""):`<p class="note">Ensimmäinen kooste ilmestyy sunnuntaina.</p>`; }
+  $("aWeeks").innerHTML=ws.length?ws.map(w=>`<details class="wk"><summary>Viikko ${w} · ${PHASE(w)}</summary>${summaryHTML(weekSummary(w),false)}</details>`).join(""):`<p class="note">Ensimmäinen kooste sunnuntaina.</p>`; }
 
 /* ===== v4: kisa – kengät, varusteet, tankkaus ===== */
 const GEAR = [["pack","Juomareppu tai -liivi"],["water","Juomaa vähintään 1 l (pullot tai pussi)"],["cup","Oma juomamuki"],["food","Energiaa (geelit, patukat) koko matkalle"],["jacket","Sadetakki, teipatut saumat"],["pants","Pitkät juoksuhousut"],["layer","Lämmin välikerros"],["hat","Pipo tai buffi"],["gloves","Hanskat"],["blanket","Avaruuslakana"],["whistle","Pilli"],["phone","Puhelin ladattuna + varavirta"],["first","Ensiside ja rakkolaastarit"],["mosq","Hyttyskarkote"],["poles","Sauvat (jos käytät)"],["shoes","Kisakengät, ajetut sisään"],["socks","Kisasukat + varasukat"],["bib","Numerolappu ja kiinnitys"],["cash","Käteistä / kortti, kuljetus Pallakselta"]];
@@ -1127,7 +1158,7 @@ function renderRace(){
   $("shoeList").innerHTML = shoes.length? shoes.map(sh=>{ const km=shoeKm(sh.id), lim=sh.limit||700, pct=Math.min(100,km/lim*100); const warn=km>=lim*0.85;
     return `<div class="shoe${sh.retired?" retired":""}"><div class="lbl"><b>👟 ${esc(sh.name)}${meta.defaultShoe===sh.id?" · oletus":""}</b><span class="num">${Math.round(km)} / ${lim} km</span></div><div class="track"><div class="fill${warn?" warnfill":""}" style="width:${pct}%"></div></div>
       ${warn&&!sh.retired?`<p class="tip">Kengät alkavat olla loppuun ajetut. Hanki uudet ja aja ne sisään ennen tärkeitä lenkkejä.</p>`:""}
-      <div class="row"><button class="link" data-shoedef="${sh.id}">Aseta oletukseksi</button><button class="link" data-shoeret="${sh.id}">${sh.retired?"Palauta käyttöön":"Poista käytöstä"}</button></div></div>`; }).join("") : `<p class="note">Lisää kengät, niin sovellus laskee niiden kilometrit ja muistuttaa vaihdosta.</p>`;
+      <div class="row"><button class="link" data-shoedef="${sh.id}">Aseta oletukseksi</button><button class="link" data-shoeret="${sh.id}">${sh.retired?"Palauta käyttöön":"Poista käytöstä"}</button></div></div>`; }).join("") : `<p class="note">Ei kenkiä.</p>`;
   // varusteet
   const have=GEAR.filter(([k])=>gear[k]&&gear[k].have).length, tested=GEAR.filter(([k])=>gear[k]&&gear[k].tested).length;
   $("gearHead").textContent=`${have}/${GEAR.length} hankittu · ${tested} testattu`;
@@ -1137,7 +1168,7 @@ function renderRace(){
   const gutL={ok:"vatsa ok",some:"pientä vaivaa",bad:"vatsa kiukutteli"};
   const avgC=(()=>{ const v=fe.map(e=>e.l.carbsH).filter(x=>typeof x==="number"); return v.length?Math.round(v.reduce((a,b)=>a+b,0)/v.length):null; })();
   $("fuelSum").innerHTML = fe.length? `<p class="tip">${fe.length} tankkauskirjausta${avgC?` · keskimäärin ${avgC} g hiilihydraattia/h`:""}${avgC&&avgC<40?" · tavoite pitkillä on 40–60 g/h":""}.</p>`:"";
-  $("fuelList").innerHTML = fe.length? `<ul class="up">${fe.slice(0,12).map(e=>`<li><time>${fmtShort(e.idx)}</time><span><b>${TYPES[e.code].l}${e.l.km?` ${n1(e.l.km)} km`:""}</b>${e.l.carbsH?` · ${e.l.carbsH} g/h`:""}${e.l.gut?` · ${gutL[e.l.gut]}`:""}<br>${esc(e.l.fuel||"")}</span></li>`).join("")}</ul>` : `<p class="note">Kirjaa pitkien lenkkien kirjausikkunassa, mitä söit ja joit ja miten vatsa toimi. Näin löydät kisastrategian.</p>`;
+  $("fuelList").innerHTML = fe.length? `<ul class="up">${fe.slice(0,12).map(e=>`<li><time>${fmtShort(e.idx)}</time><span><b>${TYPES[e.code].l}${e.l.km?` ${n1(e.l.km)} km`:""}</b>${e.l.carbsH?` · ${e.l.carbsH} g/h`:""}${e.l.gut?` · ${gutL[e.l.gut]}`:""}<br>${esc(e.l.fuel||"")}</span></li>`).join("")}</ul>` : `<p class="note">Kirjaa tankkaus pitkien lenkkien kirjausikkunassa.</p>`;
 }
 document.addEventListener("change",e=>{ const c=e.target.closest("[data-gear]"); if(!c) return; const k=c.dataset.gear; gear[k]={...(gear[k]||{}),[c.dataset.f]:c.checked}; persist(); renderRace(); });
 document.addEventListener("click",e=>{ const d=e.target.closest("[data-shoedef]"); if(d){ meta.defaultShoe=d.dataset.shoedef; persist(); renderRace(); return; }
@@ -1170,12 +1201,12 @@ function handleStravaReturn(){
   history.replaceState(null,"",location.pathname+"#historia");
   let p=null; try{ p=JSON.parse(decodeURIComponent(h.slice(8))); }catch(e){}
   if(!p){ setTimeout(()=>toast("Strava-yhteyden vahvistus epäonnistui. Yhdistä uudelleen."),300); return; }
-  if(strava.state && p.s===strava.state){ applyStravaPayload(p); setTimeout(()=>{ toast(`Strava yhdistetty${strava.name?`: ${strava.name}`:""}. Haetaan treenit…`); syncStrava(true); },300); return; }
+  if(strava.state && p.s===strava.state){ applyStravaPayload(p); setTimeout(async()=>{ toast(`Strava yhdistetty${strava.name?`: ${strava.name}`:""}.`); if(!Object.keys(logs).length) await cloudRestore(); syncStrava(true); },300); return; }
   // Palattiin eri muistiin (esim. Safari eikä kotinäytön sovellus): näytä yhdistämiskoodi.
   pendingCode = codeOf(p);
 }
 let pendingCode=null;
-function useCode(raw){ try{ const p=JSON.parse(decodeURIComponent(escape(atob(raw.trim())))); applyStravaPayload(p); $("stCode").value=""; toast(`Strava yhdistetty${strava.name?`: ${strava.name}`:""}. Haetaan treenit…`); syncStrava(true); renderStrava(); }catch(e){ $("stMsg").textContent="Koodi ei kelpaa. Kopioi koko koodi uudelleen."; } }
+function useCode(raw){ try{ const p=JSON.parse(decodeURIComponent(escape(atob(raw.trim())))); applyStravaPayload(p); $("stCode").value=""; toast(`Strava yhdistetty${strava.name?`: ${strava.name}`:""}.`); (Object.keys(logs).length?Promise.resolve():cloudRestore()).then(()=>syncStrava(true)); renderStrava(); }catch(e){ $("stMsg").textContent="Koodi ei kelpaa. Kopioi koko koodi uudelleen."; } }
 async function stravaToken(){
   if(strava.a && strava.e && strava.e*1000 > Date.now()+120000) return strava.a;
   const r=await fetch(`${workerBase()}/token`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({refresh_token:strava.r})});
@@ -1191,7 +1222,7 @@ async function syncStrava(manual){
       if(r.status===401){ throw new Error("auth"); } if(r.status===429){ throw new Error("rate"); } if(!r.ok) throw new Error("http");
       const batch=await r.json(); acts=acts.concat(batch); if(batch.length<100) break; page++; }
     const res=importActivities(acts);
-    strava.lastSync=new Date().toISOString(); saveStrava(); persist(); render();
+    strava.lastSync=new Date().toISOString(); saveStrava(); persist(); render(); cloudSave(false);
     if(res.added||res.updated||manual) toast(res.added||res.updated?`Stravasta: ${res.added} uutta treeniä${res.updated?`, ${res.updated} päivitetty`:""}.`:"Ei uusia treenejä Stravassa.");
   }catch(e){
     const m=e.message==="auth"||e.message==="token"?"Strava-yhteys on vanhentunut. Yhdistä uudelleen.":e.message==="rate"?"Strava rajoitti hakuja hetkeksi. Yritä 15 min päästä.":"Stravaan ei saatu yhteyttä. Tarkista nettiyhteys.";
@@ -1227,7 +1258,7 @@ function renderStrava(){
   $("stWorker").value=strava.worker||""; $("stWorkerRow").hidden=c;
   $("stConnect").hidden=c; $("stSync").hidden=!c; $("stDisconnect").hidden=!c; $("stSync").disabled=syncing; $("stSync").textContent=syncing?"Haetaan…":"Hae treenit nyt";
   const last=strava.lastSync?new Date(strava.lastSync):null;
-  $("stStatus").innerHTML = c ? `✅ Yhdistetty${strava.name?`: <b>${esc(strava.name)}</b>`:""}. ${last?`Viimeksi haettu ${last.getDate()}.${last.getMonth()+1}. klo ${String(last.getHours()).padStart(2,"0")}.${String(last.getMinutes()).padStart(2,"0")}.`:""} Treenit haetaan automaattisesti, kun avaat sovelluksen.` : "Ei yhdistetty. Suunto siirtää treenit Stravaan, ja sieltä ne tulevat tänne automaattisesti.";
+  $("stStatus").innerHTML = c ? `✅ ${strava.name?esc(strava.name):"Yhdistetty"}${last?` · haettu ${last.getDate()}.${last.getMonth()+1}. ${String(last.getHours()).padStart(2,"0")}.${String(last.getMinutes()).padStart(2,"0")}`:""}` : "Ei yhdistetty.";
 }
 $("stConnect").onclick=connectStrava;
 $("stCopyCode").onclick=async()=>{ try{ await navigator.clipboard.writeText(pendingCode); $("stCopyCode").textContent="Kopioitu ✓"; }catch(e){ $("stCodeOut").select(); } };
@@ -1292,7 +1323,7 @@ function renderStrength(){
   $("sList").innerHTML=P.ex.map((e,i)=>{ const d=active?(wo.d[i]||[]):[]; const finished=active&&d.filter(Boolean).length>=e.s;
     return `<li class="ex${finished?" fin":""}"><div class="exhead"><span class="exn">${i+1}</span><div><b>${esc(e.n)}</b><div class="dose"><span>${e.s} × ${esc(e.r)}</span><span>${esc(e.t)}</span><span>lepo ${e.rest} s</span></div></div></div>
       <ul class="cues">${e.c.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>
-      <p class="tip"><b>Helpompi:</b> ${esc(e.e)} · <b>Vaikeampi:</b> ${esc(e.h)}</p><p class="tip why2">Miksi: ${esc(e.w)}</p>
+      <p class="tip"><b>Helpompi:</b> ${esc(e.e)} · <b>Vaikeampi:</b> ${esc(e.h)}</p>
       ${active?`<div class="sets">${Array.from({length:e.s},(_,k)=>`<button class="set" data-set="${i}:${k}" aria-pressed="${!!d[k]}">Sarja ${k+1}${d[k]?" ✓":""}</button>`).join("")}</div>`:""}</li>`; }).join("");
   $("sStart").hidden=active; $("sFinish").hidden=!active; $("sCancel").hidden=!active;
   $("sStart").textContent = wo&&wo.p!==p ? `Aloita ${p} (keskeneräinen ${wo.p} poistuu)` : `Aloita treeni ${p}`;
@@ -1320,6 +1351,130 @@ $("sFinish").onclick=()=>{
   logs[key]=doc; persist(); wo=null; saveWo(); clearInterval(restT); $("restBar").hidden=true; render(); celebrate(); toast(`Lihaskunto ${doc.strength} kirjattu (${done}/${all} sarjaa). 💪`);
 };
 
+
+/* ===== Pilvivarmuuskopio ===== */
+let cloudTimer=null, cloudState={busy:false, last: meta.cloudSaved||null, err:null};
+function upcomingStatus(){ const t=Math.max(0,todayIdx()); const up={}; for(let i=t;i<=Math.min(BASE.length-1,t+21);i++){ const e=effective(BASE,ADAPT,i); up[isoOfIdx(i)]={code:e.code,label:TYPES[e.code].l,text:(e.text||"").slice(0,120)}; } return up; }
+function cloudPayload(){
+  const ti=todayIdx(); let ws=[]; try{ ws=computeWarnings(BASE,logs,ADAPT,ti).concat(eventWarnings(ti)).map(w=>({level:w.level,title:w.title})); }catch(e){}
+  return { data:{app:"matka-pallakselle",version:3,logs,adjOff,edits,weekScale,shoes,gear,hr:meta.hr||null,defaultShoe:meta.defaultShoe||null}, status:{upcoming:upcomingStatus(),warnings:ws,at:new Date().toISOString()}, refresh:strava.r||null };
+}
+function scheduleCloud(){ if(!stravaConnected()) return; clearTimeout(cloudTimer); cloudTimer=setTimeout(()=>cloudSave(false),8000); }
+async function cloudSave(keepalive){
+  if(!stravaConnected()) return; clearTimeout(cloudTimer);
+  try{ cloudState.busy=true; const tok=await stravaToken();
+    const r=await fetch(`${workerBase()}/backup`,{method:"PUT",keepalive:!!keepalive,headers:{Authorization:`Bearer ${tok}`,"Content-Type":"application/json"},body:JSON.stringify(cloudPayload())});
+    if(r.status===503){ cloudState.err="Pilvitallennus ei ole vielä käytössä."; return; }
+    if(!r.ok) throw new Error(r.status); const j=await r.json(); cloudState.last=meta.cloudSaved=j.savedAt; meta.lastBackup=j.savedAt; cloudState.err=null; try{ localStorage.setItem(LS_META,JSON.stringify(meta)); }catch(e){}
+  }catch(e){ cloudState.err="Pilvitallennus epäonnistui. Yritetään uudelleen."; }
+  finally{ cloudState.busy=false; if(route()==="historia") renderCloud(); }
+}
+async function cloudRestore(){
+  try{ const tok=await stravaToken(); const r=await fetch(`${workerBase()}/backup`,{headers:{Authorization:`Bearer ${tok}`}});
+    if(r.status===404){ toast("Pilvessä ei ole vielä varmuuskopiota."); return; } if(!r.ok) throw 0;
+    const d=await r.json(); let n=0;
+    for(const k in d.logs||{}){ if(!logs[k]||(d.logs[k].updatedAt||"")>(logs[k].updatedAt||"")){ logs[k]=d.logs[k]; n++; } }
+    adjOff={...(d.adjOff||{}),...adjOff}; edits={...(d.edits||{}),...edits}; weekScale={...(d.weekScale||{}),...weekScale};
+    (d.shoes||[]).forEach(x=>{ if(!shoes.find(y=>y.id===x.id)) shoes.push(x); }); gear={...(d.gear||{}),...gear};
+    if(!meta.hr&&d.hr) meta.hr=d.hr; if(!meta.defaultShoe&&d.defaultShoe) meta.defaultShoe=d.defaultShoe;
+    persist(); render(); toast(`Palautettu pilvestä: ${n} kirjausta.`);
+  }catch(e){ toast("Palautus epäonnistui. Tarkista nettiyhteys."); }
+}
+function renderCloud(){
+  const el=$("cloudStatus"); if(!el) return;
+  if(!stravaConnected()){ el.textContent="Käytössä, kun Strava on yhdistetty."; $("cloudRestore").hidden=true; return; }
+  const l=cloudState.last?new Date(cloudState.last):null;
+  el.textContent = cloudState.err || (l?`☁️ Tallennettu automaattisesti ${l.getDate()}.${l.getMonth()+1}. ${String(l.getHours()).padStart(2,"0")}.${String(l.getMinutes()).padStart(2,"0")}`:"☁️ Tallentuu automaattisesti.");
+  $("cloudRestore").hidden=false;
+}
+$("cloudRestore").onclick=cloudRestore;
+document.addEventListener("visibilitychange",()=>{ if(document.hidden && cloudTimer) cloudSave(true); });
+
+/* ===== Ilmoitukset (Web Push) ===== */
+function pushSupported(){ return "serviceWorker" in navigator && "PushManager" in window && "Notification" in window; }
+function b64uToBytes(s){ const p="=".repeat((4-s.length%4)%4); const b=atob((s+p).replace(/-/g,"+").replace(/_/g,"/")); return Uint8Array.from(b,c=>c.charCodeAt(0)); }
+async function enablePush(){
+  const msg=$("pushMsg");
+  if(!pushSupported()){ msg.textContent= standalone ? "Tämä laite ei tue ilmoituksia (vaatii iOS 16.4+)." : "Avaa sovellus kotinäytön kuvakkeesta, niin ilmoitukset voi ottaa käyttöön."; return; }
+  if(!stravaConnected()){ msg.textContent="Yhdistä ensin Strava (Historia → Strava)."; return; }
+  try{
+    const perm=await Notification.requestPermission(); if(perm!=="granted"){ msg.textContent="Ilmoitukset estetty. Salli ne iPhonen asetuksista: Asetukset → Ilmoitukset → Pallakselle."; return; }
+    const reg=await navigator.serviceWorker.ready;
+    const kr=await fetch(`${workerBase()}/push/key`); if(!kr.ok) throw new Error("key"); const {key}=await kr.json();
+    let sub=await reg.pushManager.getSubscription(); if(!sub) sub=await reg.pushManager.subscribe({userVisibleOnly:true, applicationServerKey:b64uToBytes(key)});
+    const tok=await stravaToken();
+    const r=await fetch(`${workerBase()}/push/subscribe`,{method:"POST",headers:{Authorization:`Bearer ${tok}`,"Content-Type":"application/json"},body:JSON.stringify(sub.toJSON())}); if(!r.ok) throw new Error("sub");
+    const c=await caches.open("pallas-config"); await c.put("./config.json", new Response(JSON.stringify({worker:workerBase()})));
+    meta.push=true; persist(); cloudSave(false); renderPush(); toast("Ilmoitukset käytössä.");
+  }catch(e){ msg.textContent = e.message==="key"?"Ilmoituspalvelu ei ole vielä käytössä.":"Ilmoitusten käyttöönotto epäonnistui. Yritä uudelleen."; }
+}
+async function testPush(){ try{ const tok=await stravaToken(); const r=await fetch(`${workerBase()}/push/test`,{method:"POST",headers:{Authorization:`Bearer ${tok}`}}); const j=await r.json(); toast(j.ok?"Testi-ilmoitus lähetetty.":"Testi ei mennyt perille. Ota ilmoitukset uudelleen käyttöön."); }catch(e){ toast("Testi epäonnistui."); } }
+async function disablePush(){ try{ const reg=await navigator.serviceWorker.ready; const s=await reg.pushManager.getSubscription(); if(s) await s.unsubscribe(); const tok=await stravaToken(); await fetch(`${workerBase()}/push/subscribe`,{method:"DELETE",headers:{Authorization:`Bearer ${tok}`}}); }catch(e){} meta.push=false; persist(); renderPush(); }
+function renderPush(){ const on=!!meta.push; $("pushOn").hidden=on; $("pushTest").hidden=!on; $("pushOff").hidden=!on;
+  $("pushStatus").textContent = on ? "🔔 Käytössä · iltaisin noin klo 20.45, vain jos jokin on pielessä" : "Pois päältä"; }
+$("pushOn").onclick=enablePush; $("pushTest").onclick=testPush; $("pushOff").onclick=disablePush;
+
+
+/* ===== Sykealueet (Karvonen) ===== */
+function restHR(){ if(meta.hr&&meta.hr.rest) return meta.hr.rest; const v=Object.keys(logs).sort().slice(-21).map(k=>logs[k].rhr).filter(x=>typeof x==="number").sort((a,b)=>a-b); return v.length>=3?v[Math.floor(v.length/2)]:null; }
+function maxHR(){ if(meta.hr&&meta.hr.max) return meta.hr.max; if(meta.hr&&meta.hr.age) return Math.round(208-0.7*meta.hr.age); return null; }
+function zones(){ const mx=maxHR(), rs=restHR()||60; if(!mx) return null; const z=p=>Math.round(rs+(mx-rs)*p);
+  return [{n:"Palauttava",a:z(.5),b:z(.6)},{n:"Kevyt",a:z(.6),b:z(.7)},{n:"Maratonvauhti",a:z(.7),b:z(.8)},{n:"Kynnys",a:z(.8),b:z(.88)},{n:"Kova",a:z(.88),b:mx}]; }
+function zoneFor(code,text){ const t=(text||"").toLowerCase(); if(!RUN.has(code)&&code!=="YM") return null;
+  if(/kynnys/.test(t)) return 3; if(/maratonvauh/.test(t)) return 2; if(/vedo|veto|testi|kisa|maraton|nuts/.test(t)&&code!=="P") return null; if(code==="YM") return 2; return 1; }
+function zoneChip(s){ const Z=zones(); const zi=zoneFor(s.code,s.text); if(!Z||zi==null) return ""; const z=Z[zi]; return `<span class="zchip">♥ ${z.n.toLowerCase()} ${z.a}–${z.b}</span>`; }
+function tooHard(e){ const Z=zones(); if(!Z||!e.l.hr) return false; const zi=zoneFor(e.code, (BASE[e.idx]||[])[1]); return zi===1 && e.l.hr>Z[1].b+3; }
+function renderZones(){ const Z=zones(); const h=meta.hr||{};
+  $("hrMax").value=h.max||""; $("hrAge").value=h.age||""; $("hrRest").value=h.rest||"";
+  $("hrRestAuto").textContent = !h.rest && restHR() ? `Leposyke kirjauksista: ${restHR()}` : "";
+  $("zoneList").innerHTML = Z ? Z.map((z,i)=>`<li class="z z${i+1}"><b>${z.n}</b><span class="num">${z.a}–${z.b}</span></li>`).join("") : `<li class="note">Anna maksimisyke tai ikä.</li>`;
+}
+$("hrSave").onclick=()=>{ const n=id=>{ const v=Number($(id).value.trim()); return v>0?v:null; }; meta.hr={max:n("hrMax"),age:n("hrAge"),rest:n("hrRest")}; persist(); renderZones(); toast("Sykealueet päivitetty."); };
+
+/* ===== Kisasuunnitelmat ===== */
+function longPace(){ const ps=entries().filter(e=>e.l.status==="done"&&e.code==="P"&&e.l.km>=8&&e.l.min).slice(-3); if(!ps.length) return null; return ps.reduce((a,e)=>a+e.l.min,0)/ps.reduce((a,e)=>a+e.l.km,0); }
+function hm(min){ const h=Math.floor(min/60), m=Math.round(min%60); return `${h} h ${String(m).padStart(2,"0")} min`; }
+function renderRacePlans(){
+  const p=longPace(); const bTime = p? 42.2*p*1.02 : null;
+  const gels = bTime? Math.max(4, Math.round(bTime/35)) : 7;
+  $("raceB").innerHTML=`<ul class="ins">
+    <li><b>Aika-arvio:</b> ${bTime?`${hm(bTime*0.97)} – ${hm(bTime*1.08)} (pitkien lenkkien vauhdista)`:"tarkentuu pitkistä lenkeistä"}</li>
+    <li><b>Taktiikka:</b> 5 min juoksu / 1 min kävely alusta asti, alku hitaammin kuin tuntuu</li>
+    <li><b>Tankkaus:</b> geeli 35 min välein (noin ${gels} kpl), juo jokaisella juomapisteellä</li>
+    <li><b>Edellinen ilta:</b> pasta tai riisi, varusteet valmiiksi, numerolappu paitaan</li>
+    <li><b>Aamu:</b> herätys 5.00, aamupala klo 5 (puuro, banaani), lähtöalueella 7.30</li>
+    <li><b>Jälkeen:</b> kävele, juo, syö tunnin sisällä. Seuraava viikko palautumista.</li></ul>`;
+  const test=entries().find(e=>e.key==="2027-06-26"&&e.l.status==="done"&&e.l.km&&e.l.min);
+  const nTime = test? 66*(test.l.min/test.l.km)*1.2 : (p? 66*p*1.6 : null);
+  $("raceN").innerHTML=`<ul class="ins">
+    <li><b>Aika-arvio:</b> ${nTime?`${hm(nTime*0.9)} – ${hm(nTime*1.15)}${test?" (testikisasta)":" (karkea, tarkentuu kesäkuun testistä)"}`:"tarkentuu kesäkuun testikisasta"}</li>
+    <li><b>Lähtö pe 23.7. klo 15 Hetta:</b> lounas klo 11–12, välipala klo 14</li>
+    <li><b>Taktiikka:</b> ylämäet kävellen, tasaiset ja loivat alamäet juosten, ensimmäinen tunti liian helposti</li>
+    <li><b>Tankkaus:</b> 40–60 g hiilihydraattia tunnissa, juomaa 0,5 l/h (helteellä enemmän)</li>
+    <li><b>Mukana:</b> pakolliset varusteet (lista alempana), hyttyskarkote, ladattu puhelin</li>
+    <li><b>Huoltopisteet ja aikarajat:</b> järjestäjä julkaisee kesällä</li>
+    <li><b>Maalin jälkeen:</b> kuljetus Pallakselta sovittu? Lämmin vaate ja syötävää</li></ul>`;
+}
+
+/* ===== Sää (Open-Meteo, ei avainta) ===== */
+const WCODE={0:"selkeää",1:"enimmäkseen selkeää",2:"puolipilvistä",3:"pilvistä",45:"sumua",48:"sumua",51:"tihkua",53:"tihkua",55:"tihkua",56:"jäätävää tihkua",57:"jäätävää tihkua",61:"sadetta",63:"sadetta",65:"rankkasadetta",66:"jäätävää sadetta",67:"jäätävää sadetta",71:"lunta",73:"lunta",75:"runsasta lunta",77:"lumijyväsiä",80:"sadekuuroja",81:"sadekuuroja",82:"rankkoja kuuroja",85:"lumikuuroja",86:"lumikuuroja",95:"ukkosta",96:"ukkosta",99:"ukkosta"};
+async function loadWeather(){
+  const c=load("pallas.weather.v1",null); if(c&&Date.now()-c.t<60*60000){ showWeather(c.d); return; }
+  const loc=meta.loc||{lat:60.17,lon:24.94,name:"Helsinki"};
+  try{ const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}&current=temperature_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m&wind_speed_unit=ms&timezone=auto`); if(!r.ok) return;
+    const j=await r.json(); const d={...j.current,name:loc.name}; try{ localStorage.setItem("pallas.weather.v1",JSON.stringify({t:Date.now(),d})); }catch(e){} showWeather(d); }catch(e){}
+}
+function weatherTip(d){ const t=d.temperature_2m, f=d.apparent_temperature, w=d.weather_code;
+  if([56,57,66,67].includes(w)||(t>-3&&t<2&&d.precipitation>0)) return "Liukasta: juokse sisällä tai nastoilla.";
+  if(f<=-15) return "Kova pakkanen: lyhennä tai vaihda sisätreeniin.";
+  if(t>=25) return "Kuumaa: juokse aamulla tai illalla, juo reilusti.";
+  if(w>=95) return "Ukkosta: odota sen menevän ohi.";
+  return ""; }
+function showWeather(d){ const el=$("weather"); if(!el||!d) return; const tip=weatherTip(d);
+  el.hidden=false; el.innerHTML=`<span>${esc(d.name)} ${Math.round(d.temperature_2m)} °C${Math.round(d.apparent_temperature)!==Math.round(d.temperature_2m)?` (tuntuu ${Math.round(d.apparent_temperature)})`:""} · ${WCODE[d.weather_code]||""} · ${Math.round(d.wind_speed_10m)} m/s</span>${tip?`<b>${esc(tip)}</b>`:""}<button class="link" id="wLoc">Oma sijainti</button>`;
+  $("wLoc").onclick=()=>{ if(!navigator.geolocation) return; navigator.geolocation.getCurrentPosition(p=>{ meta.loc={lat:+p.coords.latitude.toFixed(2),lon:+p.coords.longitude.toFixed(2),name:"Sijaintisi"}; persist(); try{ localStorage.removeItem("pallas.weather.v1"); }catch(e){} loadWeather(); },()=>toast("Sijaintia ei saatu.")); };
+}
+
 /* ---------- käynnistys ---------- */
 window.addEventListener("hashchange",()=>{ render(); window.scrollTo(0,0); });
 document.addEventListener("visibilitychange",()=>{ if(!document.hidden&&!edit){ render(); if(stravaConnected() && (!strava.lastSync || Date.now()-new Date(strava.lastSync).getTime()>30*60000)) syncStrava(false); } });
@@ -1330,6 +1485,7 @@ $("installX").onclick=()=>{ meta.installHidden=true; persist(); $("installHint")
 $("edX").onclick=()=>closeEditor();
 handleStravaReturn();
 render();
+loadWeather();
 if(stravaConnected() && (!strava.lastSync || Date.now()-new Date(strava.lastSync).getTime()>30*60000)) setTimeout(()=>syncStrava(false),800);
 if("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js").catch(()=>{});
 
