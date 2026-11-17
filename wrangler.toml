@@ -5,3 +5,8 @@ compatibility_date = "2026-11-01"
 workers_dev = true
 # Säilytä Cloudflaren hallintapaneelissa asetetut muuttujat (APP_URL, STRAVA_CLIENT_ID).
 keep_vars = true
+
+[vars]
+APP_URL = "https://zokaas.github.io/nuts/"
+STRAVA_CLIENT_ID = "298237"
+# STRAVA_CLIENT_SECRET on asetettu Cloudflaressa salaisuutena (Secret), ei koskaan tähän tiedostoon.
