@@ -88,7 +88,7 @@ function xpOf(st,bs){ return st.done*10+Math.round(st.km)+bs.filter(b=>b.got).le
 function levelOf(xp){ let L=LEVELS[0],next=null; LEVELS.forEach((x,i)=>{ if(xp>=x[0]){ L=x; next=LEVELS[i+1]||null; } }); return {L,next}; }
 
 /* ---------- näkymät ---------- */
-function route(){ const h=(location.hash||"").slice(1); if(h==="kisa") return "opas"; return ["historia","analyysi","opas","merkit"].includes(h)?h:"tanaan"; }
+function route(){ const h=(location.hash||"").slice(1); if(h==="kisa") return "opas"; return ["historia","analyysi","opas","merkit","asetukset"].includes(h)?h:"tanaan"; }
 function render(){
   const ti=todayIdx(), t=T0(); if(viewWeek===null) viewWeek=weekOf(t);
   BASE = buildBase(); ADAPT = buildAdapt(BASE, logs, adjOff, ti);
@@ -97,10 +97,12 @@ function render(){
   const st=stats(), bs=badges(st); const ws=computeWarnings(BASE,logs,ADAPT,ti).concat(eventWarnings(ti));
   renderCount(ti,st,bs);
   if(r==="tanaan"){ renderStatus(ws); renderToday(t,ti); renderTip(t); renderSummary(ti); renderTrail(st); renderWeek(t); renderProfile(t); renderUpcoming(t); }
-  if(r==="historia"){ renderHistory(st); renderStrava(); renderCloud(); renderPush(); }
+  if(r==="historia"){ renderHistory(st); }
+  if(r==="asetukset"){ renderStrava(); renderCloud(); renderPush(); renderZones(); renderLoc(); }
   if(r==="analyysi") renderAnalysis(ti);
   if(r==="merkit") renderBadges(st,bs);
   if(r==="opas"){ renderStrength(); renderRace(); renderZones(); renderRacePlans(); }
+  renderGearDot();
   const n=ws.filter(w=>w.level!=="info").length; try{ if(navigator.setAppBadge){ n?navigator.setAppBadge(n):navigator.clearAppBadge(); } }catch(e){}
   renderBackupNag();
 }
@@ -804,7 +806,7 @@ async function loadWeather(){
   const c=load("pallas.weather.v1",null); if(c&&Date.now()-c.t<60*60000){ showWeather(c.d); return; }
   const loc=meta.loc||{lat:60.17,lon:24.94,name:"Helsinki"};
   try{ const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}&current=temperature_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m&wind_speed_unit=ms&timezone=auto`); if(!r.ok) return;
-    const j=await r.json(); const d={...j.current,name:loc.name}; try{ localStorage.setItem("pallas.weather.v1",JSON.stringify({t:Date.now(),d})); }catch(e){} showWeather(d); }catch(e){}
+    const j=await r.json(); if(!j||!j.current) return; const d={...j.current,name:loc.name}; try{ localStorage.setItem("pallas.weather.v1",JSON.stringify({t:Date.now(),d})); }catch(e){} showWeather(d); }catch(e){}
 }
 function weatherTip(d){ const t=d.temperature_2m, f=d.apparent_temperature, w=d.weather_code;
   if([56,57,66,67].includes(w)||(t>-3&&t<2&&d.precipitation>0)) return "Liukasta: juokse sisällä tai nastoilla.";
@@ -812,18 +814,22 @@ function weatherTip(d){ const t=d.temperature_2m, f=d.apparent_temperature, w=d.
   if(t>=25) return "Kuumaa: juokse aamulla tai illalla, juo reilusti.";
   if(w>=95) return "Ukkosta: odota sen menevän ohi.";
   return ""; }
-function showWeather(d){ const el=$("weather"); if(!el||!d) return; const tip=weatherTip(d);
-  el.hidden=false; el.innerHTML=`<span>${esc(d.name)} ${Math.round(d.temperature_2m)} °C${Math.round(d.apparent_temperature)!==Math.round(d.temperature_2m)?` (tuntuu ${Math.round(d.apparent_temperature)})`:""} · ${WCODE[d.weather_code]||""} · ${Math.round(d.wind_speed_10m)} m/s</span>${tip?`<b>${esc(tip)}</b>`:""}<button class="link" id="wLoc">Oma sijainti</button>`;
-  $("wLoc").onclick=()=>{ if(!navigator.geolocation) return; navigator.geolocation.getCurrentPosition(p=>{ meta.loc={lat:+p.coords.latitude.toFixed(2),lon:+p.coords.longitude.toFixed(2),name:"Sijaintisi"}; persist(); try{ localStorage.removeItem("pallas.weather.v1"); }catch(e){} loadWeather(); },()=>toast("Sijaintia ei saatu.")); };
+function showWeather(d){ const el=$("weather"); if(!el) return; if(!d||typeof d.temperature_2m!=="number"){ el.hidden=true; return; } const tip=weatherTip(d);
+  el.hidden=false; el.innerHTML=`<span>${esc(d.name)} ${Math.round(d.temperature_2m)} °C${Math.round(d.apparent_temperature)!==Math.round(d.temperature_2m)?` (tuntuu ${Math.round(d.apparent_temperature)})`:""} · ${WCODE[d.weather_code]||""} · ${Math.round(d.wind_speed_10m)} m/s</span>${tip?`<b>${esc(tip)}</b>`:""}`;
 }
 
+function renderGearDot(){ const last=meta.lastBackup?new Date(meta.lastBackup):null; const old=!last||(Date.now()-last.getTime())>7*864e5;
+  const need = (!stravaConnected() && Object.keys(logs).length>=3 && old) || !!cloudState.err;
+  $("gearDot").hidden=!need; }
+function renderLoc(){ $("wLocName").textContent=`Sijainti: ${(meta.loc&&meta.loc.name)||"Helsinki"}`; }
+$("wLocBtn").onclick=()=>{ if(!navigator.geolocation){ toast("Sijainti ei ole käytettävissä."); return; } navigator.geolocation.getCurrentPosition(p=>{ meta.loc={lat:+p.coords.latitude.toFixed(2),lon:+p.coords.longitude.toFixed(2),name:"Oma sijainti"}; persist(); try{ localStorage.removeItem("pallas.weather.v1"); }catch(e){} loadWeather(); renderLoc(); toast("Sijainti tallennettu."); },()=>toast("Sijaintia ei saatu.")); };
+$("wLocReset").onclick=()=>{ delete meta.loc; persist(); try{ localStorage.removeItem("pallas.weather.v1"); }catch(e){} loadWeather(); renderLoc(); };
 /* ---------- käynnistys ---------- */
 window.addEventListener("hashchange",()=>{ render(); window.scrollTo(0,0); });
 document.addEventListener("visibilitychange",()=>{ if(!document.hidden&&!edit){ render(); if(stravaConnected() && (!strava.lastSync || Date.now()-new Date(strava.lastSync).getTime()>30*60000)) syncStrava(false); } });
 window.addEventListener("storage",()=>{ logs=load(LS_LOGS,{}); adjOff=load(LS_ADJ,{}); edits=load(LS_EDITS,{}); weekScale=load(LS_SCALE,{}); shoes=load(LS_SHOES,[]); gear=load(LS_GEAR,{}); if(!edit) render(); });
 const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone;
-$("installHint").hidden = !!standalone || !!meta.installHidden;
-$("installX").onclick=()=>{ meta.installHidden=true; persist(); $("installHint").hidden=true; };
+$("installHint").hidden = !!standalone;
 $("edX").onclick=()=>closeEditor();
 handleStravaReturn();
 render();

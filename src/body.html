@@ -1,14 +1,10 @@
 <body>
 <div class="wrap">
   <header class="mast">
-    <h1 class="route">Hetta <span class="arrow">→</span> Pallas<small>Nuts 66 km · 23.7.2027 · välietappi Belgrad</small></h1>
+    <div class="mastrow"><h1 class="route">Hetta <span class="arrow">→</span> Pallas<small>Nuts 66 km · 23.7.2027 · välietappi Belgrad</small></h1>
+      <a href="#asetukset" class="gear" id="gear" aria-label="Asetukset"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg><i class="gdot" id="gearDot" hidden></i></a></div>
     <div class="count" id="count"></div>
   </header>
-  <div class="install" id="installHint" hidden>
-    <button class="x" id="installX" aria-label="Sulje">×</button><b>Asenna sovellukseksi:</b>
-    <ol><li>Avaa tämä sivu Safarissa.</li><li>Napauta Jaa-painiketta (neliö ja nuoli ylös).</li><li>Valitse <b>Lisää Koti-valikkoon</b>.</li></ol>
-  </div>
-  <div class="nag" id="backupNag" hidden><span>Varmuuskopiosta yli viikko.</span><button class="btn small primary" data-backup>Tallenna</button></div>
 
 
   <div data-view="tanaan" class="view">
@@ -32,39 +28,6 @@
       <div class="row"><input type="search" id="hSearch" placeholder="Hae muistiinpanoista" aria-label="Hae muistiinpanoista"><select id="hSort" aria-label="Järjestys"><option value="date">Uusin ensin</option><option value="km">Pisin ensin</option><option value="feel">Raskain ensin</option></select></div>
       <div class="tablewrap" id="hTable"></div>
       <ul class="hcards" id="hCards"></ul>
-    </section>
-    <section class="card" id="stravaCard">
-      <div class="weekhead"><h2>Strava</h2><span class="stv big">S</span></div>
-      <p class="tip" id="stStatus"></p>
-      <div class="field" id="stWorkerRow"><label for="stWorker">Välipalvelimen osoite</label><input type="text" id="stWorker" inputmode="url" autocapitalize="off" autocorrect="off" placeholder="https://pallakselle.nimi.workers.dev"></div>
-      <div class="row"><button class="btn primary" id="stConnect">Yhdistä Strava</button><button class="btn primary" id="stSync">Hae treenit nyt</button><button class="btn ghost" id="stDisconnect">Katkaise yhteys</button></div>
-      <p class="tip" id="stMsg"></p>
-      <div class="suggest" id="stCodeBox" hidden>
-        <b>Melkein valmista! Strava palasi Safariin eikä sovellukseen.</b>
-        <p class="tip">1. Kopioi alla oleva koodi. 2. Avaa Matka Pallakselle kotinäytön kuvakkeesta. 3. Historia → Strava → liitä koodi kohtaan "Yhdistämiskoodi" → Ota käyttöön.</p>
-        <textarea id="stCodeOut" readonly rows="3"></textarea>
-        <button class="btn primary" id="stCopyCode">Kopioi koodi</button>
-      </div>
-      <details class="fold" id="stPaste"><summary>Onko sinulla yhdistämiskoodi?</summary>
-        <div class="field"><label for="stCode">Yhdistämiskoodi</label><textarea id="stCode" rows="3" placeholder="Liitä koodi tähän"></textarea></div>
-        <button class="btn" id="stUseCode">Ota käyttöön</button>
-      </details>
-    </section>
-    <section class="card">
-      <div class="weekhead"><h2>Ilmoitukset</h2></div>
-      <p class="tip" id="pushStatus"></p>
-      <div class="row"><button class="btn primary" id="pushOn">Ota ilmoitukset käyttöön</button><button class="btn" id="pushTest" hidden>Testaa</button><button class="btn ghost" id="pushOff" hidden>Poista käytöstä</button></div>
-      <p class="tip" id="pushMsg"></p>
-    </section>
-    <section class="card backup">
-      <h2>Varmuuskopio</h2>
-      <p class="tip" id="cloudStatus"></p>
-      <div class="row"><button class="btn" id="cloudRestore" hidden>Palauta pilvestä</button></div>
-      <details class="fold" id="fileBackup" open><summary>Varmuuskopio tiedostoon</summary>
-      <p class="tip" id="lastBackup"></p>
-      <div class="row"><button class="btn" data-backup>Tallenna tiedostoon</button>
-        <label class="btn file" for="restoreFile">Palauta tiedostosta<input type="file" id="restoreFile" accept="application/json,.json"></label></div>
-      <p class="tip" id="restoreMsg"></p></details>
     </section>
   </div>
 
@@ -107,13 +70,7 @@
     <section class="card">
       <div class="weekhead"><h2>Sykealueet</h2></div>
       <ul class="zones" id="zoneList"></ul>
-      <div class="grid3">
-        <div class="field"><label for="hrMax">Maksimisyke</label><input type="text" id="hrMax" inputmode="numeric" placeholder="185"></div>
-        <div class="field"><label for="hrAge">tai ikä</label><input type="text" id="hrAge" inputmode="numeric" placeholder="35"></div>
-        <div class="field"><label for="hrRest">Leposyke</label><input type="text" id="hrRest" inputmode="numeric" placeholder="auto"></div>
-      </div>
-      <p class="tip" id="hrRestAuto"></p>
-      <div class="row"><button class="btn" id="hrSave">Tallenna</button></div>
+      <p class="tip"><a href="#asetukset" class="link">Muuta sykeasetuksia</a></p>
     </section>
     <section class="card">
       <div class="weekhead"><h2>Kengät</h2></div>
@@ -130,6 +87,64 @@
     <section class="card">
       <div class="weekhead"><h2>Tankkausloki</h2></div>
       <div id="fuelSum"></div><div id="fuelList"></div>
+    </section>
+  </div>
+  <div data-view="asetukset" class="view" hidden>
+    <div class="sethead"><a href="#tanaan" class="link">‹ Takaisin</a><h2>Asetukset</h2></div>
+  <div class="nag" id="backupNag" hidden><span>Varmuuskopiosta yli viikko.</span><button class="btn small primary" data-backup>Tallenna</button></div>
+    <section class="card" id="stravaCard">
+      <div class="weekhead"><h2>Strava</h2><span class="stv big">S</span></div>
+      <p class="tip" id="stStatus"></p>
+      <div class="field" id="stWorkerRow"><label for="stWorker">Välipalvelimen osoite</label><input type="text" id="stWorker" inputmode="url" autocapitalize="off" autocorrect="off" placeholder="https://pallakselle.nimi.workers.dev"></div>
+      <div class="row"><button class="btn primary" id="stConnect">Yhdistä Strava</button><button class="btn primary" id="stSync">Hae treenit nyt</button><button class="btn ghost" id="stDisconnect">Katkaise yhteys</button></div>
+      <p class="tip" id="stMsg"></p>
+      <div class="suggest" id="stCodeBox" hidden>
+        <b>Melkein valmista! Strava palasi Safariin eikä sovellukseen.</b>
+        <p class="tip">1. Kopioi alla oleva koodi. 2. Avaa Matka Pallakselle kotinäytön kuvakkeesta. 3. Historia → Strava → liitä koodi kohtaan "Yhdistämiskoodi" → Ota käyttöön.</p>
+        <textarea id="stCodeOut" readonly rows="3"></textarea>
+        <button class="btn primary" id="stCopyCode">Kopioi koodi</button>
+      </div>
+      <details class="fold" id="stPaste"><summary>Onko sinulla yhdistämiskoodi?</summary>
+        <div class="field"><label for="stCode">Yhdistämiskoodi</label><textarea id="stCode" rows="3" placeholder="Liitä koodi tähän"></textarea></div>
+        <button class="btn" id="stUseCode">Ota käyttöön</button>
+      </details>
+    </section>
+    <section class="card">
+      <div class="weekhead"><h2>Ilmoitukset</h2></div>
+      <p class="tip" id="pushStatus"></p>
+      <div class="row"><button class="btn primary" id="pushOn">Ota ilmoitukset käyttöön</button><button class="btn" id="pushTest" hidden>Testaa</button><button class="btn ghost" id="pushOff" hidden>Poista käytöstä</button></div>
+      <p class="tip" id="pushMsg"></p>
+    </section>
+    <section class="card backup">
+      <div class="weekhead"><h2>Varmuuskopio</h2></div>
+      <p class="tip" id="cloudStatus"></p>
+      <div class="row"><button class="btn" id="cloudRestore" hidden>Palauta pilvestä</button></div>
+      <details class="fold" id="fileBackup" open><summary>Varmuuskopio tiedostoon</summary>
+      <p class="tip" id="lastBackup"></p>
+      <div class="row"><button class="btn" data-backup>Tallenna tiedostoon</button>
+        <label class="btn file" for="restoreFile">Palauta tiedostosta<input type="file" id="restoreFile" accept="application/json,.json"></label></div>
+      <p class="tip" id="restoreMsg"></p></details>
+    </section>
+    <section class="card">
+      <div class="weekhead"><h2>Syke</h2></div>
+      <div class="grid3">
+        <div class="field"><label for="hrMax">Maksimisyke</label><input type="text" id="hrMax" inputmode="numeric" placeholder="185"></div>
+        <div class="field"><label for="hrAge">tai ikä</label><input type="text" id="hrAge" inputmode="numeric" placeholder="35"></div>
+        <div class="field"><label for="hrRest">Leposyke</label><input type="text" id="hrRest" inputmode="numeric" placeholder="auto"></div>
+      </div>
+      <p class="tip" id="hrRestAuto"></p>
+      <div class="row"><button class="btn" id="hrSave">Tallenna</button></div>
+    </section>
+    <section class="card">
+      <div class="weekhead"><h2>Sää</h2></div>
+      <p class="tip" id="wLocName"></p>
+      <div class="row"><button class="btn" id="wLocBtn">Käytä sijaintiani</button><button class="btn ghost" id="wLocReset">Helsinki</button></div>
+    </section>
+    <section class="card">  <div class="install" id="installHint">
+    <b>Asenna sovellukseksi:</b>
+    <ol><li>Avaa tämä sivu Safarissa.</li><li>Napauta Jaa-painiketta (neliö ja nuoli ylös).</li><li>Valitse <b>Lisää Koti-valikkoon</b>.</li></ol>
+  </div>
+      <p class="tip">Matka Pallakselle · <a class="link" href="https://github.com/zokaas/nuts" target="_blank" rel="noopener">GitHub</a></p>
     </section>
   </div>
   <div data-view="merkit" class="view" hidden>
