@@ -142,10 +142,16 @@ async function evening(env, kv, who, date) {
   if (fresh.length) { lines.push(fresh[0].title + "."); await kv.put(`warned:${who}`, JSON.stringify(seen.concat(fresh.map(w => w.title)).slice(-50))); }
   const tomorrow = status.upcoming && status.upcoming[nextDate(date)];
   if (tomorrow && ["X", "R"].includes(tomorrow.code)) lines.push(`Huomenna: ${tomorrow.label}.`);
+  else if (tomorrow && tomorrow.code === "P") lines.push(longRunTip(tomorrow.text));
   if (!lines.length) return;
   const r = await notify(env, kv, who, { title: "Matka Pallakselle", body: lines.join(" ") });
   if (r === true) await kv.put(`sent:${who}:${date}`, "1", { expirationTtl: 60 * 60 * 36 });
 }
+function durMin(text) { const t = text || ""; const h = t.match(/(\d+(?:[,.]\d+)?)(?:[–-](\d+(?:[,.]\d+)?))?\s?h\b/); if (h) return Math.round(parseFloat((h[2] || h[1]).replace(",", ".")) * 60);
+  const m = t.match(/(\d+)(?:[–-](\d+))?\s?min/); if (m) return +(m[2] || m[1]); const k = t.match(/(\d+(?:[,.]\d+)?)\s?km/); return k ? Math.round(parseFloat(k[1].replace(",", ".")) * 7.5) : 0; }
+function longRunTip(text) { const m = durMin(text); const len = m >= 60 ? `${Math.floor(m / 60)} h${m % 60 ? ` ${m % 60} min` : ""}` : m ? `${m} min` : "";
+  const tips = ["syö illalla kunnon hiilarit", "lataa kello"]; if (m >= 75) tips.push("varaa juomaa ja geeli tai välipala mukaan"); else tips.push("juo illalla lasi vettä lisää");
+  if (m >= 120) tips.push("testaa kisaruokaa"); return `Huomenna pitkä lenkki${len ? ` (${len})` : ""}: ${tips.join(", ")}.`; }
 function nextDate(d) { const t = new Date(d + "T12:00:00Z"); t.setUTCDate(t.getUTCDate() + 1); return t.toISOString().slice(0, 10); }
 
 async function refresh(env, rt) {

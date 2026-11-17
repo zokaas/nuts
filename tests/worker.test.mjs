@@ -40,3 +40,16 @@ test("iltatarkistus: kirjaamaton treeni lähettää ilmoituksen kerran", async()
   const msg=JSON.parse([...kv.m.entries()].find(([k])=>k.startsWith("msg:"))[1]); assert.match(msg.body,/kirjaamatta/); assert.match(msg.body,/kipua/);
   waits.length=0; await w.scheduled({force:true},env,ctx); await Promise.all(waits); assert.strictEqual(pushes.length,1);
 });
+
+test("iltatarkistus: muistutus ennen pitkää lenkkiä", async()=>{
+  const kv=new KV(); const env={...base, PALLAS_KV:kv}; pushes=[];
+  const d=new Intl.DateTimeFormat("en-CA",{timeZone:"Europe/Helsinki"}).format(new Date());
+  const t=new Date(d+"T12:00:00Z"); t.setUTCDate(t.getUTCDate()+1); const tm=t.toISOString().slice(0,10);
+  await kv.put("users",JSON.stringify(["42"])); await kv.put("sub:42",JSON.stringify({endpoint:"https://push.example/x"}));
+  await kv.put("status:42",JSON.stringify({upcoming:{[d]:{code:"L",label:"Lepo"},[tm]:{code:"P",label:"Pitkä lenkki",text:"Pitkä lenkki 1,5 h rauhallisesti"}},warnings:[]}));
+  await kv.put("backup:42",JSON.stringify({logs:{}}));
+  const waits=[]; const ctx={waitUntil:p=>waits.push(p)};
+  await w.scheduled({force:true},env,ctx); await Promise.all(waits);
+  assert.strictEqual(pushes.length,1);
+  const msg=JSON.parse([...kv.m.entries()].find(([k])=>k.startsWith("msg:"))[1]); assert.match(msg.body,/pitkä lenkki \(1 h 30 min\)/); assert.match(msg.body,/geeli/);
+});

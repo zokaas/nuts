@@ -24,9 +24,9 @@
   <div data-view="historia" class="view" hidden>
     <section class="tiles" id="hTiles"></section>
     <section class="card">
-      <div class="weekhead"><h2>Treenihistoria</h2><button class="btn ghost small" id="hCopy">Kopioi taulukkona</button></div>
+      <div class="weekhead"><h2>Treenihistoria</h2><button class="btn ghost small" id="hSearchBtn" aria-pressed="false" aria-label="Haku ja järjestys">🔍</button></div>
       <div class="filters" id="hFilters" role="group" aria-label="Suodata"><button data-f="all">Kaikki</button><button data-f="run">Juoksut</button><button data-f="other">Muut</button><button data-f="health">Vointi</button><button data-f="skip">Väliin jääneet</button></div>
-      <div class="row"><input type="search" id="hSearch" placeholder="Hae muistiinpanoista" aria-label="Hae muistiinpanoista"><select id="hSort" aria-label="Järjestys"><option value="date">Uusin ensin</option><option value="km">Pisin ensin</option><option value="feel">Raskain ensin</option></select></div>
+      <div class="row" id="hSearchRow" hidden><input type="search" id="hSearch" placeholder="Hae muistiinpanoista" aria-label="Hae muistiinpanoista"><select id="hSort" aria-label="Järjestys"><option value="date">Uusin ensin</option><option value="km">Pisin ensin</option><option value="feel">Raskain ensin</option></select></div>
       <div class="tablewrap" id="hTable"></div>
       <ul class="hcards" id="hCards"></ul>
     </section>
@@ -88,16 +88,17 @@
     <section class="card">
       <div class="weekhead"><h2>Kengät</h2></div>
       <div id="shoeList" class="shoes"></div>
+      <details class="fold"><summary>＋ Lisää kengät</summary>
       <div class="grid2"><div class="field"><label for="shoeName">Uudet kengät</label><input type="text" id="shoeName" placeholder="Esim. Speedgoat 6"></div>
       <div class="field"><label for="shoeStart">Jo juostu (km)</label><input type="text" id="shoeStart" inputmode="decimal" placeholder="0"></div></div>
-      <div class="row"><button class="btn" id="shoeAdd">Lisää kengät</button></div>
+      <div class="row"><button class="btn" id="shoeAdd">Lisää kengät</button></div></details>
     </section>
     <section class="card">
-      <div class="weekhead"><h2>Nutsin varusteet</h2><span class="tip" id="gearHead"></span></div>
+      <details class="fold gearfold"><summary><span>Nutsin varusteet</span><span class="tip" id="gearHead"></span></summary>
       <p class="tip">Tyypillinen lista; viralliset varusteet tarkistetaan kesällä.</p>
-      <div id="gearList" class="gearlist"></div>
+      <div id="gearList" class="gearlist"></div></details>
     </section>
-    <section class="card">
+    <section class="card" id="fuelCard" hidden>
       <div class="weekhead"><h2>Tankkausloki</h2></div>
       <div id="fuelSum"></div><div id="fuelList"></div>
     </section>
@@ -133,6 +134,7 @@
       <p class="tip" id="cloudStatus"></p>
       <div class="row"><button class="btn" id="cloudRestore" hidden>Palauta pilvestä</button></div>
       <details class="fold" id="fileBackup" open><summary>Varmuuskopio tiedostoon</summary>
+        <div class="row"><button class="btn ghost small" id="hCopy">Kopioi treenit taulukkona</button></div>
       <p class="tip" id="lastBackup"></p>
       <div class="row"><button class="btn" data-backup>Tallenna tiedostoon</button>
         <label class="btn file" for="restoreFile">Palauta tiedostosta<input type="file" id="restoreFile" accept="application/json,.json"></label></div>

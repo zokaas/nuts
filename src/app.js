@@ -177,7 +177,7 @@ function sessionBlock(s,first,ti){
   let acts;
   if(s.code==="L") acts=`<div class="iconacts">${ia(`data-open="${s.key}" data-mode="vointi"`,"♥","Vointi")}${ia(`data-logfree="${s.idx}"`,"＋","Kirjaa liikunta")}</div>`;
   else if(ti!=null && s.idx>ti) acts=`<div class="iconacts">${ia(`data-open="${s.key}"`,"✎","Avaa")}${canMove?ia(`data-move="${s.key}"`,"→","Huomiselle"):""}${!s.moved&&s.code!=="R"?ia(`data-swap="${s.idx}"`,"⇄","Vaihda laji"):""}</div>`;
-  else acts=`<button class="btn primary big" data-quick="${s.key}">✓ Tehty</button><div class="iconacts">${ia(`data-open="${s.key}" data-pre="done"`,"✎","Tehty + tiedot")}${ia(`data-open="${s.key}" data-pre="skip"`,"✕","Väliin")}${canMove?ia(`data-move="${s.key}"`,"→","Huomiselle"):""}${!s.moved&&s.code!=="R"?ia(`data-swap="${s.idx}"`,"⇄","Vaihda laji"):""}${prog?ia(`data-gostrength="${prog}"`,"💪",`Lihas ${prog}`):""}${ia(`data-open="${s.key}" data-mode="vointi"`,"♥","Vointi")}</div>`;
+  else acts=`<button class="btn primary big" data-quick="${s.key}">✓ Tehty</button><div class="iconacts">${ia(`data-open="${s.key}" data-pre="skip"`,"✕","Väliin")}${canMove?ia(`data-move="${s.key}"`,"→","Huomiselle"):""}${!s.moved&&s.code!=="R"?ia(`data-swap="${s.idx}"`,"⇄","Vaihda laji"):""}${prog?ia(`data-gostrength="${prog}"`,"💪",`Lihas ${prog}`):""}${ia(`data-open="${s.key}" data-mode="vointi"`,"♥","Vointi")}</div>`;
   return `<div class="sess${first?"":" extra"}">${head}
     <div class="today-title"><h2>${TYPES[s.code].l}</h2>${stateLabel(l)}</div>${adaptBox}${editedBox}
     <p class="target">${esc(text)}</p>${zoneChip(s)}${s.note&&!s.moved?`<p class="tip">📌 ${esc(s.note)}</p>`:""}
@@ -272,13 +272,10 @@ function renderWeek(t){
     const d=new Date(START_UTC+i*864e5), ss=sessionsOn(BASE,logs,ADAPT,i), s0=ss[0], ci=changeInfo(s0);
     strip+=`<button class="sd${i===t?" today":""}${i===sel?" sel":""}${ci?" chg":""}" data-sel="${i}" aria-pressed="${i===sel}" aria-label="${fmt(i)}: ${TYPES[s0.code].l}"><span class="dw">${DOW[dow(i)]}</span><span class="dn num">${d.getUTCDate()}</span><span class="ty ${TYPES[s0.code].c}">${SHORT[s0.code]||""}</span>${i<=t?(dayMark(ss)||`<span class="mark none"></span>`):`<span class="mark none"></span>`}${(ss.length-1+extrasOn(i).length)>0?`<i class="plus">+${ss.length-1+extrasOn(i).length}</i>`:""}</button>`;
   }
-  for(let i=a;i<=b&&i<BASE.length;i++){ const d=new Date(START_UTC+i*864e5); sessionsOn(BASE,logs,ADAPT,i).concat(extrasOn(i)).forEach((s,k)=>{
-    const ci=changeInfo(s); rows+=`<button class="day${i===t?" is-today":""}${ci?` changed k-${ci.kind}`:""}" data-open="${s.key}"><span class="d">${k?"":DOW[dow(i)]}<small>${k?(/~[sf]/.test(s.key)?"lisä":"siirretty"):`${d.getUTCDate()}.${d.getUTCMonth()+1}.`}</small></span><span class="what">${typeChip(s.code)}${changeTag(s)||(edits[isoOfIdx(i)]&&!k&&!edits[isoOfIdx(i)].ev?`<span class="adtag">✏️ muokattu</span>`:"")}<span class="t">${esc(s.text||"Lepo")}</span></span>${markFor(s)}</button>`; }); }
   $("week").innerHTML=`<div class="weekhead"><div><div class="eyebrow">${PHASE(w)}${(w<=21&&!(w>=8&&w<=10))?" · 🏠 sisäkausi":""}</div><h2>Viikko ${w}</h2></div><div class="navbtns"><button data-addev="" aria-label="Lisää meno" title="Lisää meno">＋</button><button id="wPrev" aria-label="Edellinen viikko" ${w<=1?"disabled":""}>‹</button><button id="wNow" aria-label="Tämä viikko">•</button><button id="wNext" aria-label="Seuraava viikko" ${w>=36?"disabled":""}>›</button></div></div>
     <div class="strip" role="group" aria-label="Viikon päivät">${strip}</div>
-    ${slimGoal(w,act,tgt)}${weekScaleControls(w,t)}
-    <details class="fold" id="weekList"${weekListOpen?" open":""}><summary>Viikon treenit listana</summary><div class="days">${rows}</div></details>`;
-  $("weekList").ontoggle=e=>{ weekListOpen=e.target.open; }; if($("loadCtl")) $("loadCtl").ontoggle=e=>{ loadOpen=e.target.open; };
+    ${slimGoal(w,act,tgt)}${weekScaleControls(w,t)}`;
+  if($("loadCtl")) $("loadCtl").ontoggle=e=>{ loadOpen=e.target.open; };
   $("wPrev").onclick=()=>weekGo(-1); $("wNext").onclick=()=>weekGo(1);
   if(moveFrom!=null) $("week").querySelectorAll(".sd[data-sel]").forEach(b=>{ const j=+b.dataset.sel; b.classList.toggle("mvfrom",j===moveFrom); b.classList.toggle("mvok",j!==moveFrom&&canSwap(j)); }); $("wNow").onclick=()=>{ viewWeek=weekOf(t); selDay=null; render(); };
 }
@@ -338,10 +335,10 @@ function renderHistory(st){
   if(f==="health") es=es.filter(e=>flagsOf(e.l).some(x=>x!=="great")); if(f==="skip") es=es.filter(e=>e.l.status==="skip");
   if(q) es=es.filter(e=>(e.l.note||"").toLowerCase().includes(q)||TYPES[e.code].l.toLowerCase().includes(q)||(e.l.painArea||"").includes(q));
   es.sort({date:(a,b)=>a.key<b.key?1:-1,km:(a,b)=>(b.l.km||0)-(a.l.km||0),feel:(a,b)=>(a.l.feel||9)-(b.l.feel||9)}[hist.sort]);
-  $("hTiles").innerHTML=[["Juostu",`${n1(st.km)} km`],["Treenejä",st.done],["Pisin",st.longest?`${n1(st.longest)} km`:"–"],["Keskivauhti",st.avgPace?`${st.avgPace}/km`:"–"],["Nousua",`${Math.round(st.elev)} m`],["Paras putki",st.best]].map(([a,b])=>`<div class="tile"><span>${a}</span><b class="num">${b}</b></div>`).join("");
+  $("hTiles").innerHTML=[["Juostu",`${n1(st.km)} km`],["Treenejä",st.done],["Pisin",st.longest?`${n1(st.longest)} km`:"–"],["Keskivauhti",st.avgPace?`${st.avgPace}/km`:"–"],["Nousua",st.elev?`${Math.round(st.elev)} m`:""],["Paras putki",st.best]].filter(([,b])=>b!==""&&b!=="–"&&b!==0).map(([a,b])=>`<div class="tile"><span>${a}</span><b class="num">${b}</b></div>`).join("");
   document.querySelectorAll("#hFilters button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.f===f));
   let lastTW=null; const body=es.map(e=>{ const l=e.l,fl=flagsOf(l); const w=weekOf(e.idx); const gh=hist.sort==="date"&&w!==lastTW?`<tr class="wkrow"><td colspan="13">__WK${w}__</td></tr>`:""; lastTW=w; return gh+`<tr data-open="${e.key}" tabindex="0"><td class="num">${fmtShort(e.idx)}${e.key.endsWith("~m")?"→":""}</td><td>${typeChip(e.code)}${l.stravaId?' <span class="stv" title="Strava">S</span>':""}${l.strength?` 💪${l.strength}`:""}${l.stravaName?`<br><small class="sn">${esc(l.stravaName)}</small>`:""}</td><td>${l.status==="done"?"✓":l.status==="skip"?"väliin":"📝"}</td><td class="num r">${typeof l.km==="number"?n1(l.km):""}</td><td class="num r">${typeof l.min==="number"?l.min:""}</td><td class="num r">${pace(l.km,l.min)}</td><td class="num r">${l.hr||""}</td><td class="num r">${l.elev??""}</td><td>${l.feel?FEEL[l.feel-1][1]:""}</td><td>${fl.map(x=>FLAG_L[x].split(" ")[0]).join("")}${l.painArea?` ${esc(l.painArea)}`:""}</td><td class="num r">${l.rhr||""}</td><td class="num r">${l.sleepH?n1(l.sleepH):""}</td><td class="nt">${esc(l.note||"")}</td></tr>`; }).join("");
-  const cardArr=es.map(e=>{ const l=e.l,fl=flagsOf(l); const bits=[l.status==="done"?"✓ tehty":l.status==="skip"?"väliin":"📝", typeof l.km==="number"?`${n1(l.km)} km`:"", typeof l.min==="number"?`${l.min} min`:"", pace(l.km,l.min)?`${pace(l.km,l.min)}/km`:"", l.hr?`♥ ${l.hr}${tooHard(e)?" ⚠︎":""}`:"", l.elev?`↗ ${l.elev} m`:""].filter(Boolean).join(" · ");
+  const cardArr=es.map(e=>{ const l=e.l,fl=flagsOf(l); const bits=[l.status==="done"?"✓":l.status==="skip"?"väliin":"📝", typeof l.km==="number"?`${n1(l.km)} km`:"", typeof l.min==="number"?`${l.min} min`:"", pace(l.km,l.min)?`${pace(l.km,l.min)}/km`:"", l.hr?`♥ ${l.hr}${tooHard(e)?" ⚠︎":""}`:"", l.elev?`↗ ${l.elev} m`:""].filter(Boolean).join(" · ").replace(/^(✓|📝) · /,"$1 ");
     return `<li class="hcard" data-open="${e.key}" tabindex="0"><span class="hd">${fmtShort(e.idx)}<small>${DOW[dow(e.idx)]}</small></span><span class="hm"><span>${typeChip(e.code)}${l.stravaId?' <span class="stv">S</span>':""}${l.strength?` 💪${l.strength}`:""} ${fl.map(x=>FLAG_L[x].split(" ")[0]).join("")}</span><span class="hs">${bits}</span>${l.stravaName||l.note?`<span class="hn">${esc(l.stravaName||"")}${l.stravaName&&l.note?" · ":""}${esc(l.note||"")}</span>`:""}</span></li>`; });
   const byDate=hist.sort==="date"; const wk=e=>weekOf(e.idx); const wsum={};
   if(byDate) es.forEach(e=>{ const w=wk(e); const o=wsum[w]=wsum[w]||{km:0,n:0}; if(e.l.status==="done"){ o.n++; if(typeof e.l.km==="number") o.km+=e.l.km; } });
@@ -473,6 +470,7 @@ document.addEventListener("keydown",e=>{ if(e.key==="Enter"){ const r=e.target.c
 $("hFilters").onclick=e=>{ const b=e.target.closest("[data-f]"); if(!b) return; hist.filter=b.dataset.f; render(); };
 $("hSearch").oninput=e=>{ hist.q=e.target.value; render(); }; $("hSort").onchange=e=>{ hist.sort=e.target.value; render(); };
 function csv(){ return [["pvm","treeni","tila","km","min","vauhti","syke","fiilis","vointi","kipu","leposyke","uni","kengät","tankkaus","g/h","muistiinpano"]].concat(entries().filter(e=>e.l.status!=="moved").map(e=>[e.key.slice(0,10),TYPES[e.code].l,e.l.status,e.l.km??"",e.l.min??"",pace(e.l.km,e.l.min),e.l.hr??"",e.l.feel??"",flagsOf(e.l).join(" "),e.l.painArea?`${e.l.painArea} ${e.l.painLevel||""}`:"",e.l.rhr??"",e.l.sleepH??"",(shoes.find(x=>x.id===e.l.shoeId)||{}).name||"",(e.l.fuel||"").replace(/[\n;]/g," "),e.l.carbsH??"",(e.l.note||"").replace(/[\n;]/g," ")])).map(r=>r.join(";")).join("\n"); }
+$("hSearchBtn").onclick=()=>{ const r=$("hSearchRow"); r.hidden=!r.hidden; $("hSearchBtn").setAttribute("aria-pressed",String(!r.hidden)); if(!r.hidden) $("hSearch").focus(); else if(hist.q||hist.sort!=="date"){ hist.q=""; hist.sort="date"; $("hSearch").value=""; $("hSort").value="date"; render(); } };
 $("hCopy").onclick=async()=>{ try{ await navigator.clipboard.writeText(csv()); toast("Taulukko kopioitu. Liitä Exceliin tai Sheetsiin."); }catch(e){ toast("Kopiointi ei onnistunut."); } };
 async function backup(){
   const data={app:"matka-pallakselle",version:2,exportedAt:new Date().toISOString(),logs,adjOff,edits,weekScale,shoes,gear,defaultShoe:meta.defaultShoe||null,stravaWorker:strava.worker||null};
@@ -738,7 +736,7 @@ function renderRace(){
   $("shoeList").innerHTML = shoes.length? shoes.map(sh=>{ const km=shoeKm(sh.id), lim=sh.limit||700, pct=Math.min(100,km/lim*100); const warn=km>=lim*0.85;
     return `<div class="shoe${sh.retired?" retired":""}"><div class="lbl"><b>👟 ${esc(sh.name)}${meta.defaultShoe===sh.id?" · oletus":""}</b><span class="num">${Math.round(km)} / ${lim} km</span></div><div class="track"><div class="fill${warn?" warnfill":""}" style="width:${pct}%"></div></div>
       ${warn&&!sh.retired?`<p class="tip">Kengät alkavat olla loppuun ajetut. Hanki uudet ja aja ne sisään ennen tärkeitä lenkkejä.</p>`:""}
-      <div class="row"><button class="link" data-shoedef="${sh.id}">Aseta oletukseksi</button><button class="link" data-shoeret="${sh.id}">${sh.retired?"Palauta käyttöön":"Poista käytöstä"}</button></div></div>`; }).join("") : `<p class="note">Ei kenkiä.</p>`;
+      <div class="row"><button class="link" data-shoedef="${sh.id}">Aseta oletukseksi</button><button class="link" data-shoeret="${sh.id}">${sh.retired?"Palauta käyttöön":"Poista käytöstä"}</button></div></div>`; }).join("") : `<p class="note">Lisää kengät, niin näet kilometrit ja vaihtoajan.</p>`;
   // varusteet
   const have=GEAR.filter(([k])=>gear[k]&&gear[k].have).length, tested=GEAR.filter(([k])=>gear[k]&&gear[k].tested).length;
   $("gearHead").textContent=`${have}/${GEAR.length} hankittu · ${tested} testattu`;
@@ -747,6 +745,7 @@ function renderRace(){
   const fe=entries().filter(e=>e.l.fuel||e.l.carbsH||e.l.gut).sort((a,b)=>a.key<b.key?1:-1);
   const gutL={ok:"vatsa ok",some:"pientä vaivaa",bad:"vatsa kiukutteli"};
   const avgC=(()=>{ const v=fe.map(e=>e.l.carbsH).filter(x=>typeof x==="number"); return v.length?Math.round(v.reduce((a,b)=>a+b,0)/v.length):null; })();
+  $("fuelCard").hidden=!fe.length;
   $("fuelSum").innerHTML = fe.length? `<p class="tip">${fe.length} tankkauskirjausta${avgC?` · keskimäärin ${avgC} g hiilihydraattia/h`:""}${avgC&&avgC<40?" · tavoite pitkillä on 40–60 g/h":""}.</p>`:"";
   $("fuelList").innerHTML = fe.length? `<ul class="up">${fe.slice(0,12).map(e=>`<li><time>${fmtShort(e.idx)}</time><span><b>${TYPES[e.code].l}${e.l.km?` ${n1(e.l.km)} km`:""}</b>${e.l.carbsH?` · ${e.l.carbsH} g/h`:""}${e.l.gut?` · ${gutL[e.l.gut]}`:""}<br>${esc(e.l.fuel||"")}</span></li>`).join("")}</ul>` : `<p class="note">Kirjaa tankkaus pitkien lenkkien kirjausikkunassa.</p>`;
 }
@@ -998,7 +997,7 @@ async function enablePush(){
 async function testPush(){ try{ const tok=await stravaToken(); const r=await fetch(`${workerBase()}/push/test`,{method:"POST",headers:{Authorization:`Bearer ${tok}`}}); const j=await r.json(); toast(j.ok?"Testi-ilmoitus lähetetty.":"Testi ei mennyt perille. Ota ilmoitukset uudelleen käyttöön."); }catch(e){ toast("Testi epäonnistui."); } }
 async function disablePush(){ try{ const reg=await navigator.serviceWorker.ready; const s=await reg.pushManager.getSubscription(); if(s) await s.unsubscribe(); const tok=await stravaToken(); await fetch(`${workerBase()}/push/subscribe`,{method:"DELETE",headers:{Authorization:`Bearer ${tok}`}}); }catch(e){} meta.push=false; persist(); renderPush(); }
 function renderPush(){ const on=!!meta.push; $("pushOn").hidden=on; $("pushTest").hidden=!on; $("pushOff").hidden=!on;
-  $("pushStatus").textContent = on ? "🔔 Käytössä · iltaisin noin klo 20.45, vain jos jokin on pielessä" : "Pois päältä"; }
+  $("pushStatus").textContent = on ? "🔔 Käytössä · iltaisin noin klo 20.45: kirjaamaton treeni, varoitukset ja huomisen pitkä lenkki, testi tai kisa" : "Pois päältä"; }
 $("pushOn").onclick=enablePush; $("pushTest").onclick=testPush; $("pushOff").onclick=disablePush;
 
 
@@ -1046,7 +1045,7 @@ function predictionHTML(ti, big){ const P=predictMarathon(ti); if(!P) return `<p
     ${big&&tr.filter(v=>v!=null).length>=2?spark(tr,{min:Math.min(...tr.filter(Boolean))*0.97,max:Math.max(...tr.filter(Boolean))*1.03,color:"var(--fell)",label:"Aika-arvio viikoittain",fmtv:v=>hm(v).replace(" min","")}):""}
     <p class="tip">Perusta: ${P.basis}${P.maxLong<21?". Tarkentuu, kun pisin lenkki ylittää 21 km":""}.</p>`; }
 function renderRacePlans(){
-  const P=predictMarathon(todayIdx()); const bTime = P? P.t : null;
+  const P=predictMarathon(todayIdx()); const bTime = P? P.t : null; const p=longPace();
   const gels = bTime? Math.max(4, Math.round(bTime/35)) : 7;
   $("raceB").innerHTML=`<ul class="ins">
     <li><b>Aika-arvio:</b> ${P?`${hm(P.lo)} – ${hm(P.hi)}, tavoitevauhti ${pace(1,P.pace)}/km (${P.basis})`:"tarkentuu kirjatuista juoksuista"}</li>
