@@ -18,7 +18,14 @@
 export default {
   async fetch(req, env) {
     const url = new URL(req.url);
-    const app = new URL(env.APP_URL);
+    const missing = ["APP_URL", "STRAVA_CLIENT_ID", "STRAVA_CLIENT_SECRET"].filter(k => !env[k]);
+    let app; try { app = new URL(env.APP_URL); } catch { app = null; }
+    if (missing.length || !app) {
+      return new Response(
+        `Matka Pallakselle – Strava-välipalvelin on käynnissä, mutta asetukset puuttuvat: ${missing.join(", ") || "APP_URL (virheellinen osoite)"}.\n` +
+        `Lisää ne Cloudflaressa: Workers & Pages → nuts → Settings → Variables and Secrets.`,
+        { status: 200, headers: { "Content-Type": "text/plain; charset=utf-8" } });
+    }
     const cors = {
       "Access-Control-Allow-Origin": app.origin,
       "Access-Control-Allow-Headers": "Authorization, Content-Type",
