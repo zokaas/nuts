@@ -61,7 +61,7 @@ export default {
       });
       if (!r.ok) return back("strava-virhe");
       const t = await r.json();
-      const payload = { a: t.access_token, r: t.refresh_token, e: t.expires_at, n: (t.athlete && t.athlete.firstname) || "", s: state };
+      const payload = { a: t.access_token, r: t.refresh_token, e: t.expires_at, n: (t.athlete && t.athlete.firstname) || "", s: state, w: url.origin };
       return back(`strava=${encodeURIComponent(JSON.stringify(payload))}`);
     }
 
