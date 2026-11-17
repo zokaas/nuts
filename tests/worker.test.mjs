@@ -53,3 +53,18 @@ test("iltatarkistus: muistutus ennen pitkää lenkkiä", async()=>{
   assert.strictEqual(pushes.length,1);
   const msg=JSON.parse([...kv.m.entries()].find(([k])=>k.startsWith("msg:"))[1]); assert.match(msg.body,/pitkä lenkki \(1 h 30 min\)/); assert.match(msg.body,/geeli/);
 });
+
+test("sunnuntain viikkokatsaus", async()=>{
+  const kv=new KV(); const env={...base, PALLAS_KV:kv}; pushes=[];
+  const sun="2026-11-22", add=n=>{ const t=new Date(sun+"T12:00:00Z"); t.setUTCDate(t.getUTCDate()+n); return t.toISOString().slice(0,10); };
+  const up={}; for(let k=-6;k<=7;k++) up[add(k)]={code:[0,3,5].includes((k+7)%7)?"L":"J",label:"Juoksu",text:"Juoksu 30 min"};
+  up[add(6)]={code:"P",label:"Pitkä lenkki",text:"Pitkä lenkki 50 min"}; up[add(5)].note="Pikkujoulut";
+  await kv.put("users",JSON.stringify(["42"])); await kv.put("sub:42",JSON.stringify({endpoint:"https://push.example/x"}));
+  await kv.put("status:42",JSON.stringify({upcoming:up,weeks:{[add(-6)]:{w:1,tgt:8},[add(1)]:{w:2,tgt:10}},warnings:[]}));
+  await kv.put("backup:42",JSON.stringify({logs:{[add(-5)]:{status:"done",type:"J",km:3.5},[add(-3)]:{status:"done",type:"S"},[add(0)]:{status:"done",type:"J",km:4}}}));
+  const waits=[]; const ctx={waitUntil:p=>waits.push(p)};
+  await w.scheduled({force:true,date:sun},env,ctx); await Promise.all(waits);
+  assert.strictEqual(pushes.length,1);
+  const msg=JSON.parse([...kv.m.entries()].find(([k])=>k.startsWith("msg:"))[1]);
+  assert.strictEqual(msg.title,"Viikon katsaus"); assert.match(msg.body,/Vk 1: 3\/\d treeniä, 7,5 \/ 8 km/); assert.match(msg.body,/Ensi viikko: .*tavoite 10 km.*pitkä lenkki la 50 min/); assert.match(msg.body,/Pikkujoulut/);
+});

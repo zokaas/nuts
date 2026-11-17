@@ -120,7 +120,8 @@ export default {
     const now = helsinkiNow();
     if (now.hour !== 20 && !event.force) return; // kaksi cronia kattavat kesä- ja talviajan
     const users = (await kv.get("users", "json")) || [];
-    for (const who of users) ctx.waitUntil(evening(env, kv, who, now.date));
+    const date = (event.force && event.date) || now.date; // testeille
+    for (const who of users) ctx.waitUntil(evening(env, kv, who, date));
   },
 };
 
@@ -140,11 +141,13 @@ async function evening(env, kv, who, date) {
   const seen = (await kv.get(`warned:${who}`, "json")) || [];
   const fresh = (status.warnings || []).filter(w => (w.level === "crit" || w.level === "warn") && !seen.includes(w.title));
   if (fresh.length) { lines.push(fresh[0].title + "."); await kv.put(`warned:${who}`, JSON.stringify(seen.concat(fresh.map(w => w.title)).slice(-50))); }
+  const sunday = new Date(date + "T12:00:00Z").getUTCDay() === 0;
+  if (sunday) { const wk = await weekly(env, kv, who, status, backup, date); if (wk) lines.unshift(...wk); }
   const tomorrow = status.upcoming && status.upcoming[nextDate(date)];
   if (tomorrow && ["X", "R"].includes(tomorrow.code)) lines.push(`Huomenna: ${tomorrow.label}.`);
   else if (tomorrow && tomorrow.code === "P") lines.push(longRunTip(tomorrow.text));
   if (!lines.length) return;
-  const r = await notify(env, kv, who, { title: "Matka Pallakselle", body: lines.join(" ") });
+  const r = await notify(env, kv, who, { title: sunday ? "Viikon katsaus" : "Matka Pallakselle", body: lines.join(" ") });
   if (r === true) await kv.put(`sent:${who}:${date}`, "1", { expirationTtl: 60 * 60 * 36 });
 }
 function durMin(text) { const t = text || ""; const h = t.match(/(\d+(?:[,.]\d+)?)(?:[–-](\d+(?:[,.]\d+)?))?\s?h\b/); if (h) return Math.round(parseFloat((h[2] || h[1]).replace(",", ".")) * 60);
@@ -152,11 +155,42 @@ function durMin(text) { const t = text || ""; const h = t.match(/(\d+(?:[,.]\d+)
 function longRunTip(text) { const m = durMin(text); const len = m >= 60 ? `${Math.floor(m / 60)} h${m % 60 ? ` ${m % 60} min` : ""}` : m ? `${m} min` : "";
   const tips = ["syö illalla kunnon hiilarit", "lataa kello"]; if (m >= 75) tips.push("varaa juomaa ja geeli tai välipala mukaan"); else tips.push("juo illalla lasi vettä lisää");
   if (m >= 120) tips.push("testaa kisaruokaa"); return `Huomenna pitkä lenkki${len ? ` (${len})` : ""}: ${tips.join(", ")}.`; }
+const RUNC = ["J", "JL", "P", "X", "R"], DOWS = ["su", "ma", "ti", "ke", "to", "pe", "la"];
+function addDays(d, n) { const t = new Date(d + "T12:00:00Z"); t.setUTCDate(t.getUTCDate() + n); return t.toISOString().slice(0, 10); }
+const fi1 = x => (Math.round(x * 10) / 10).toString().replace(".", ",");
+async function weekly(env, kv, who, status, backup, date) {
+  const up = status.upcoming || {}, logs = (backup && backup.logs) || {}, mon = addDays(date, -6);
+  const days = Array.from({ length: 7 }, (_, k) => addDays(mon, k));
+  const planned = days.filter(d => up[d] && up[d].code !== "L").length;
+  let done = 0, km = 0; const ids = new Set();
+  for (const k in logs) { if (!days.includes(k.slice(0, 10))) continue; const l = logs[k]; if (l.stravaId) ids.add(l.stravaId); if (l.status !== "done") continue; done++; if (RUNC.includes(l.type) && typeof l.km === "number") km += l.km; }
+  for (const a of await stravaSince(env, kv, who, mon)) { if (ids.has(a.id) || !days.includes((a.start_date_local || "").slice(0, 10))) continue; done++; if (["Run", "TrailRun", "VirtualRun"].includes(a.sport_type || a.type)) km += (a.distance || 0) / 1000; }
+  const wk = (status.weeks || {})[mon], nx = (status.weeks || {})[addDays(mon, 7)];
+  if (!planned && !done) return null;
+  const verdict = planned && done >= planned ? "Täysi viikko! 💪" : planned && done >= planned - 1 ? "Hyvä viikko." : "Ensi viikko on uusi alku.";
+  const out = [`${wk ? `Vk ${wk.w}: ` : ""}${done}${planned ? `/${planned}` : ""} treeniä, ${fi1(km)}${wk ? ` / ${wk.tgt}` : ""} km juostu. ${verdict}`];
+  const nd = Array.from({ length: 7 }, (_, k) => addDays(date, k + 1)).filter(d => up[d]);
+  if (nd.length) { const n = nd.filter(d => up[d].code !== "L").length; const keys = nd.filter(d => ["P", "X", "R"].includes(up[d].code)).map(d => { const u = up[d], m = durMin(u.text); const wd = DOWS[new Date(d + "T12:00:00Z").getUTCDay()];
+      return `${u.code === "P" ? "pitkä lenkki" : u.label.toLowerCase()} ${wd}${u.code === "P" && m ? ` ${m >= 60 ? `${Math.floor(m / 60)} h${m % 60 ? ` ${m % 60} min` : ""}` : `${m} min`}` : ""}`; });
+    const notes = nd.filter(d => up[d].note).map(d => `${up[d].note} ${DOWS[new Date(d + "T12:00:00Z").getUTCDay()]}`).slice(0, 2);
+    out.push(`Ensi viikko: ${n} treeniä${nx ? `, tavoite ${nx.tgt} km` : ""}${keys.length ? `, ${keys.join(", ")}` : ""}${notes.length ? `. Muista: ${notes.join(", ")}` : ""}.`); }
+  return out;
+}
 function nextDate(d) { const t = new Date(d + "T12:00:00Z"); t.setUTCDate(t.getUTCDate() + 1); return t.toISOString().slice(0, 10); }
 
 async function refresh(env, rt) {
   const r = await fetch(`${STRAVA}/oauth/token`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ client_id: env.STRAVA_CLIENT_ID, client_secret: env.STRAVA_CLIENT_SECRET, refresh_token: rt, grant_type: "refresh_token" }) });
   return r.ok ? r.json() : null;
+}
+async function stravaSince(env, kv, who, from) {
+  try {
+    const rt = await kv.get(`refresh:${who}`); if (!rt) return [];
+    const t = await refresh(env, rt); if (!t) return [];
+    if (t.refresh_token && t.refresh_token !== rt) await kv.put(`refresh:${who}`, t.refresh_token);
+    const after = Math.floor(new Date(from + "T00:00:00Z").getTime() / 1000) - 3 * 3600;
+    const r = await fetch(`${STRAVA}/api/v3/athlete/activities?after=${after}&per_page=50`, { headers: { Authorization: `Bearer ${t.access_token}` } });
+    return r.ok ? await r.json() : [];
+  } catch { return []; }
 }
 async function stravaToday(env, kv, who, date) {
   try {

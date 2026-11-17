@@ -541,6 +541,12 @@ body.maint .hero, body.maint #week, body.maint #status, body.maint #summary, bod
 .gearfold summary{display:flex; justify-content:space-between; align-items:baseline; gap:8px; font-family:var(--display); font-stretch:110%; font-weight:800; font-size:20px}
 .gearfold summary .tip{font-family:var(--body); font-weight:400; font-size:13px}
 #hSearchBtn[aria-pressed="true"]{background:var(--ink); color:var(--bg)}
+.mill{margin:0; font-size:14px; color:var(--muted); background:var(--info-bg); border-radius:10px; padding:8px 10px}
+.mill b{color:var(--ink)}
+.mt{width:100%; border-collapse:collapse; font-size:14px; table-layout:fixed} .mt th{font-size:11px; text-transform:uppercase; color:var(--muted); text-align:left; padding:4px} .mt td{padding:5px 4px; border-top:1px solid var(--line)}
+.mtg{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); font-size:14px}
+.mtg b{font-size:11px; text-transform:uppercase; color:var(--muted); padding:4px 2px}
+.mtg span{padding:6px 2px; border-top:1px solid var(--line)}
 </style>
 </head>
 <body>
@@ -629,6 +635,12 @@ body.maint .hero, body.maint #week, body.maint #status, body.maint #summary, bod
       <div class="weekhead"><h2>Sykealueet</h2></div>
       <ul class="zones" id="zoneList"></ul>
       <p class="tip"><a href="#asetukset" class="link">Muuta sykeasetuksia</a></p>
+    </section>
+    <section class="card">
+      <div class="weekhead"><h2>Juoksumatto</h2></div>
+      <div class="grid2"><div class="field"><label for="millPace">Vauhti (min/km)</label><input type="text" id="millPace" inputmode="decimal" placeholder="6:30"></div><div class="field"><label for="millKmh">Nopeus (km/h)</label><input type="text" id="millKmh" inputmode="decimal" placeholder="9,2"></div></div>
+      <details class="fold"><summary>Muuntotaulukko</summary><div id="millTable"></div></details>
+      <p class="tip">Pidä kaltevuus 1 %: se vastaa ulkojuoksua. Ylämäkiharjoituksiin 6–10 %.</p>
     </section>
     <section class="card">
       <div class="weekhead"><h2>Kengät</h2></div>
@@ -1021,7 +1033,7 @@ function render(){
   if(r==="analyysi") renderAnalysis(ti,st,t);
   if(r==="merkit") renderBadges(st,bs);
   if(r==="kalenteri") renderCalendar(t);
-  if(r==="opas"){ renderStrength(); renderRace(); renderZones(); renderRacePlans(); }
+  if(r==="opas"){ renderMill(); renderStrength(); renderRace(); renderZones(); renderRacePlans(); }
   renderGearDot();
   const n=ws.filter(w=>w.level!=="info").length; try{ if(navigator.setAppBadge){ n?navigator.setAppBadge(n):navigator.clearAppBadge(); } }catch(e){}
   renderBackupNag();
@@ -1091,7 +1103,7 @@ function sessionBlock(s,first,ti){
   else acts=`<button class="btn primary big" data-quick="${s.key}">✓ Tehty</button><div class="iconacts">${ia(`data-open="${s.key}" data-pre="skip"`,"✕","Väliin")}${canMove?ia(`data-move="${s.key}"`,"→","Huomiselle"):""}${!s.moved&&s.code!=="R"?ia(`data-swap="${s.idx}"`,"⇄","Vaihda laji"):""}${prog?ia(`data-gostrength="${prog}"`,"💪",`Lihas ${prog}`):""}${ia(`data-open="${s.key}" data-mode="vointi"`,"♥","Vointi")}</div>`;
   return `<div class="sess${first?"":" extra"}">${head}
     <div class="today-title"><h2>${TYPES[s.code].l}</h2>${stateLabel(l)}</div>${adaptBox}${editedBox}
-    <p class="target">${esc(text)}</p>${zoneChip(s)}${s.note&&!s.moved?`<p class="tip">📌 ${esc(s.note)}</p>`:""}
+    <p class="target">${esc(text)}</p>${zoneChip(s)}${millChip(s)}${s.note&&!s.moved?`<p class="tip">📌 ${esc(s.note)}</p>`:""}
     <div class="acts">${acts}</div></div>`;
 }
 const RACES={B:{idx:()=>BELGRADE,name:"Belgradin maraton",start:"su 18.4. klo 8.00",lat:44.8125,lon:20.4612,place:"Belgrad",
@@ -1851,10 +1863,11 @@ $("sFinish").onclick=()=>{
 
 /* ===== Pilvivarmuuskopio ===== */
 let cloudTimer=null, cloudState={busy:false, last: meta.cloudSaved||null, err:null};
-function upcomingStatus(){ const t=Math.max(0,todayIdx()); const up={}; for(let i=t;i<=Math.min(BASE.length-1,t+21);i++){ const e=effective(BASE,ADAPT,i); up[isoOfIdx(i)]={code:e.code,label:TYPES[e.code].l,text:(e.text||"").slice(0,120)}; } return up; }
+function weeksStatus(){ const t=Math.max(0,todayIdx()), w=weekOf(t), o={}; for(const x of [w,w+1]){ if(x>36) continue; o[isoOfIdx((x-1)*7-1)]={w:x,tgt:TARGET_EFF[x-1]}; } return o; }
+function upcomingStatus(){ const t0=Math.max(0,todayIdx()); const t=Math.max(0,(weekOf(t0)-1)*7-1); const up={}; for(let i=t;i<=Math.min(BASE.length-1,t+21);i++){ const e=effective(BASE,ADAPT,i); up[isoOfIdx(i)]={code:e.code,label:TYPES[e.code].l,text:(e.text||"").slice(0,120),note:(BASE[i][2]||"").slice(0,40)}; } return up; }
 function cloudPayload(){
   const ti=todayIdx(); let ws=[]; try{ ws=computeWarnings(BASE,logs,ADAPT,ti).concat(eventWarnings(ti)).map(w=>({level:w.level,title:w.title})); }catch(e){}
-  return { data:{app:"matka-pallakselle",version:3,logs,adjOff,edits,weekScale,shoes,gear,hr:meta.hr||null,defaultShoe:meta.defaultShoe||null}, status:{upcoming:upcomingStatus(),warnings:ws,at:new Date().toISOString()}, refresh:strava.r||null };
+  return { data:{app:"matka-pallakselle",version:3,logs,adjOff,edits,weekScale,shoes,gear,hr:meta.hr||null,defaultShoe:meta.defaultShoe||null}, status:{upcoming:upcomingStatus(),weeks:weeksStatus(),warnings:ws,at:new Date().toISOString()}, refresh:strava.r||null };
 }
 function scheduleCloud(){ if(!stravaConnected()) return; clearTimeout(cloudTimer); cloudTimer=setTimeout(()=>cloudSave(false),8000); }
 async function cloudSave(keepalive){
@@ -1919,6 +1932,26 @@ function zones(){ const mx=maxHR(), rs=restHR()||60; if(!mx) return null; const 
   return [{n:"Palauttava",a:z(.5),b:z(.6)},{n:"Kevyt",a:z(.6),b:z(.7)},{n:"Maratonvauhti",a:z(.7),b:z(.8)},{n:"Kynnys",a:z(.8),b:z(.88)},{n:"Kova",a:z(.88),b:mx}]; }
 function zoneFor(code,text){ const t=(text||"").toLowerCase(); if(!RUN.has(code)&&code!=="YM") return null;
   if(/kynnys/.test(t)) return 3; if(/maratonvauh/.test(t)) return 2; if(/vedo|veto|testi|kisa|maraton|nuts/.test(t)&&code!=="P") return null; if(code==="YM") return 2; return 1; }
+/* Juoksumatto */
+const isIndoor = i => { const w=weekOf(i); return w<=21 && !(w>=8&&w<=10); };
+const kmh = p => (60/p).toFixed(1).replace(".",",");
+function easyPace(){ const es=entries().filter(e=>e.l.status==="done"&&RUN.has(e.code)&&e.code!=="X"&&e.l.km>=2&&e.l.min>0).slice(-8).map(e=>e.l.min/e.l.km).sort((a,b)=>a-b); return es.length>=2? es[Math.floor(es.length/2)] : null; }
+function millChip(s){ if(!isIndoor(s.idx)) return ""; const l=logs[s.key]; if(l&&l.status==="done") return "";
+  if(s.code==="YM") return `<p class="mill">🏠 Matolla: kaltevuus 6–10 %, reipas kävely 5–6 km/h. Lyhyet hölkkäpätkät, jos jaksaa.</p>`;
+  if(!RUN.has(s.code)||s.code==="R") return "";
+  const p=easyPace(); const rw=(s.text||"").match(/(\d+)\s?min juoksu \+ (\d+)\s?min kävely/);
+  let base;
+  if(rw){ const fr=+rw[1]/(+rw[1]+ +rw[2]); const v= p ? Math.max(6.5,((60/p)-5.5*(1-fr))/fr) : null; base= v ? `juoksuosuudet noin <b>${v.toFixed(1).replace(".",",")} km/h</b>, kävely 5–6 km/h` : `juoksuosuudet <b>7–8 km/h</b>, kävely 5–6 km/h`; }
+  else base= p ? `noin <b>${kmh(p)} km/h</b> (${pace(1,p)}/km)` : `aloita <b>7–8 km/h</b> ja säädä niin, että puhe vielä kulkee`;
+  const hard = hasIntensity(s.text) ? (/mäki|vedo/i.test(s.text)?" Mäkivedot: kaltevuus 5–8 %, sama vauhti.":" Reippaat osuudet: nosta 1–1,5 km/h.") : "";
+  return `<p class="mill">🏠 Matolla: ${base}, kaltevuus 1 %.${s.code==="P"?" Pitkä lenkki: pidä vauhti tasaisena, juo 20 min välein.":""}${hard}</p>`; }
+function renderMill(){ const el=$("millTable"); if(!el) return; const P=predictMarathon(todayIdx()), e=easyPace(); const rows=[]; for(let p=5;p<=9.01;p+=0.5) rows.push(p);
+  el.innerHTML=`<div class="mtg"><b>Vauhti</b><b>km/h</b><b>Vauhti</b><b>km/h</b>${[0,1,2,3,4].map(k=>`<span>${pace(1,rows[k])}</span><span class="num">${kmh(rows[k])}</span><span>${rows[k+5]?pace(1,rows[k+5]):""}</span><span class="num">${rows[k+5]?kmh(rows[k+5]):""}</span>`).join("")}</div>
+    ${e?`<p class="tip">Oma helppo vauhtisi nyt: <b>${pace(1,e)}/km = ${kmh(e)} km/h</b>.</p>`:""}${P?`<p class="tip">Maratonvauhti-arvio: <b>${pace(1,P.pace)}/km = ${kmh(P.pace)} km/h</b>.</p>`:""}`; }
+function millConv(from){ const pIn=$("millPace"), kIn=$("millKmh");
+  if(from==="p"){ const m=pIn.value.trim().match(/^(\d{1,2})[:.,](\d{1,2})$/)||pIn.value.trim().match(/^(\d{1,2})$/); if(!m){ kIn.value=""; return; } const p=+m[1]+(m[2]?+m[2]/60:0); if(p>2) kIn.value=kmh(p); }
+  else { const k=parseFloat(kIn.value.replace(",",".")); if(!(k>2&&k<30)){ pIn.value=""; return; } pIn.value=pace(1,60/k); } }
+$("millPace").oninput=()=>millConv("p"); $("millKmh").oninput=()=>millConv("k");
 function zoneChip(s){ const Z=zones(); const zi=zoneFor(s.code,s.text); if(!Z||zi==null) return ""; const z=Z[zi]; return `<span class="zchip">♥ ${z.n.toLowerCase()} ${z.a}–${z.b}</span>`; }
 function tooHard(e){ const Z=zones(); if(!Z||!e.l.hr) return false; const zi=zoneFor(e.code, (BASE[e.idx]||[])[1]); return zi===1 && e.l.hr>Z[1].b+3; }
 function renderZones(){ const Z=zones(); const h=meta.hr||{};
