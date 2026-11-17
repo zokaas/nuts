@@ -18,7 +18,7 @@
 <style>
 /* Layout idea: one phone-width column read top to bottom — status, today, this week, the route profile, what is coming. */
 :root{
-  --bg:#eef1ef; --surface:#ffffff; --ink:#16211f; --muted:#5d6b68; --line:#d5dcd9;
+  --bg:#eef1ef; --surface:#ffffff; --ink:#16211f; --muted:#4c5956; --line:#d5dcd9;
   --accent:#d9661f;   /* lakka: cloudberry orange */
   --fell:#2e4a52;     /* tunturi: slate blue-green */
   --ok:#2f7d55; --warn:#a87700; --crit:#b8322a;
@@ -29,7 +29,7 @@
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    --bg:#0f1716; --surface:#172221; --ink:#e7eeec; --muted:#97a6a2; --line:#2a3836;
+    --bg:#0f1716; --surface:#172221; --ink:#e7eeec; --muted:#a9b7b3; --line:#2a3836;
     --accent:#f08a43; --fell:#8fb3bb;
     --ok:#5fbf8a; --warn:#e0b440; --crit:#f07068;
     --ok-bg:#16301f; --warn-bg:#352b10; --crit-bg:#3a1a18; --info-bg:#1b2a2e;
@@ -37,7 +37,7 @@
   }
 }
 :root[data-theme="dark"]{
-  --bg:#0f1716; --surface:#172221; --ink:#e7eeec; --muted:#97a6a2; --line:#2a3836;
+  --bg:#0f1716; --surface:#172221; --ink:#e7eeec; --muted:#a9b7b3; --line:#2a3836;
   --accent:#f08a43; --fell:#8fb3bb;
   --ok:#5fbf8a; --warn:#e0b440; --crit:#f07068;
   --ok-bg:#16301f; --warn-bg:#352b10; --crit-bg:#3a1a18; --info-bg:#1b2a2e;
@@ -285,8 +285,8 @@ details.wk[open]{display:flex; flex-direction:column; gap:8px}
 
 /* ===== Mobiili ===== */
 .mastrow{display:flex; justify-content:space-between; align-items:flex-start; gap:12px}
-.gear{position:relative; flex:none; width:44px; height:44px; border-radius:12px; display:grid; place-items:center; color:var(--muted); border:1px solid var(--line); background:var(--surface)}
-.gear svg{width:22px; height:22px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round}
+.gearbtn{position:relative; flex:none; width:44px; height:44px; border-radius:12px; display:grid; place-items:center; color:var(--muted); border:1px solid var(--line); background:var(--surface)}
+.gearbtn svg{width:22px; height:22px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round}
 .gdot{position:absolute; top:7px; right:7px; width:9px; height:9px; border-radius:50%; background:var(--crit)}
 .sethead{display:flex; flex-direction:column; gap:6px}
 .sethead h2{font-size:26px; font-stretch:112%}
@@ -353,5 +353,86 @@ input,select,textarea{font-size:16px !important} /* estää iOS-zoomauksen */
 .gear{grid-template-columns:1fr auto auto; gap:8px}
 .chk input{width:22px; height:22px}
 .levelcard{padding:16px}
+
+/* ===== v5 UI ===== */
+/* Header: big on Tänään, thin sticky bar elsewhere */
+.pagetitle{display:none}
+body:not([data-route="tanaan"]) .mast{position:sticky; top:0; z-index:11; margin:-20px -16px 0; padding:calc(8px + env(safe-area-inset-top)) 16px 8px; background:color-mix(in srgb, var(--bg) 88%, transparent); -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px); border-bottom:1px solid var(--line); gap:0}
+body:not([data-route="tanaan"]) .route, body:not([data-route="tanaan"]) .count{display:none}
+body:not([data-route="tanaan"]) .pagetitle{display:block; font-size:22px; font-stretch:112%; font-weight:800; align-self:center}
+body:not([data-route="tanaan"]) .mastrow{align-items:center}
+body:not([data-route="tanaan"]) .gearbtn{width:38px; height:38px}
+body[data-route="asetukset"] .mast{display:none}
+/* Hero */
+.hero{gap:14px; border-width:2px; border-color:color-mix(in srgb, var(--accent) 35%, var(--line))}
+.herotop{display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap}
+.herohead{display:flex; justify-content:space-between; align-items:baseline; gap:8px}
+.hero.other{border-color:var(--line); border-style:dashed}
+.hero.other .wchip{display:none}
+.pill{display:inline-flex; align-items:center; gap:7px; border:0; border-radius:999px; padding:6px 12px; font-weight:700; font-size:14px; background:var(--ok-bg); color:var(--ok)}
+.pill.st-warn{background:var(--warn-bg); color:var(--warn)} .pill.st-crit{background:var(--crit-bg); color:var(--crit)}
+.pill .dot{width:9px; height:9px; background:currentColor}
+.pill .pc{font-weight:400; opacity:.85; padding-left:6px; border-left:1px solid currentColor}
+.pill:disabled{cursor:default; opacity:1}
+.wchip{font-size:13px; color:var(--muted); text-align:right; max-width:60%; line-height:1.3}
+.wchip b{color:var(--warn); display:block; font-weight:700}
+.sess{display:flex; flex-direction:column; gap:10px}
+.sess.extra{border-top:1px dashed var(--line); padding-top:12px}
+.acts{display:flex; flex-direction:column; gap:10px; margin-top:2px}
+.btn.big{width:100%; padding:15px 16px; font-size:17px; border-radius:12px}
+.btn.wide{width:100%}
+.iconacts{display:grid; grid-template-columns:repeat(auto-fit,minmax(64px,1fr)); gap:6px}
+.ia{display:flex; flex-direction:column; align-items:center; gap:2px; border:1px solid var(--line); background:transparent; border-radius:10px; padding:8px 4px; font-size:12px; font-weight:700; color:var(--muted)}
+.ia span{font-size:18px; line-height:1.1; color:var(--ink)}
+.tipline{font-size:13px; color:var(--muted); margin:0 4px; line-height:1.4}
+.status{gap:8px; padding:10px 12px}
+/* Week strip */
+.strip{display:grid; grid-template-columns:repeat(7,1fr); gap:4px}
+.sd{position:relative; display:flex; flex-direction:column; align-items:center; gap:3px; padding:7px 0 8px; border:1px solid transparent; border-radius:10px; background:transparent; min-width:0}
+.sd .dw{font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.04em}
+.sd .dn{font-family:var(--display); font-weight:800; font-size:17px; line-height:1}
+.sd .ty{font-size:10px; font-weight:700; padding:1px 4px; border-radius:4px; max-width:100%; overflow:hidden; text-overflow:clip; white-space:nowrap}
+.sd .mark{width:18px; height:18px; font-size:10px; border-width:1.5px}
+.sd .mark.none{border-color:transparent}
+.sd.today{background:var(--info-bg)}
+.sd.today .dn{color:var(--accent)}
+.sd.sel{border-color:var(--ink)}
+.sd.chg::after{content:""; position:absolute; top:5px; right:6px; width:6px; height:6px; border-radius:50%; background:var(--fell)}
+.sd.empty{opacity:.35}
+.sd .plus{position:absolute; bottom:2px; right:4px; font-style:normal; font-size:9px; font-weight:800; color:var(--muted)}
+#weekList .days{border-top:0}
+/* History by week */
+.wkhead{list-style:none; display:flex; justify-content:space-between; align-items:baseline; padding:14px 2px 4px; font-family:var(--display); font-weight:800; font-size:14px; letter-spacing:.06em; text-transform:uppercase; border-bottom:2px solid var(--ink)}
+.wkhead span, .wkrow span{font-family:var(--body); font-weight:400; text-transform:none; letter-spacing:0; color:var(--muted); font-size:13px; margin-left:8px}
+.wkrow td{font-family:var(--display); font-weight:800; padding-top:12px; border-bottom:2px solid var(--ink)}
+.hcard{padding:8px 2px; gap:8px; grid-template-columns:44px 1fr}
+.hcard .hs{font-size:13px}
+/* Strength accordion */
+.ex{padding:0; gap:0}
+.ex details summary{list-style:none; padding:12px; cursor:pointer}
+.ex details summary::-webkit-details-marker{display:none}
+.ex details summary::after{content:"›"; margin-left:auto; color:var(--muted); font-size:20px; transition:transform .15s}
+.ex details[open] summary::after{transform:rotate(90deg)}
+.exbody{padding:0 12px 12px; display:flex; flex-direction:column; gap:8px}
+.exlist{gap:8px}
+.exlist.active .ex:not(.cur):not(.fin){opacity:.7}
+.ex.cur{border:2px solid var(--accent); box-shadow:0 4px 14px color-mix(in srgb, var(--accent) 18%, transparent)}
+.ex.fin .exn{background:var(--ok)}
+.ex.cur .set{padding:14px 18px; font-size:16px}
+/* Analysis segments */
+.seg{display:grid; grid-template-columns:repeat(3,1fr); gap:4px; padding:4px; background:var(--surface); border:1px solid var(--line); border-radius:12px}
+.seg button{border:0; background:transparent; border-radius:9px; padding:9px 0; font-weight:700; color:var(--muted)}
+.seg button[aria-selected="true"]{background:var(--ink); color:var(--bg)}
+.agroup{display:flex; flex-direction:column; gap:18px}
+.agroup[hidden]{display:none}
+.trend{grid-template-columns:1fr; gap:4px}
+.trend div{flex-direction:row; justify-content:space-between; align-items:baseline}
+/* Tiles: no clipped labels */
+.tile span{font-size:11px; letter-spacing:.04em; hyphens:auto; -webkit-hyphens:auto; overflow-wrap:anywhere; line-height:1.2}
+/* View fade */
+@media (prefers-reduced-motion: no-preference){
+  .view:not([hidden]){animation:vfade .18s ease-out}
+  @keyframes vfade{from{opacity:0; transform:translateY(4px)} to{opacity:1; transform:none}}
+}
 </style>
 </head>

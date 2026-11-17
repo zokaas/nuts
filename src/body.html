@@ -1,23 +1,22 @@
 <body>
 <div class="wrap">
   <header class="mast">
-    <div class="mastrow"><h1 class="route">Hetta <span class="arrow">→</span> Pallas<small>Nuts 66 km · 23.7.2027 · välietappi Belgrad</small></h1>
-      <a href="#asetukset" class="gear" id="gear" aria-label="Asetukset"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg><i class="gdot" id="gearDot" hidden></i></a></div>
+    <div class="mastrow"><h1 class="pagetitle" id="pageTitle"></h1><h1 class="route">Hetta <span class="arrow">→</span> Pallas<small>Nuts 66 km · 23.7.2027 · välietappi Belgrad</small></h1>
+      <a href="#asetukset" class="gearbtn" id="gear" aria-label="Asetukset"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg><i class="gdot" id="gearDot" hidden></i></a></div>
     <div class="count" id="count"></div>
   </header>
 
 
   <div data-view="tanaan" class="view">
-    <section class="status" id="status" aria-live="polite"></section>
-    <div class="weather" id="weather" hidden></div>
-    <section class="card" id="today"></section>
-    <section class="card" id="summary" hidden></section>
-    <section class="card tipcard" id="tip"></section>
-    <section class="card trail" id="trail"></section>
+    <section class="card hero">
+      <div class="herotop"><button class="pill st-ok" id="pill" type="button"></button><span class="wchip" id="weather" hidden></span></div>
+      <div id="today"></div>
+    </section>
+    <section class="status" id="status" aria-live="polite" hidden></section>
     <section class="card" id="week"></section>
-    <section class="card profile"><div class="eyebrow">Reittiprofiili · viikkokilometrit</div><div id="profile"></div>
-      <div class="legend"><span><i style="background:var(--line)"></i>Tavoite</span><span><i style="background:var(--accent)"></i>Juostu</span></div></section>
-    <section class="card"><div class="eyebrow">Tulossa 3 viikon sisällä</div><ul class="up" id="upcoming"></ul></section>
+    <section class="card" id="summary" hidden></section>
+    <section class="card"><div class="eyebrow">Tulossa</div><ul class="up" id="upcoming"></ul></section>
+    <p class="tipline" id="tip"></p>
   </div>
 
   <div data-view="historia" class="view" hidden>
@@ -32,13 +31,22 @@
   </div>
 
   <div data-view="analyysi" class="view" hidden>
-    <section class="card"><div class="eyebrow">Ohjelman muutokset seuraavat 2 viikkoa</div><div id="aAdapt"></div></section>
-    <section class="card"><div class="eyebrow">Viikkokoosteet</div><div id="aWeeks"></div></section>
-    <section class="card"><div class="eyebrow">Kuorma</div><div id="aLoad"></div></section>
-    <section class="card"><div class="eyebrow">Trendit 30 päivää</div><div id="aTrends"></div></section>
-    <section class="card"><div class="eyebrow">Vointi 30 päivää</div><div id="aHealth"></div></section>
-    <section class="card"><div class="eyebrow">Havainnot</div><div id="aInsights"></div></section>
-    <section class="card"><details class="fold"><summary>Näin ohjelma mukautuu</summary>
+    <div class="seg" id="aSeg" role="tablist" aria-label="Analyysi"><button role="tab" data-atab="matka">Matka</button><button role="tab" data-atab="kunto">Kunto</button><button role="tab" data-atab="vointi">Vointi</button></div>
+    <div class="agroup" data-agroup="matka">
+      <section class="card trail" id="trail"></section>
+      <section class="card profile"><div class="eyebrow">Viikkokilometrit</div><div id="profile"></div>
+        <div class="legend"><span><i style="background:var(--line)"></i>Tavoite</span><span><i style="background:var(--accent)"></i>Juostu</span></div></section>
+      <section class="card"><div class="eyebrow">Viikkokoosteet</div><div id="aWeeks"></div></section>
+    </div>
+    <div class="agroup" data-agroup="kunto" hidden>
+      <section class="card"><div class="eyebrow">Kuorma</div><div id="aLoad"></div></section>
+      <section class="card"><div class="eyebrow">Trendit 30 päivää</div><div id="aTrends"></div></section>
+      <section class="card"><div class="eyebrow">Havainnot</div><div id="aInsights"></div></section>
+    </div>
+    <div class="agroup" data-agroup="vointi" hidden>
+      <section class="card"><div class="eyebrow">Vointi 30 päivää</div><div id="aHealth"></div></section>
+      <section class="card"><div class="eyebrow">Ohjelman muutokset 2 vk</div><div id="aAdapt"></div></section>
+      <section class="card"><details class="fold"><summary>Näin ohjelma mukautuu</summary>
       <ul class="ins">
         <li><b>Sairas:</b> sinä ja seuraava päivä lepoa, sitten kevyt paluu (50 → 75 %, ei vetoja). Paluu kestää kaksi kertaa niin monta päivää kuin sairastit, 3–10 pv.</li>
         <li><b>Kova kipu tai kipua 2 päivänä:</b> 3 päivää ilman juoksua (spinning tai kävely, jos kivutonta), sitten 50 % ilman vetoja.</li>
@@ -47,6 +55,7 @@
         <li><b>3 treeniä väliin viikossa:</b> seuraava viikko 80 %.</li>
         <li>Kisapäiviä ei koskaan muuteta. Mukautuksen voi ohittaa päiväkohtaisesti valinnalla "Palauta alkuperäinen".</li>
       </ul></details></section>
+    </div>
   </div>
 
 
