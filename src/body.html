@@ -37,6 +37,7 @@
       <section class="card profile"><div class="eyebrow">Viikkokilometrit</div><div id="profile"></div>
         <div class="legend"><span><i style="background:var(--line)"></i>Tavoite</span><span><i style="background:var(--accent)"></i>Juostu</span></div></section>
       <section class="card"><div class="eyebrow">Viikkokoosteet</div><div id="aWeeks"></div></section>
+      <a href="#merkit" class="card linkcard"><span>🏅 Taso ja merkit</span><span aria-hidden="true">›</span></a>
     </div>
     <div class="agroup" data-agroup="kunto" hidden>
       <section class="card"><div class="eyebrow">Kuorma</div><div id="aLoad"></div></section>
@@ -156,6 +157,12 @@
       <p class="tip">Matka Pallakselle · <a class="link" href="https://github.com/zokaas/nuts" target="_blank" rel="noopener">GitHub</a></p>
     </section>
   </div>
+  <div data-view="kalenteri" class="view" hidden>
+    <div class="calbar"><div class="filters" id="calFilters" role="group" aria-label="Korosta"><button data-cf="all">Kaikki</button><button data-cf="run">Juoksut</button><button data-cf="key">Pitkät, testit, kisat</button></div><button class="btn small" id="calNow">Tämä viikko</button></div>
+    <div class="calhead" aria-hidden="true"><span></span><span>ma</span><span>ti</span><span>ke</span><span>to</span><span>pe</span><span>la</span><span>su</span></div>
+    <div id="calBody" class="calbody"></div>
+    <p class="tipline">Napauta päivää: se avautuu Tänään-näkymään, jossa voit kirjata, siirtää tai muokata sitä.</p>
+  </div>
   <div data-view="merkit" class="view" hidden>
     <section class="card levelcard" id="level"></section>
     <section class="card"><div class="weekhead"><h2>Merkit</h2><span class="tip" id="badgeCount"></span></div><div class="badges" id="badgeGrid"></div></section>
@@ -207,7 +214,7 @@
     <div class="sheet-foot"><button class="btn primary" id="edSave">Tallenna</button><button class="btn ghost" id="edCancel">Peruuta</button><button class="btn ghost" id="edClear">Tyhjennä</button></div>
   </div>
 </div>
-<nav class="tabs" aria-label="Näkymät"><a href="#tanaan"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg><span>Tänään</span></a><a href="#historia"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg><span>Historia</span></a><a href="#analyysi"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20l5-7 4 4 5-9 4 6"/></svg><span>Analyysi</span></a><a href="#opas"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h9a3 3 0 013 3v13H9a3 3 0 01-3-3z"/><path d="M6 17a3 3 0 013-3h9"/></svg><span>Opas</span></a><a href="#merkit"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9" r="5"/><path d="M8.5 13l-1.5 8 5-2.5 5 2.5-1.5-8"/></svg><span>Merkit</span></a></nav>
+<nav class="tabs" aria-label="Näkymät"><a href="#tanaan"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg><span>Tänään</span></a><a href="#kalenteri"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/><path d="M8 14h2M14 14h2M8 17h2"/></svg><span>Kalenteri</span></a><a href="#historia"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg><span>Historia</span></a><a href="#analyysi"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20l5-7 4 4 5-9 4 6"/></svg><span>Analyysi</span></a><a href="#opas"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h9a3 3 0 013 3v13H9a3 3 0 01-3-3z"/><path d="M6 17a3 3 0 013-3h9"/></svg><span>Opas</span></a></nav>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <div class="restbar" id="restBar" hidden><span id="restTxt">Lepo</span><div class="track"><div class="fill" id="restFill"></div></div><button class="btn small" id="restSkip">Ohita</button></div>
 <canvas id="fx" hidden aria-hidden="true"></canvas>
