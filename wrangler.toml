@@ -6,6 +6,11 @@ workers_dev = true
 # Säilytä Cloudflaren hallintapaneelissa asetetut muuttujat (APP_URL, STRAVA_CLIENT_ID).
 keep_vars = true
 
+# Pilvivarmuuskopio ja ilmoitukset (Cloudflare KV -tallennustila "nuts")
+kv_namespaces = [
+  { binding = "PALLAS_KV", id = "259e45908cd6462e8c93b56b5b6eead8" }
+]
+
 [vars]
 APP_URL = "https://zokaas.github.io/nuts/"
 STRAVA_CLIENT_ID = "298237"
