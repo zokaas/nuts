@@ -588,6 +588,7 @@ body.maint .hero, body.maint #week, body.maint #status, body.maint #summary, bod
 .daypick button{border:1px solid var(--line); background:transparent; border-radius:8px; padding:8px 0; font-weight:700; color:var(--muted)}
 .daypick button[aria-pressed="true"]{background:var(--ink); color:var(--bg); border-color:var(--ink)}
 .ins .muted{color:var(--muted)}
+.habday{font-family:var(--display); font-stretch:110%; font-size:16px} .habday.past{color:var(--fell)}
 </style>
 </head>
 <body>
@@ -1680,18 +1681,17 @@ function habFirst(h){ return idxOfISO(((h.sched||[])[0]||{}).from||isoOfIdx(0));
 function habStreak(h,i){ return flexStreak(habEvents(h,habFirst(h),i),weekOf(i)).cur; }
 function habFlexNow(h,i){ return flexStreak(habEvents(h,habFirst(h),i),weekOf(i)).flexNow; }
 function habWeek(h,i){ const a0=(weekOf(i)-1)*7-1; let n=0; for(let k=a0;k<=a0+6;k++) if(habDone(h.id,k)) n++; return n; }
-let habDay=null;
-function renderHabits(ti){ const el=$("habits"); if(!el) return; const i=habDay??ti; const hs=habits().map(h=>({h,on:habitOn(h,i)})).filter(x=>x.on);
-  if(!hs.length){ el.hidden=true; return; } el.hidden=false;
+function renderHabits(ti){ const el=$("habits"); if(!el) return; const i=selDay==null?ti:selDay; if(i>ti){ el.hidden=true; return; } const hs=habits().map(h=>({h,on:habitOn(h,i)})).filter(x=>x.on);
+  if(!hs.length){ el.hidden=true; return; } el.hidden=false; const yHas=ti>0&&habits().some(h=>habitOn(h,ti-1)); const dayLbl= i===ti?`Tänään · ${fmt(i)}`: i===ti-1?`Eilen · ${fmt(i)}`: fmt(i);
   const order={aamu:0,"päivä":1,ilta:2}; hs.sort((a,b)=>order[a.h.when]-order[b.h.when]);
   const done=hs.filter(x=>habDone(x.h.id,i)).length, need=hs.filter(x=>!x.on.opt).length, needDone=hs.filter(x=>!x.on.opt&&habDone(x.h.id,i)).length;
-  el.innerHTML=`<div class="habhead"><div class="eyebrow">Tavat${i!==ti?` · ${fmt(i)}`:""}</div><span class="habcount${needDone>=need?" ok":""}">${needDone>=need?"✓ ":""}${needDone}/${need}</span></div>
+  el.innerHTML=`<div class="habhead"><div><div class="eyebrow">Tavat</div><b class="habday${i!==ti?" past":""}">${dayLbl}</b></div><span class="habcount${needDone>=need?" ok":""}">${needDone>=need?"✓ ":""}${needDone}/${need}</span></div>
     <ul class="hablist">${hs.map(({h,on})=>{ const d=habDone(h.id,i); const st=habStreak(h,i); const wk=h.week?`${habWeek(h,i)}/${h.week} tällä viikolla`:(st>=2?`🔥 ${st} pv putkeen${habFlexNow(h,i)?" · 🛟 joustopäivä käytetty":""}`:"");
       return `<li><button class="hab${d?" done":""}${on.opt?" opt":""}" data-hab="${h.id}" data-hi="${i}" aria-pressed="${d}"><span class="hk" aria-hidden="true">${d?"✓":""}</span><span class="hi" aria-hidden="true">${h.ic}</span><span class="ht"><b>${esc(h.name)}${on.opt?` <small>valinnainen</small>`:""}</b>${on.n?`<small>${esc(on.n)}</small>`:""}${wk?`<small class="hs">${wk}</small>`:""}</span></button></li>`; }).join("")}</ul>
-    ${i!==ti?`<button class="link" data-habday="">‹ Tänään</button>`:`<button class="link" data-habday="${ti-1}">Kirjaa eiliselle</button>`}`; }
+    ${i!==ti?`<button class="link" data-seltoday>‹ Takaisin tähän päivään</button>`:yHas?`<button class="link" data-sel="${ti-1}">Unohtuiko eilen? Merkitse eilisen tavat</button>`:""}`; }
 document.addEventListener("click",e=>{ const b=e.target.closest("[data-hab]"); if(b){ const id=b.dataset.hab, i=+b.dataset.hi, d=isoOfIdx(i); meta.hab=meta.hab||{}; const r=meta.hab[d]=meta.hab[d]||{}; if(r[id]) delete r[id]; else { r[id]=1; if(navigator.vibrate) navigator.vibrate(10); } if(!Object.keys(r).length) delete meta.hab[d];
     persist(); renderHabits(todayIdx()); renderCount(todayIdx(),stats(),badges(stats())); const all=habits().filter(h=>{ const on=habitOn(h,i); return on&&!on.opt; }); if(r[id]&&all.every(h=>habDone(h.id,i))){ celebrate(); toast("Päivän tavat tehty ✓ +5 XP bonus"); } else if(r[id]) toast("+2 XP"); return; }
-  const hd=e.target.closest("[data-habday]"); if(hd){ habDay= hd.dataset.habday===""?null:+hd.dataset.habday; renderHabits(todayIdx()); } });
+});
 function habGridHTML(ti){ const hs=habits(); if(!hs.length) return `<p class="note">Ei tapoja.</p>`; const N=28, a=ti-N+1;
   return hs.map(h=>{ let req=0, ok=0; const cells=[]; const f0=idxOfISO(((h.sched||[])[0]||{}).from||isoOfIdx(a)); for(let i=Math.max(a,f0);i<=ti;i++){ const on=habitOn(h,i); const d=habDone(h.id,i); if(on&&!on.opt){ req++; if(d) ok++; } cells.push(`<i class="${d?"y":on?(on.opt?"o":(i===ti?"t":"n")):"x"}" title="${fmt(i)}"></i>`); }
     return `<div class="hgrow"><div class="hgh"><span>${h.ic} ${esc(h.name)}</span><span class="num">${req?Math.round(ok/req*100):0} %</span></div><div class="hgrid">${cells.join("")}</div></div>`; }).join("")+`<p class="tip">Viimeiset 4 viikkoa. Vihreä = tehty, harmaa = jäi, tyhjä = ei ohjelmassa.</p>`; }
