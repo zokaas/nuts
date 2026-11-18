@@ -593,6 +593,16 @@ body.maint .hero, body.maint #week, body.maint #status, body.maint #summary, bod
 .hic{font-size:11px} .hic.opt{opacity:.45} .hic.done{filter:grayscale(1); opacity:.5}
 .cc .hics{min-height:12px; line-height:12px} .cc .hic{font-size:10px}
 .hab.fut{opacity:.8; cursor:default} .hab.fut .hk{border-style:dashed}
+.btab{width:100%; border-collapse:collapse; font-size:15px; table-layout:fixed}
+.btab th{text-align:left; font-size:12px; color:var(--muted); font-weight:700; padding:4px} .btab th small{display:block; font-weight:400}
+.btab tbody th{color:var(--ink); font-size:14px} .btab td{padding:6px 4px; border-top:1px solid var(--line)} .btab td.neg{color:var(--warn); font-weight:700} .btab td.u{color:var(--muted); font-size:12px}
+.grid3{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px}
+.bform{display:flex; flex-direction:column; gap:8px; border-top:1px solid var(--line); padding-top:10px}
+.hablist li{display:flex; flex-direction:column; gap:4px} .bgo{align-self:flex-start; margin-left:44px; font-size:14px}
+.bgrid{display:grid; grid-template-columns:1.4fr 1fr 1fr 1fr; gap:0; font-size:15px}
+.bgrid > *{padding:7px 4px; border-top:1px solid var(--line)} .bgrid > b{border-top:0; font-size:12px; color:var(--muted)} .bgrid b small{display:block; font-weight:400}
+.bgrid .bl{font-weight:700; font-size:14px} .bgrid .bl small{display:block; font-weight:400; color:var(--muted); font-size:11px} .bgrid .neg{color:var(--warn); font-weight:800}
+.hmv{display:flex; flex-wrap:wrap; gap:6px; margin-left:44px}
 </style>
 </head>
 <body>
@@ -648,6 +658,7 @@ body.maint .hero, body.maint #week, body.maint #status, body.maint #summary, bod
       <section class="card"><div class="eyebrow">Havainnot</div><div id="aInsights"></div></section>
     </div>
     <div class="agroup" data-agroup="vointi" hidden>
+      <section class="card"><div class="eyebrow">Verikoearvot</div><div id="aBlood"></div></section>
       <section class="card"><div class="eyebrow">Tavat</div><div id="aHab"></div></section>
       <section class="card"><div class="eyebrow">Tavat ja vointi</div><div id="aHabIns"></div></section>
       <section class="card"><div class="eyebrow">Vointi 30 päivää</div><div id="aHealth"></div></section>
@@ -1118,7 +1129,7 @@ function render(){
   BASE = buildBase(); ADAPT = buildAdapt(BASE, logs, adjOff, ti);
   const r=route(); document.body.dataset.route=r; $("pageTitle").textContent=TITLES[r]||""; document.querySelectorAll("[data-view]").forEach(v=>v.hidden=v.dataset.view!==r);
   document.querySelectorAll(".tabs a").forEach(a=>a.setAttribute("aria-current",a.getAttribute("href")==="#"+r?"page":"false"));
-  const st=stats(), bs=badges(st); const ws=computeWarnings(BASE,logs,ADAPT,ti).concat(eventWarnings(ti)).concat(cpWarnings(ti)); checkCont30();
+  const st=stats(), bs=badges(st); const ws=computeWarnings(BASE,logs,ADAPT,ti).concat(eventWarnings(ti)).concat(cpWarnings(ti)).concat(bloodWarnings()); checkCont30();
   renderCount(ti,st,bs);
   if(r==="tanaan"){ renderHabits(ti); renderMaint(); renderRaceWeek(ti); renderStatus(ws); renderToday(t,ti); renderTip(t); renderSummary(ti); renderWeek(t); renderUpcoming(t); }
   if(r==="historia"){ renderHistory(st); }
@@ -1389,7 +1400,7 @@ function renderAnalysis(ti,st,t0){
   const lr=loadRatio(BASE,logs,ti); const lw=weekOf(ti)-1; const last4=[]; for(let w=Math.max(1,lw-3);w<=Math.max(1,lw);w++) last4.push([w,weekKm(BASE,logs,w),TARGET[w-1]]);
   const comp = last4.length? Math.round(last4.reduce((a,x)=>a+x[1],0)/Math.max(1,last4.reduce((a,x)=>a+x[2],0))*100):0;
   const elevW=w=>{ const [a,z]=weekRange(w); let s2=0; for(const k in logs){ const i=idxOfISO(k); if(i>=a&&i<=z&&logs[k].status==="done"&&typeof logs[k].elev==="number") s2+=logs[k].elev; } return Math.round(s2); };
-  $("aHab").innerHTML=habGridHTML(Math.max(0,ti)); $("aHabIns").innerHTML=habitInsights(Math.max(0,ti));
+  $("aBlood").innerHTML=bloodHTML(); $("aHab").innerHTML=habGridHTML(Math.max(0,ti)); $("aHabIns").innerHTML=habitInsights(Math.max(0,ti));
   $("aPred").innerHTML=predictionHTML(ti,true); $("aPredT").textContent=bHalf()?"Puolimaratonin aika-arvio":"Belgradin aika-arvio"; $("aCont").innerHTML=contHTML(ti); $("aCps").innerHTML=cpHTML(ti);
   $("aLoad").innerHTML=`<div class="tiles"><div class="tile"><span>Nousu tällä vk</span><b class="num">${elevW(weekOf(ti))} m</b></div><div class="tile"><span>Nousu viime vk</span><b class="num">${elevW(Math.max(1,weekOf(ti)-1))} m</b></div><div class="tile"><span>Toteuma 4 vk</span><b class="num">${comp} %</b></div><div class="tile"><span>Kuorma&shy;suhde</span><b class="num">${lr?String(Math.round(lr.ratio*100)/100).replace(".",","):"–"}</b></div><div class="tile"><span>7 pv km</span><b class="num">${lr?lr.acute:"–"}</b></div></div>
     <p class="tip">${lr? (lr.ratio>1.5?"Kuorma nousi viime viikolla jyrkästi suhteessa edellisiin viikkoihin. Pidä seuraavat päivät kevyinä.": lr.ratio<0.8?"Viime viikko oli kevyempi kuin edelliset. Hyvä palautumiseen, mutta älä jää pitkäksi aikaa alas.":"Kuorma nousee tasaisesti. Juuri näin pitääkin."):"Kuormasuhde (7 pv / 4 vk keskiarvo) näkyy, kun kirjauksia on 3 viikolta. Turvallinen alue 0,8–1,3."}</p>`;
@@ -1683,7 +1694,9 @@ const HABIT_DEFAULT=[
 function habits(){ if(!meta.habits){ meta.habits=JSON.parse(JSON.stringify(HABIT_DEFAULT)); meta.hab=meta.hab||{}; meta.habMig=3; persist(); }
   if((meta.habMig||0)<2){ meta.habits=meta.habits.filter(h=>h.id!=="letti"&&h.id!=="kampa"); meta.habMig=2; persist(); }
   if((meta.habMig||0)<3){ for(const h of HABIT_V3) if(!meta.habits.some(x=>x.id===h.id)) meta.habits.push(JSON.parse(JSON.stringify(h))); meta.habMig=3; persist(); } return meta.habits.filter(h=>!h.off); }
-function habitOn(h,i){ const d=isoOfIdx(i), w=dow(i); const sc=(h.sched||[]).find(x=>x.from<=d&&(!x.to||d<=x.to)); if(!sc) return null;
+function habitOn(h,i){ if(h.task||!meta.habMove||!meta.habMove[h.id]) return habitOnBase(h,i); const d=isoOfIdx(i), mv=meta.habMove[h.id]; if(mv[d]) return null;
+  for(const f in mv) if(mv[f]===d){ const b=habitOnBase(h,idxOfISO(f)); if(b) return {...b,n:(b.n?b.n+" · ":"")+`siirretty ${fmt(idxOfISO(f))}`,moved:f}; } return habitOnBase(h,i); }
+function habitOnBase(h,i){ const d=isoOfIdx(i), w=dow(i); const sc=(h.sched||[]).find(x=>x.from<=d&&(!x.to||d<=x.to)); if(!sc) return null;
   if(h.task){ const H=meta.hab||{}; for(const k in H){ if(k>=sc.from&&k<d&&H[k][h.id]) return null; } return {n:h.note||"",opt:false,task:true,sc}; } if(sc.days==="all") return {n:"",opt:false,sc}; const x=sc.days[w]; return x?{...x,sc}:null; }
 function habIcons(i){ if(!meta.habits) return ""; return meta.habits.filter(h=>!h.off&&!h.task).map(h=>({h,on:habitOn(h,i)})).filter(x=>x.on&&x.on.sc.days!=="all").map(x=>`<span class="hic${x.on.opt?" opt":""}${habDone(x.h.id,i)?" done":""}" title="${esc(x.h.name)}">${x.h.ic}</span>`).join(""); }
 function habDone(id,i){ const r=(meta.hab||{})[isoOfIdx(i)]; return !!(r&&r[id]); }
@@ -1692,16 +1705,18 @@ function habFirst(h){ return idxOfISO(((h.sched||[])[0]||{}).from||isoOfIdx(0));
 function habStreak(h,i){ return flexStreak(habEvents(h,habFirst(h),i),weekOf(i)).cur; }
 function habFlexNow(h,i){ return flexStreak(habEvents(h,habFirst(h),i),weekOf(i)).flexNow; }
 function habWeek(h,i){ const a0=(weekOf(i)-1)*7-1; let n=0; for(let k=a0;k<=a0+6;k++) if(habDone(h.id,k)) n++; return n; }
+let habMoveOpen=null;
+function habMoveTargets(h,i){ const out=[]; for(let k=i+1;k<=i+6&&out.length<5;k++){ const ex=habitOn(h,k); if(ex&&!ex.opt) continue; out.push(k); } return out; }
 function renderHabits(ti){ const el=$("habits"); if(!el) return; const i=selDay==null?ti:selDay; const fut=i>ti; const hs=habits().map(h=>({h,on:habitOn(h,i)})).filter(x=>x.on);
   if(!hs.length){ el.hidden=true; return; } el.hidden=false; const yHas=ti>0&&habits().some(h=>habitOn(h,ti-1)); const dayLbl= i===ti?`Tänään · ${fmt(i)}`: i===ti-1?`Eilen · ${fmt(i)}`: i===ti+1?`Huomenna · ${fmt(i)}`: fmt(i);
   const order={aamu:0,"päivä":1,ilta:2}; hs.sort((a,b)=>order[a.h.when]-order[b.h.when]);
   const need=hs.filter(x=>!x.on.opt&&!x.h.task).length, needDone=hs.filter(x=>!x.on.opt&&!x.h.task&&habDone(x.h.id,i)).length;
   el.innerHTML=`<div class="habhead"><div><div class="eyebrow">Tavat${fut?" · tulossa":""}</div><b class="habday${i!==ti?" past":""}">${dayLbl}</b></div>${need&&!fut?`<span class="habcount${needDone>=need?" ok":""}">${needDone>=need?"✓ ":""}${needDone}/${need}</span>`:""}</div>
-    <ul class="hablist">${hs.map(({h,on})=>{ const d=habDone(h.id,i); const st=habStreak(h,i); const wk=fut?"":h.task?(d?"Tehty ✓":"Tehtävä · näkyy, kunnes tehty"):h.week?`${habWeek(h,i)}/${h.week} tällä viikolla`:(st>=2?`🔥 ${st} pv putkeen${habFlexNow(h,i)?" · 🛟 joustopäivä käytetty":""}`:"");
-      return `<li><button class="hab${d?" done":""}${on.opt?" opt":""}${fut?" fut":""}" ${fut?"disabled":`data-hab="${h.id}" data-hi="${i}"`} aria-pressed="${d}"><span class="hk" aria-hidden="true">${d?"✓":""}</span><span class="hi" aria-hidden="true">${h.ic}</span><span class="ht"><b>${esc(h.name)}${on.opt?` <small>valinnainen</small>`:""}</b>${on.n?`<small>${esc(on.n)}</small>`:""}${wk?`<small class="hs">${wk}</small>`:""}</span></button></li>`; }).join("")}</ul>
+    <ul class="hablist">${hs.map(({h,on})=>{ const d=habDone(h.id,i); const st=habStreak(h,i); const bv=h.task&&(meta.blood||{})[h.id]; const wk=fut?"":h.task?(d?(bv?`Ferritiini ${bv.ferr??"–"} · Hb ${bv.hb??"–"}`:"Tehty ✓"):"Tehtävä · näkyy, kunnes tehty"):h.week?`${habWeek(h,i)}/${h.week} tällä viikolla`:(st>=2?`🔥 ${st} pv putkeen${habFlexNow(h,i)?" · 🛟 joustopäivä käytetty":""}`:"");
+      return `<li><button class="hab${d?" done":""}${on.opt?" opt":""}${fut?" fut":""}" ${fut?"disabled":`data-hab="${h.id}" data-hi="${i}"`} aria-pressed="${d}"><span class="hk" aria-hidden="true">${d?"✓":""}</span><span class="hi" aria-hidden="true">${h.ic}</span><span class="ht"><b>${esc(h.name)}${on.opt?` <small>valinnainen</small>`:""}</b>${on.n?`<small>${esc(on.n)}</small>`:""}${wk?`<small class="hs">${wk}</small>`:""}</span></button>${!h.task&&!d&&on.sc.days!=="all"?(on.moved?`<button class="link bgo" data-hmvundo="${h.id}:${on.moved}">↺ Peru siirto</button>`:habMoveOpen===h.id+":"+i?`<div class="hmv">${habMoveTargets(h,i).map(k=>`<button class="btn small" data-hmv="${h.id}:${isoOfIdx(i)}:${isoOfIdx(k)}">${k===i+1?"Huomenna":DOW[dow(k)]+" "+new Date(START_UTC+k*864e5).getUTCDate()+"."}</button>`).join("")}<button class="btn small ghost" data-hmvopen="">Peruuta</button></div>`:`<button class="link bgo" data-hmvopen="${h.id}:${i}">→ Siirrä toiselle päivälle</button>`):""}${h.task&&d&&!fut?`<button class="link bgo" data-bgo="${h.id}">${(meta.blood||{})[h.id]?"Muokkaa arvoja":"＋ Kirjaa ferritiini ja hemoglobiini"}</button>`:""}</li>`; }).join("")}</ul>
     ${i!==ti?`<button class="link" data-seltoday>‹ Takaisin tähän päivään</button>`:yHas?`<button class="link" data-sel="${ti-1}">Unohtuiko eilen? Merkitse eilisen tavat</button>`:""}`; }
 document.addEventListener("click",e=>{ const b=e.target.closest("[data-hab]"); if(b){ const id=b.dataset.hab, i=+b.dataset.hi, d=isoOfIdx(i); meta.hab=meta.hab||{}; const r=meta.hab[d]=meta.hab[d]||{}; if(r[id]) delete r[id]; else { r[id]=1; if(navigator.vibrate) navigator.vibrate(10); } if(!Object.keys(r).length) delete meta.hab[d];
-    persist(); renderHabits(todayIdx()); renderCount(todayIdx(),stats(),badges(stats())); const all=habits().filter(h=>{ if(h.task) return false; const on=habitOn(h,i); return on&&!on.opt; }); if(r[id]&&all.every(h=>habDone(h.id,i))){ celebrate(); toast("Päivän tavat tehty ✓ +5 XP bonus"); } else if(r[id]) toast(meta.habits.find(x=>x.id===id)?.task?"Tehtävä kuitattu ✓ +2 XP":"+2 XP"); return; }
+    persist(); renderHabits(todayIdx()); renderCount(todayIdx(),stats(),badges(stats())); const all=habits().filter(h=>{ if(h.task) return false; const on=habitOn(h,i); return on&&!on.opt; }); if(r[id]&&all.every(h=>habDone(h.id,i))){ celebrate(); toast("Päivän tavat tehty ✓ +5 XP bonus"); } else if(r[id]){ const tk=meta.habits.find(x=>x.id===id)?.task; if(tk&&/^veri/.test(id)) toast("Verikoe kuitattu ✓ +2 XP",{l:"Kirjaa arvot",fn:()=>{ anaTab="vointi"; bloodEdit=id; location.hash="#analyysi"; }}); else toast(tk?"Tehtävä kuitattu ✓ +2 XP":"+2 XP"); } return; }
 });
 function habGridHTML(ti){ const hs=habits().filter(h=>!h.task); if(!hs.length) return `<p class="note">Ei tapoja.</p>`; const N=28, a=ti-N+1;
   return hs.map(h=>{ let req=0, ok=0; const cells=[]; const f0=idxOfISO(((h.sched||[])[0]||{}).from||isoOfIdx(a)); for(let i=Math.max(a,f0);i<=ti;i++){ const on=habitOn(h,i); const d=habDone(h.id,i); if(on&&!on.opt){ req++; if(d) ok++; } cells.push(`<i class="${d?"y":on?(on.opt?"o":(i===ti?"t":"n")):"x"}" title="${fmt(i)}"></i>`); }
@@ -1717,7 +1732,35 @@ $("habAdd").onclick=()=>{ const name=$("habName").value.trim().slice(0,50); if(!
   meta.habits.push({id:"h"+Date.now().toString(36),ic:$("habIc").value.trim()||"✅",name,when:$("habWhen").value,sched:[{from:isoOfIdx(Math.max(0,todayIdx())),days:sc}]});
   persist(); $("habName").value=""; $("habIc").value=""; document.querySelectorAll("#habDays button").forEach(b=>b.setAttribute("aria-pressed","false")); renderHabitSettings(); toast(`Lisätty: ${name}`); };
 $("habDays").onclick=e=>{ const b=e.target.closest("[data-hd]"); if(b) b.setAttribute("aria-pressed",String(b.getAttribute("aria-pressed")!=="true")); };
-function restoreExtras(d){ if(d.habits&&!meta.habits) meta.habits=d.habits; if(d.hab){ meta.hab=meta.hab||{}; for(const k in d.hab) meta.hab[k]={...d.hab[k],...(meta.hab[k]||{})}; } if(d.bGoal&&!meta.bGoal) meta.bGoal=d.bGoal; if(d.rck&&!meta.rck) meta.rck=d.rck; }
+function restoreExtras(d){ if(d.habits&&!meta.habits) meta.habits=d.habits; if(d.hab){ meta.hab=meta.hab||{}; for(const k in d.hab) meta.hab[k]={...d.hab[k],...(meta.hab[k]||{})}; } if(d.bGoal&&!meta.bGoal) meta.bGoal=d.bGoal; if(d.rck&&!meta.rck) meta.rck=d.rck; if(d.blood) meta.blood={...d.blood,...(meta.blood||{})}; if(d.habMove&&!meta.habMove) meta.habMove=d.habMove; }
+
+document.addEventListener("click",e=>{ const o=e.target.closest("[data-hmvopen]"); if(o){ habMoveOpen=o.dataset.hmvopen||null; renderHabits(todayIdx()); return; }
+  const m=e.target.closest("[data-hmv]"); if(m){ const [id,from,to]=m.dataset.hmv.split(":"); meta.habMove=meta.habMove||{}; const mv=meta.habMove[id]=meta.habMove[id]||{};
+    const orig=Object.keys(mv).find(f=>mv[f]===from)||from; mv[orig]=to; if(orig===to) delete mv[orig]; habMoveOpen=null; persist(); render(); const h=meta.habits.find(x=>x.id===id); toast(`${h.ic} ${h.name} siirretty: ${fmt(idxOfISO(to))}`,{l:"Peru",fn:()=>{ if(orig===from) delete mv[orig]; else mv[orig]=from; persist(); render(); }}); return; }
+  const u=e.target.closest("[data-hmvundo]"); if(u){ const [id,f]=u.dataset.hmvundo.split(":"); delete meta.habMove[id][f]; persist(); render(); toast("Siirto peruttu."); } });
+
+/* ===== Verikoearvot ===== */
+const BLOOD=[["veri1","Marraskuu"],["veri2","Helmikuu"]];
+let bloodEdit=null;
+function bloodHTML(){ const B=meta.blood||{}; const a=B.veri1, b=B.veri2; const f=(o,k)=>o&&typeof o[k]==="number"?o[k]:null;
+  const row=(lbl,k,u)=>{ const x=f(a,k), y=f(b,k); const d=x!=null&&y!=null?y-x:null; return `<span class="bl">${lbl}<small>${u}</small></span><span class="num">${x??"–"}</span><span class="num">${y??"–"}</span><span class="num${d!=null&&d<0&&k!=="crp"?" neg":""}">${d==null?"":(d>0?"+":"")+n1(d)}</span>`; };
+  const form=id=>{ const o=B[id]||{}; return `<div class="bform"><div class="grid3"><div class="field"><label for="bF">Ferritiini (µg/l)</label><input id="bF" inputmode="decimal" value="${o.ferr??""}"></div><div class="field"><label for="bH">Hemoglobiini (g/l)</label><input id="bH" inputmode="numeric" value="${o.hb??""}"></div><div class="field"><label for="bC">CRP (valinn.)</label><input id="bC" inputmode="decimal" value="${o.crp??""}"></div></div><div class="field"><label for="bD">Näytteenottopäivä</label><input type="date" id="bD" value="${o.date||isoOfIdx(Math.max(0,todayIdx()))}"></div><div class="row"><button class="btn primary small" data-bsave="${id}">Tallenna</button><button class="btn ghost small" data-bcancel>Peruuta</button></div></div>`; };
+  return `<div class="bgrid"><b></b><b>Marras${a&&a.date?`<small>${fmtShort(idxOfISO(a.date))}</small>`:""}</b><b>Helmi${b&&b.date?`<small>${fmtShort(idxOfISO(b.date))}</small>`:""}</b><b>Muutos</b>${row("Ferritiini","ferr","µg/l")}${row("Hemoglobiini","hb","g/l")}${(f(a,"crp")!=null||f(b,"crp")!=null)?row("CRP","crp","mg/l"):""}</div>
+    ${bloodEdit?form(bloodEdit):`<div class="row">${BLOOD.map(([id,l])=>`<button class="btn small" data-bedit="${id}">${(B[id]?"Muokkaa ":"Kirjaa ")+l.toLowerCase()+"n arvot"}</button>`).join("")}</div>`}
+    ${bloodNotes().map(x=>`<p class="tip">${x}</p>`).join("")}<p class="tip">Ferritiini nousee tulehduksessa, joten flunssassa tai kovan treenin jälkeen otettu arvo voi näyttää todellista paremmalta. Tulkinta: lääkäri.</p>`; }
+function bloodNotes(){ const B=meta.blood||{}, a=B.veri1, b=B.veri2, out=[];
+  const last=b&&b.ferr!=null?b:a; if(last&&typeof last.ferr==="number"&&last.ferr<30) out.push(`⚠️ Ferritiini ${n1(last.ferr)} µg/l on alle 30, jota käytetään yleisesti raudanpuutteen rajana. Keskustele lääkärin kanssa raudasta.`);
+  if(a&&b&&typeof a.ferr==="number"&&typeof b.ferr==="number"&&b.ferr<=a.ferr*0.7) out.push(`⚠️ Ferritiini laski ${n1(a.ferr)} → ${n1(b.ferr)} µg/l (${Math.round((1-b.ferr/a.ferr)*100)} %). Treenimäärän kasvu kuluttaa rautavarastoja.`);
+  if(a&&b&&typeof a.hb==="number"&&typeof b.hb==="number"&&a.hb-b.hb>=10) out.push(`⚠️ Hemoglobiini laski ${a.hb} → ${b.hb} g/l.`);
+  return out; }
+function bloodWarnings(){ return bloodNotes().length?[{level:"warn",title:"Verikoe: ferritiini vaatii huomiota",detail:bloodNotes().join(" ").replace(/⚠️ /g,"")+" Katso Analyysi → Vointi."}]:[]; }
+document.addEventListener("click",e=>{ const ed=e.target.closest("[data-bedit]"); if(ed){ bloodEdit=ed.dataset.bedit; $("aBlood").innerHTML=bloodHTML(); setTimeout(()=>$("bF").focus(),30); return; }
+  if(e.target.closest("[data-bcancel]")){ bloodEdit=null; $("aBlood").innerHTML=bloodHTML(); return; }
+  const sv=e.target.closest("[data-bsave]"); if(sv){ const num=id=>{ const v=parseFloat($(id).value.replace(",",".")); return isFinite(v)&&v>0?v:null; }; const o={ferr:num("bF"),hb:num("bH"),crp:num("bC"),date:$("bD").value||null};
+    if(o.ferr==null&&o.hb==null){ toast("Kirjaa vähintään ferritiini tai hemoglobiini."); return; } if(o.hb!=null&&o.hb<50) o.hb=Math.round(o.hb*10); // g/dl → g/l
+    meta.blood=meta.blood||{}; meta.blood[sv.dataset.bsave]=o; meta.hab=meta.hab||{}; const d=o.date||isoOfIdx(todayIdx()); (meta.hab[d]=meta.hab[d]||{})[sv.dataset.bsave]=1;
+    bloodEdit=null; persist(); render(); toast(bloodNotes().length?"Tallennettu. Katso huomio.":"Verikoearvot tallennettu ✓"); return; }
+  const go=e.target.closest("[data-bgo]"); if(go){ anaTab="vointi"; bloodEdit=go.dataset.bgo; location.hash="#analyysi"; setTimeout(()=>{ const el=$("aBlood"); if(el) el.scrollIntoView({behavior:"smooth",block:"center"}); },120); } });
 
 /* ===== Menot ja suunnitelmat ===== */
 let evKind="note";
@@ -2023,7 +2066,7 @@ function weeksStatus(){ const t=Math.max(0,todayIdx()), w=weekOf(t), o={}; for(c
 function upcomingStatus(){ const t0=Math.max(0,todayIdx()); const t=Math.max(0,(weekOf(t0)-1)*7-1); const up={}; for(let i=t;i<=Math.min(BASE.length-1,t+21);i++){ const e=effective(BASE,ADAPT,i); up[isoOfIdx(i)]={code:e.code,label:TYPES[e.code].l,text:(e.text||"").slice(0,120),note:(BASE[i][2]||"").slice(0,40)}; } return up; }
 function cloudPayload(){
   const ti=todayIdx(); let ws=[]; try{ ws=computeWarnings(BASE,logs,ADAPT,ti).concat(eventWarnings(ti)).concat(cpWarnings(ti)).map(w=>({level:w.level,title:w.title})); }catch(e){}
-  return { data:{app:"matka-pallakselle",version:3,logs,adjOff,edits,weekScale,shoes,gear,hr:meta.hr||null,defaultShoe:meta.defaultShoe||null,habits:meta.habits||null,hab:meta.hab||{},bGoal:meta.bGoal||null,rck:meta.rck||null}, status:{upcoming:upcomingStatus(),weeks:weeksStatus(),warnings:ws,at:new Date().toISOString()}, refresh:strava.r||null };
+  return { data:{app:"matka-pallakselle",version:3,logs,adjOff,edits,weekScale,shoes,gear,hr:meta.hr||null,defaultShoe:meta.defaultShoe||null,habits:meta.habits||null,hab:meta.hab||{},bGoal:meta.bGoal||null,rck:meta.rck||null,blood:meta.blood||null,habMove:meta.habMove||null}, status:{upcoming:upcomingStatus(),weeks:weeksStatus(),warnings:ws,at:new Date().toISOString()}, refresh:strava.r||null };
 }
 function scheduleCloud(){ if(!stravaConnected()) return; clearTimeout(cloudTimer); cloudTimer=setTimeout(()=>cloudSave(false),8000); }
 async function cloudSave(keepalive){
