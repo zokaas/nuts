@@ -589,6 +589,10 @@ body.maint .hero, body.maint #week, body.maint #status, body.maint #summary, bod
 .daypick button[aria-pressed="true"]{background:var(--ink); color:var(--bg); border-color:var(--ink)}
 .ins .muted{color:var(--muted)}
 .habday{font-family:var(--display); font-stretch:110%; font-size:16px} .habday.past{color:var(--fell)}
+.hics{display:flex; gap:1px; justify-content:center; min-height:14px; line-height:14px}
+.hic{font-size:11px} .hic.opt{opacity:.45} .hic.done{filter:grayscale(1); opacity:.5}
+.cc .hics{min-height:12px; line-height:12px} .cc .hic{font-size:10px}
+.hab.fut{opacity:.8; cursor:default} .hab.fut .hk{border-style:dashed}
 </style>
 </head>
 <body>
@@ -1282,7 +1286,7 @@ function renderWeek(t){
   for(let i=a0;i<=a0+6;i++){
     if(i<0||i>=BASE.length){ strip+=`<span class="sd empty" aria-hidden="true"><span class="dw">${DOW[dow(i)]}</span></span>`; continue; }
     const d=new Date(START_UTC+i*864e5), ss=sessionsOn(BASE,logs,ADAPT,i), s0=ss[0], ci=changeInfo(s0);
-    strip+=`<button class="sd${i===t?" today":""}${i===sel?" sel":""}${ci?" chg":""}" data-sel="${i}" aria-pressed="${i===sel}" aria-label="${fmt(i)}: ${TYPES[s0.code].l}"><span class="dw">${DOW[dow(i)]}</span><span class="dn num">${d.getUTCDate()}</span><span class="ty ${TYPES[s0.code].c}">${SHORT[s0.code]||""}</span>${i<=t?(dayMark(ss)||`<span class="mark none"></span>`):`<span class="mark none"></span>`}${(ss.length-1+extrasOn(i).length)>0?`<i class="plus">+${ss.length-1+extrasOn(i).length}</i>`:""}</button>`;
+    strip+=`<button class="sd${i===t?" today":""}${i===sel?" sel":""}${ci?" chg":""}" data-sel="${i}" aria-pressed="${i===sel}" aria-label="${fmt(i)}: ${TYPES[s0.code].l}"><span class="dw">${DOW[dow(i)]}</span><span class="dn num">${d.getUTCDate()}</span><span class="ty ${TYPES[s0.code].c}">${SHORT[s0.code]||""}</span><span class="hics">${habIcons(i)}</span>${i<=t?(dayMark(ss)||`<span class="mark none"></span>`):`<span class="mark none"></span>`}${(ss.length-1+extrasOn(i).length)>0?`<i class="plus">+${ss.length-1+extrasOn(i).length}</i>`:""}</button>`;
   }
   $("week").innerHTML=`<div class="weekhead"><div><div class="eyebrow">${PHASE(w)}${(w<=21&&!(w>=8&&w<=10))?" · 🏠 sisäkausi":""}</div><h2>Viikko ${w}</h2></div><div class="navbtns"><button data-addev="" aria-label="Lisää meno" title="Lisää meno">＋</button><button id="wPrev" aria-label="Edellinen viikko" ${w<=1?"disabled":""}>‹</button><button id="wNow" aria-label="Tämä viikko">•</button><button id="wNext" aria-label="Seuraava viikko" ${w>=36?"disabled":""}>›</button></div></div>
     <div class="strip" role="group" aria-label="Viikon päivät">${strip}</div>
@@ -1319,7 +1323,7 @@ function renderCalendar(t){
     for(let i=a0;i<=a0+6;i++){
       if(i<0||i>=BASE.length){ cells+=`<span class="cc empty"></span>`; continue; }
       const ss=sessionsOn(BASE,logs,ADAPT,i), s0=ss[0], note=BASE[i][2], c=s0.code, dim=!want(c), chg=changeInfo(s0)||(edits[isoOfIdx(i)]&&!edits[isoOfIdx(i)].ev);
-      cells+=`<button class="cc${i===t?" today":""}${i<t?" past":""}${dim?" dim":""}${c==="R"?" race":""}${chg?" chg":""}" data-cal="${i}" aria-label="${fmt(i)}: ${TYPES[c].l}${chg?", muutettu":""}${note?`, ${esc(note)}`:""}"><span class="dn num">${new Date(START_UTC+i*864e5).getUTCDate()}</span><span class="ty ${TYPES[c].c}">${SHORT[c]||""}</span>${i<=t?dayMark(ss)||`<span class="mark none"></span>`:note?`<span class="cn" aria-hidden="true">📌</span>`:`<span class="mark none"></span>`}${extrasOn(i).length?`<i class="plus">+${extrasOn(i).length}</i>`:""}</button>`;
+      cells+=`<button class="cc${i===t?" today":""}${i<t?" past":""}${dim?" dim":""}${c==="R"?" race":""}${chg?" chg":""}" data-cal="${i}" aria-label="${fmt(i)}: ${TYPES[c].l}${chg?", muutettu":""}${note?`, ${esc(note)}`:""}"><span class="dn num">${new Date(START_UTC+i*864e5).getUTCDate()}</span><span class="ty ${TYPES[c].c}">${SHORT[c]||""}</span><span class="hics">${habIcons(i)}</span>${i<=t?dayMark(ss)||`<span class="mark none"></span>`:note?`<span class="cn" aria-hidden="true">📌</span>`:`<span class="mark none"></span>`}${extrasOn(i).length?`<i class="plus">+${extrasOn(i).length}</i>`:""}</button>`;
     }
     const past=w<cw, met=tgt?act>=tgt*0.9:true;
     h+=`<div class="calwk${w===cw?" cur":""}${past?(met?" met":" short"):""}" id="cw${w}"><div class="cwh"><b>Vk ${w}</b><span>${fmtShort(Math.max(0,a0))}–${fmtShort(Math.min(BASE.length-1,a0+6))}</span><span class="cwk num">${past&&met?"✓ ":""}${w<=cw?`${n1(act)} / `:""}${tgt} km</span></div><div class="calgrid">${cells}</div></div>`;
@@ -1681,19 +1685,20 @@ function habits(){ if(!meta.habits){ meta.habits=JSON.parse(JSON.stringify(HABIT
   if((meta.habMig||0)<3){ for(const h of HABIT_V3) if(!meta.habits.some(x=>x.id===h.id)) meta.habits.push(JSON.parse(JSON.stringify(h))); meta.habMig=3; persist(); } return meta.habits.filter(h=>!h.off); }
 function habitOn(h,i){ const d=isoOfIdx(i), w=dow(i); const sc=(h.sched||[]).find(x=>x.from<=d&&(!x.to||d<=x.to)); if(!sc) return null;
   if(h.task){ const H=meta.hab||{}; for(const k in H){ if(k>=sc.from&&k<d&&H[k][h.id]) return null; } return {n:h.note||"",opt:false,task:true,sc}; } if(sc.days==="all") return {n:"",opt:false,sc}; const x=sc.days[w]; return x?{...x,sc}:null; }
+function habIcons(i){ if(!meta.habits) return ""; return meta.habits.filter(h=>!h.off&&!h.task).map(h=>({h,on:habitOn(h,i)})).filter(x=>x.on&&x.on.sc.days!=="all").map(x=>`<span class="hic${x.on.opt?" opt":""}${habDone(x.h.id,i)?" done":""}" title="${esc(x.h.name)}">${x.h.ic}</span>`).join(""); }
 function habDone(id,i){ const r=(meta.hab||{})[isoOfIdx(i)]; return !!(r&&r[id]); }
 function habEvents(h,from,to){ const ev=[]; for(let k=from;k<=to;k++){ const on=habitOn(h,k); if(!on||on.opt) continue; const d=habDone(h.id,k); if(!d&&k===to) continue; ev.push({w:weekOf(k),ok:d}); } return ev; }
 function habFirst(h){ return idxOfISO(((h.sched||[])[0]||{}).from||isoOfIdx(0)); }
 function habStreak(h,i){ return flexStreak(habEvents(h,habFirst(h),i),weekOf(i)).cur; }
 function habFlexNow(h,i){ return flexStreak(habEvents(h,habFirst(h),i),weekOf(i)).flexNow; }
 function habWeek(h,i){ const a0=(weekOf(i)-1)*7-1; let n=0; for(let k=a0;k<=a0+6;k++) if(habDone(h.id,k)) n++; return n; }
-function renderHabits(ti){ const el=$("habits"); if(!el) return; const i=selDay==null?ti:selDay; if(i>ti){ el.hidden=true; return; } const hs=habits().map(h=>({h,on:habitOn(h,i)})).filter(x=>x.on);
-  if(!hs.length){ el.hidden=true; return; } el.hidden=false; const yHas=ti>0&&habits().some(h=>habitOn(h,ti-1)); const dayLbl= i===ti?`Tänään · ${fmt(i)}`: i===ti-1?`Eilen · ${fmt(i)}`: fmt(i);
+function renderHabits(ti){ const el=$("habits"); if(!el) return; const i=selDay==null?ti:selDay; const fut=i>ti; const hs=habits().map(h=>({h,on:habitOn(h,i)})).filter(x=>x.on);
+  if(!hs.length){ el.hidden=true; return; } el.hidden=false; const yHas=ti>0&&habits().some(h=>habitOn(h,ti-1)); const dayLbl= i===ti?`Tänään · ${fmt(i)}`: i===ti-1?`Eilen · ${fmt(i)}`: i===ti+1?`Huomenna · ${fmt(i)}`: fmt(i);
   const order={aamu:0,"päivä":1,ilta:2}; hs.sort((a,b)=>order[a.h.when]-order[b.h.when]);
   const need=hs.filter(x=>!x.on.opt&&!x.h.task).length, needDone=hs.filter(x=>!x.on.opt&&!x.h.task&&habDone(x.h.id,i)).length;
-  el.innerHTML=`<div class="habhead"><div><div class="eyebrow">Tavat</div><b class="habday${i!==ti?" past":""}">${dayLbl}</b></div>${need?`<span class="habcount${needDone>=need?" ok":""}">${needDone>=need?"✓ ":""}${needDone}/${need}</span>`:""}</div>
-    <ul class="hablist">${hs.map(({h,on})=>{ const d=habDone(h.id,i); const st=habStreak(h,i); const wk=h.task?(d?"Tehty ✓":"Tehtävä · näkyy, kunnes tehty"):h.week?`${habWeek(h,i)}/${h.week} tällä viikolla`:(st>=2?`🔥 ${st} pv putkeen${habFlexNow(h,i)?" · 🛟 joustopäivä käytetty":""}`:"");
-      return `<li><button class="hab${d?" done":""}${on.opt?" opt":""}" data-hab="${h.id}" data-hi="${i}" aria-pressed="${d}"><span class="hk" aria-hidden="true">${d?"✓":""}</span><span class="hi" aria-hidden="true">${h.ic}</span><span class="ht"><b>${esc(h.name)}${on.opt?` <small>valinnainen</small>`:""}</b>${on.n?`<small>${esc(on.n)}</small>`:""}${wk?`<small class="hs">${wk}</small>`:""}</span></button></li>`; }).join("")}</ul>
+  el.innerHTML=`<div class="habhead"><div><div class="eyebrow">Tavat${fut?" · tulossa":""}</div><b class="habday${i!==ti?" past":""}">${dayLbl}</b></div>${need&&!fut?`<span class="habcount${needDone>=need?" ok":""}">${needDone>=need?"✓ ":""}${needDone}/${need}</span>`:""}</div>
+    <ul class="hablist">${hs.map(({h,on})=>{ const d=habDone(h.id,i); const st=habStreak(h,i); const wk=fut?"":h.task?(d?"Tehty ✓":"Tehtävä · näkyy, kunnes tehty"):h.week?`${habWeek(h,i)}/${h.week} tällä viikolla`:(st>=2?`🔥 ${st} pv putkeen${habFlexNow(h,i)?" · 🛟 joustopäivä käytetty":""}`:"");
+      return `<li><button class="hab${d?" done":""}${on.opt?" opt":""}${fut?" fut":""}" ${fut?"disabled":`data-hab="${h.id}" data-hi="${i}"`} aria-pressed="${d}"><span class="hk" aria-hidden="true">${d?"✓":""}</span><span class="hi" aria-hidden="true">${h.ic}</span><span class="ht"><b>${esc(h.name)}${on.opt?` <small>valinnainen</small>`:""}</b>${on.n?`<small>${esc(on.n)}</small>`:""}${wk?`<small class="hs">${wk}</small>`:""}</span></button></li>`; }).join("")}</ul>
     ${i!==ti?`<button class="link" data-seltoday>‹ Takaisin tähän päivään</button>`:yHas?`<button class="link" data-sel="${ti-1}">Unohtuiko eilen? Merkitse eilisen tavat</button>`:""}`; }
 document.addEventListener("click",e=>{ const b=e.target.closest("[data-hab]"); if(b){ const id=b.dataset.hab, i=+b.dataset.hi, d=isoOfIdx(i); meta.hab=meta.hab||{}; const r=meta.hab[d]=meta.hab[d]||{}; if(r[id]) delete r[id]; else { r[id]=1; if(navigator.vibrate) navigator.vibrate(10); } if(!Object.keys(r).length) delete meta.hab[d];
     persist(); renderHabits(todayIdx()); renderCount(todayIdx(),stats(),badges(stats())); const all=habits().filter(h=>{ if(h.task) return false; const on=habitOn(h,i); return on&&!on.opt; }); if(r[id]&&all.every(h=>habDone(h.id,i))){ celebrate(); toast("Päivän tavat tehty ✓ +5 XP bonus"); } else if(r[id]) toast(meta.habits.find(x=>x.id===id)?.task?"Tehtävä kuitattu ✓ +2 XP":"+2 XP"); return; }
