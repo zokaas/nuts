@@ -14,6 +14,7 @@
       <div class="herotop"><button class="pill st-ok" id="pill" type="button"></button><span class="wchip" id="weather" hidden></span></div>
       <div id="today"></div>
     </section>
+    <section class="card plancard" id="planWeek" hidden></section>
     <section class="card habcard" id="habits" hidden></section>
     <section class="status" id="status" aria-live="polite" hidden></section>
     <section class="card" id="week"></section>
@@ -51,6 +52,7 @@
       <section class="card"><div class="eyebrow">Havainnot</div><div id="aInsights"></div></section>
     </div>
     <div class="agroup" data-agroup="vointi" hidden>
+      <div id="aCycle"></div>
       <section class="card"><div class="eyebrow">Verikoearvot ja kehonkoostumus</div><div id="aBlood"></div></section>
       <section class="card"><div class="eyebrow">Tavat</div><div id="aHab"></div></section>
       <section class="card"><div class="eyebrow">Tavat ja vointi</div><div id="aHabIns"></div></section>
@@ -117,6 +119,7 @@
   </div>
   <div data-view="asetukset" class="view" hidden>
     <div class="sethead"><a href="#tanaan" class="link">‹ Takaisin</a><h2>Asetukset</h2></div>
+    <a href="#ohje" class="card linkcard"><span>❓ Näin sovellus toimii</span><span aria-hidden="true">›</span></a>
   <div class="nag" id="backupNag" hidden><span>Varmuuskopiosta yli viikko.</span><button class="btn small primary" data-backup>Tallenna</button></div>
     <section class="card" id="stravaCard">
       <div class="weekhead"><h2>Strava</h2><span class="stv big">S</span></div>
@@ -155,6 +158,7 @@
     <section class="card">
       <h2>Tavat</h2>
       <div id="habSet"></div>
+      <label class="chk togglerow"><input type="checkbox" id="cycOn"> 🩸 Seuraa kuukautiskiertoa <small>(valinnainen, näkyy Tavat-kortissa ja Analyysissä)</small></label>
       <details class="fold"><summary>＋ Uusi tapa</summary>
         <div class="grid2"><div class="field"><label for="habName">Nimi</label><input type="text" id="habName" maxlength="50" placeholder="Esim. venyttely 10 min"></div><div class="field"><label for="habIc">Emoji</label><input type="text" id="habIc" maxlength="4" placeholder="✅"></div></div>
         <div class="field"><label for="habWhen">Milloin</label><select id="habWhen"><option value="aamu">Aamu</option><option value="päivä">Päivä</option><option value="ilta">Ilta</option></select></div>
@@ -185,10 +189,21 @@
     </section>
   </div>
   <div data-view="kalenteri" class="view" hidden>
-    <div class="calbar"><div class="filters" id="calFilters" role="group" aria-label="Korosta"><button data-cf="all">Kaikki</button><button data-cf="run">Juoksut</button><button data-cf="key">Pitkät, testit, kisat</button></div><div class="row"><button class="btn small" id="calNow">Tämä viikko</button><button class="btn small primary" data-addev="">＋ Meno</button></div></div>
+    <div class="calbar"><div class="filters" id="calFilters" role="group" aria-label="Korosta"><button data-cf="all">Kaikki</button><button data-cf="run">Juoksut</button><button data-cf="key">Pitkät, testit, kisat</button></div><div class="row"><button class="btn small" data-planfrom>🗓️ Suunnittele</button><button class="btn small" id="calNow">Tämä viikko</button><button class="btn small primary" data-addev="">＋ Meno</button></div></div>
     <div class="calhead" aria-hidden="true"><span></span><span>ma</span><span>ti</span><span>ke</span><span>to</span><span>pe</span><span>la</span><span>su</span></div>
     <div id="calBody" class="calbody"></div>
     <p class="tipline">Napauta päivää: se avautuu Tänään-näkymään, jossa voit kirjata, siirtää tai muokata sitä.</p>
+  </div>
+  <div data-view="ohje" class="view" hidden>
+    <div class="sethead"><a href="#asetukset" class="link">‹ Asetukset</a><h2>Näin sovellus toimii</h2></div>
+    <details class="card fold helpfold" open><summary>Tänään</summary><p><b>✓ Tehty</b> kirjaa treenin yhdellä napautuksella. Strava täydentää kilometrit ja ajan myöhemmin.</p>
+<ul><li><b>✕ Väliin</b>: treeni jäi tekemättä. Ohjelma mukautuu.</li><li><b>→ Huomiselle</b>: siirtää treenin seuraavaan päivään.</li><li><b>⇄ Vaihda laji</b>: esim. uinti juoksun tilalle. Avaintreenit (pitkä lenkki, mäet, testit) kannattaa siirtää eikä vaihtaa.</li><li><b>♥ Vointi</b>: uni, leposyke, kipu tai sairaus. Nämä keventävät tulevia treenejä tarvittaessa.</li></ul></details>
+    <details class="card fold helpfold"><summary>Viikkonauha ja kalenteri</summary><ul><li>Napauta päivää, niin se avautuu ylimpään korttiin.</li><li><b>Pyyhkäise</b> viikkonauhaa vaihtaaksesi viikkoa.</li><li><b>Pitkä painallus</b> päivän kohdalla aloittaa siirron. Napauta sitten uutta päivää, niin treenit vaihtavat paikkaa.</li><li>Oranssi piste = ohjelmaa on muutettu. 🧴 = pesupäivä. 📌 = meno.</li><li>Kalenterissa on koko ohjelma. Vihreä reuna = viikon tavoite täyttyi, keltainen = jäi vajaaksi.</li></ul></details>
+    <details class="card fold helpfold"><summary>Mukautuva ohjelma</summary><ul><li>Sairaus, kipu, väsymys, väliin jääneet treenit ja kohonnut leposyke keventävät seuraavia päiviä automaattisesti.</li><li>Muutokset näkyvät treenikortissa, ja ne voi perua.</li><li><b>Viikon kuorma</b> (Normaali / Kevyt 80 % / Palautus 60 %) lyhentää viikon juoksuja. Testit, kisat ja lihaskunto pysyvät.</li><li><b>Menot</b> (＋ viikkokortissa tai Kalenterissa): muistutus tai lepopäivä. Yhden päivän menolle saat siirtoehdotukset.</li></ul></details>
+    <details class="card fold helpfold"><summary>Tavat</summary><ul><li>Napauta tapa tehdyksi. Valinnaiset tavat näkyvät katkoviivalla.</li><li><b>Joustopäivä</b>: yksi väliin jäänyt päivä viikossa ei katkaise putkea (🛟).</li><li>Pesupäivän voi siirtää toiselle päivälle (→ Siirrä toiselle päivälle).</li><li>XP: 2 per tapa, +5 täydestä päivästä. Omia tapoja lisätään Asetuksissa.</li><li>Verikoe on tehtävä: se näkyy, kunnes kuittaat sen. Arvot kirjataan Analyysiin.</li></ul></details>
+    <details class="card fold helpfold"><summary>Analyysi</summary><ul><li><b>Matka</b>: reitti Hetasta Pallakselle, viikkokilometrit ja viikkokoosteet.</li><li><b>Kunto</b>: Belgradin välitarkistukset (ja tarvittaessa puolimaraton-varasuunnitelma), yhtäjaksoinen juoksu, aika-arvio, kuorma ja trendit.</li><li><b>Vointi</b>: kuukautiskierto (jos päällä), verikoearvot ja kehonkoostumus, tavat ja niiden yhteys vointiin, vointimerkinnät ja ohjelman muutokset.</li></ul></details>
+    <details class="card fold helpfold"><summary>Ilmoitukset</summary><ul><li>Iltaisin noin klo 20.45, enintään yksi päivässä: kirjaamaton treeni, varoitukset, huominen pitkä lenkki, testi tai kisa.</li><li>Sunnuntaisin <b>Viikon katsaus</b>: mennyt viikko ja ensi viikko.</li><li>Sunnuntaina (ja lauantai-iltana) Tänään-sivulla on <b>Suunnittele ensi viikko</b>. Sen saa auki milloin tahansa Kalenterista.</li></ul></details>
+    <details class="card fold helpfold"><summary>Strava, sää ja varmuuskopio</summary><ul><li>Strava tuo treenit automaattisesti, myös yksityiset. Erikseen kirjattu lihaskunto yhdistyy päivän treeniin, ja lisätreenit näkyvät omina riveinään.</li><li>Sää: ulkotreeneihin tulee varoitus ukkosesta, rankkasateesta, myrskystä, kovasta pakkasesta ja helteestä.</li><li>Kaikki tallentuu pilveen automaattisesti. Uudella puhelimella: yhdistä Strava ja valitse Palauta pilvestä.</li></ul></details>
   </div>
   <div data-view="merkit" class="view" hidden>
     <section class="card levelcard" id="level"></section>

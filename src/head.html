@@ -607,5 +607,16 @@ body.maint .hero, body.maint #week, body.maint #status, body.maint #summary, bod
 .blist{list-style:none; margin:0; padding:0} .blist li{display:flex; justify-content:space-between; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid var(--line)}
 .blist small{display:block; color:var(--muted); font-size:12px} .bv{font-weight:700; text-align:right; white-space:nowrap} .bv em{font-style:normal; font-weight:400; color:var(--muted)} .bv em.neg{color:var(--warn); font-weight:700}
 .bform label small{font-weight:400; color:var(--muted)}
+.plancard{border:2px solid var(--fell); gap:12px}
+.planbtn{display:grid; grid-template-columns:auto 1fr auto; gap:10px; align-items:center; width:100%; text-align:left; border:0; background:transparent; font:inherit; color:inherit; padding:0}
+.planbtn > span:first-child{font-size:26px} .planbtn small{display:block; color:var(--muted); font-size:13px}
+.pstep{display:flex; flex-direction:column; gap:6px; border-top:1px solid var(--line); padding-top:10px} .pstep p{margin:0}
+.pdays li{align-items:flex-start} .pdays .hic{font-size:13px}
+.togglerow{display:flex; gap:10px; align-items:center; margin-top:8px} .togglerow small{color:var(--muted)}
+.hab.cyc.done{background:color-mix(in srgb, var(--crit) 14%, transparent)} .hab.cyc.done .hk{background:var(--crit); border-color:var(--crit)}
+.cyclist li span:first-child{font-weight:700}
+.helpfold summary{font-family:var(--display); font-stretch:110%; font-weight:800; font-size:17px; cursor:pointer}
+.helpfold ul{margin:8px 0 0; padding-left:18px; display:flex; flex-direction:column; gap:6px} .helpfold p{margin:8px 0 0}
+body[data-route="ohje"] .mast{display:none}
 </style>
 </head>

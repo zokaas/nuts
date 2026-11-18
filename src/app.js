@@ -18,7 +18,7 @@ const FLAG_L = Object.fromEntries(FLAGS);
 const AREAS = ["sääri","polvi","akillesjänne","pohje","jalkapohja","nilkka","lonkka","reisi","selkä","muu"];
 const DOW = ["ma","ti","ke","to","pe","la","su"];
 const SHORT = {V:"Vapaa",UI:"Uinti",PY:"Pyörä",HI:"Hiihto",SK:"Sauva",KA:"Kävely",SA:"Sali",JO:"Jooga",PA:"Pallo",MU:"Muu",J:"Juoksu",JL:"Juoksu",P:"Pitkä",PT:"Patikka",YM:"Ylämäki",K:"Piiri",T:"Tribe",TL:"Tribe",S:"Spin",SH:"Spin",SL:"Spin",LH:"Huolto",X:"Testi",R:"Kisa",L:"Lepo"};
-const TITLES = {kalenteri:"Kalenteri",historia:"Historia",analyysi:"Analyysi",opas:"Opas",merkit:"Merkit",asetukset:"Asetukset"};
+const TITLES = {ohje:"Näin sovellus toimii",kalenteri:"Kalenteri",historia:"Historia",analyysi:"Analyysi",opas:"Opas",merkit:"Merkit",asetukset:"Asetukset"};
 let selDay=null, statusOpen=false, anaTab="matka";
 const FEEL = [["1","raskas"],["2","tahmea"],["3","ok"],["4","hyvä"],["5","kevyt"]];
 const BELGRADE = idxOfISO("2027-04-18"), NUTS = idxOfISO("2027-07-23");
@@ -94,6 +94,7 @@ function badges(st){
     ["📝","Rehellinen kirjaaja","Kirjasit väliin jääneen treenin",all.some(e=>e.l.status==="skip")],
     ["🛌","Viisas lepääjä","Lepäsit sairaana etkä juossut",all.some(e=>flagsOf(e.l).includes("sick"))&&!all.some(e=>flagsOf(e.l).includes("sick")&&e.l.status==="done"&&RUN.has(e.code))],
     ["💾","Varmuuskopioija","Varmuuskopio tallennettu",!!meta.lastBackup],
+    ["🗓️","Suunnittelija","4 viikkoa suunniteltu etukäteen",Object.keys(meta.planned||{}).length>=4],
     ...habitBadges(),
   ].map(([icon,name,desc,got])=>({icon,name,desc,got}));
 }
@@ -127,7 +128,7 @@ function habitInsights(ti){ const hs=habits(); const out=[]; const avg=a=>a.redu
 function levelOf(xp){ let L=LEVELS[0],next=null; LEVELS.forEach((x,i)=>{ if(xp>=x[0]){ L=x; next=LEVELS[i+1]||null; } }); return {L,next}; }
 
 /* ---------- näkymät ---------- */
-function route(){ const h=(location.hash||"").slice(1); if(h==="kisa") return "opas"; return ["historia","kalenteri","analyysi","opas","merkit","asetukset"].includes(h)?h:"tanaan"; }
+function route(){ const h=(location.hash||"").slice(1); if(h==="kisa") return "opas"; return ["historia","kalenteri","analyysi","opas","merkit","asetukset","ohje"].includes(h)?h:"tanaan"; }
 function render(){
   const ti=todayIdx(), t=T0(); if(viewWeek===null) viewWeek=weekOf(t);
   BASE = buildBase(); ADAPT = buildAdapt(BASE, logs, adjOff, ti);
@@ -135,7 +136,7 @@ function render(){
   document.querySelectorAll(".tabs a").forEach(a=>a.setAttribute("aria-current",a.getAttribute("href")==="#"+r?"page":"false"));
   const st=stats(), bs=badges(st); const ws=computeWarnings(BASE,logs,ADAPT,ti).concat(eventWarnings(ti)).concat(cpWarnings(ti)).concat(bloodWarnings()); checkCont30();
   renderCount(ti,st,bs);
-  if(r==="tanaan"){ renderHabits(ti); renderMaint(); renderRaceWeek(ti); renderStatus(ws); renderToday(t,ti); renderTip(t); renderSummary(ti); renderWeek(t); renderUpcoming(t); }
+  if(r==="tanaan"){ renderPlanWeek(ti); renderHabits(ti); renderMaint(); renderRaceWeek(ti); renderStatus(ws); renderToday(t,ti); renderTip(t); renderSummary(ti); renderWeek(t); renderUpcoming(t); }
   if(r==="historia"){ renderHistory(st); }
   if(r==="asetukset"){ renderHabitSettings(); renderStrava(); renderCloud(); renderPush(); renderZones(); renderLoc(); }
   if(r==="analyysi") renderAnalysis(ti,st,t);
@@ -306,7 +307,7 @@ function renderWeek(t){
   $("week").innerHTML=`<div class="weekhead"><div><div class="eyebrow">${PHASE(w)}${(w<=21&&!(w>=8&&w<=10))?" · 🏠 sisäkausi":""}</div><h2>Viikko ${w}</h2></div><div class="navbtns"><button data-addev="" aria-label="Lisää meno" title="Lisää meno">＋</button><button id="wPrev" aria-label="Edellinen viikko" ${w<=1?"disabled":""}>‹</button><button id="wNow" aria-label="Tämä viikko">•</button><button id="wNext" aria-label="Seuraava viikko" ${w>=36?"disabled":""}>›</button></div></div>
     <div class="strip" role="group" aria-label="Viikon päivät">${strip}</div>
     ${slimGoal(w,act,tgt)}${weekScaleControls(w,t)}`;
-  if($("loadCtl")) $("loadCtl").ontoggle=e=>{ loadOpen=e.target.open; };
+  { const lc=$("week").querySelector("#loadCtl"); if(lc) lc.ontoggle=e=>{ loadOpen=e.target.open; }; }
   $("wPrev").onclick=()=>weekGo(-1); $("wNext").onclick=()=>weekGo(1);
   if(moveFrom!=null) $("week").querySelectorAll(".sd[data-sel]").forEach(b=>{ const j=+b.dataset.sel; b.classList.toggle("mvfrom",j===moveFrom); b.classList.toggle("mvok",j!==moveFrom&&canSwap(j)); }); $("wNow").onclick=()=>{ viewWeek=weekOf(t); selDay=null; render(); };
 }
@@ -404,7 +405,7 @@ function renderAnalysis(ti,st,t0){
   const lr=loadRatio(BASE,logs,ti); const lw=weekOf(ti)-1; const last4=[]; for(let w=Math.max(1,lw-3);w<=Math.max(1,lw);w++) last4.push([w,weekKm(BASE,logs,w),TARGET[w-1]]);
   const comp = last4.length? Math.round(last4.reduce((a,x)=>a+x[1],0)/Math.max(1,last4.reduce((a,x)=>a+x[2],0))*100):0;
   const elevW=w=>{ const [a,z]=weekRange(w); let s2=0; for(const k in logs){ const i=idxOfISO(k); if(i>=a&&i<=z&&logs[k].status==="done"&&typeof logs[k].elev==="number") s2+=logs[k].elev; } return Math.round(s2); };
-  $("aBlood").innerHTML=bloodHTML(); $("aHab").innerHTML=habGridHTML(Math.max(0,ti)); $("aHabIns").innerHTML=habitInsights(Math.max(0,ti));
+  $("aCycle").innerHTML=cycleHTML(Math.max(0,ti)); $("aBlood").innerHTML=bloodHTML(); $("aHab").innerHTML=habGridHTML(Math.max(0,ti)); $("aHabIns").innerHTML=habitInsights(Math.max(0,ti));
   $("aPred").innerHTML=predictionHTML(ti,true); $("aPredT").textContent=bHalf()?"Puolimaratonin aika-arvio":"Belgradin aika-arvio"; $("aCont").innerHTML=contHTML(ti); $("aCps").innerHTML=cpHTML(ti);
   $("aLoad").innerHTML=`<div class="tiles"><div class="tile"><span>Nousu tällä vk</span><b class="num">${elevW(weekOf(ti))} m</b></div><div class="tile"><span>Nousu viime vk</span><b class="num">${elevW(Math.max(1,weekOf(ti)-1))} m</b></div><div class="tile"><span>Toteuma 4 vk</span><b class="num">${comp} %</b></div><div class="tile"><span>Kuorma&shy;suhde</span><b class="num">${lr?String(Math.round(lr.ratio*100)/100).replace(".",","):"–"}</b></div><div class="tile"><span>7 pv km</span><b class="num">${lr?lr.acute:"–"}</b></div></div>
     <p class="tip">${lr? (lr.ratio>1.5?"Kuorma nousi viime viikolla jyrkästi suhteessa edellisiin viikkoihin. Pidä seuraavat päivät kevyinä.": lr.ratio<0.8?"Viime viikko oli kevyempi kuin edelliset. Hyvä palautumiseen, mutta älä jää pitkäksi aikaa alas.":"Kuorma nousee tasaisesti. Juuri näin pitääkin."):"Kuormasuhde (7 pv / 4 vk keskiarvo) näkyy, kun kirjauksia on 3 viikolta. Turvallinen alue 0,8–1,3."}</p>`;
@@ -712,11 +713,11 @@ function habWeek(h,i){ const a0=(weekOf(i)-1)*7-1; let n=0; for(let k=a0;k<=a0+6
 let habMoveOpen=null;
 function habMoveTargets(h,i){ const out=[]; for(let k=i+1;k<=i+6&&out.length<5;k++){ const ex=habitOn(h,k); if(ex&&!ex.opt) continue; out.push(k); } return out; }
 function renderHabits(ti){ const el=$("habits"); if(!el) return; const i=selDay==null?ti:selDay; const fut=i>ti; const hs=habits().map(h=>({h,on:habitOn(h,i)})).filter(x=>x.on);
-  if(!hs.length){ el.hidden=true; return; } el.hidden=false; const yHas=ti>0&&habits().some(h=>habitOn(h,ti-1)); const dayLbl= i===ti?`Tänään · ${fmt(i)}`: i===ti-1?`Eilen · ${fmt(i)}`: i===ti+1?`Huomenna · ${fmt(i)}`: fmt(i);
+  if(!hs.length&&!cyc().on){ el.hidden=true; return; } el.hidden=false; const yHas=ti>0&&habits().some(h=>habitOn(h,ti-1)); const dayLbl= i===ti?`Tänään · ${fmt(i)}`: i===ti-1?`Eilen · ${fmt(i)}`: i===ti+1?`Huomenna · ${fmt(i)}`: fmt(i);
   const order={aamu:0,"päivä":1,ilta:2}; hs.sort((a,b)=>order[a.h.when]-order[b.h.when]);
   const need=hs.filter(x=>!x.on.opt&&!x.h.task).length, needDone=hs.filter(x=>!x.on.opt&&!x.h.task&&habDone(x.h.id,i)).length;
   el.innerHTML=`<div class="habhead"><div><div class="eyebrow">Tavat${fut?" · tulossa":""}</div><b class="habday${i!==ti?" past":""}">${dayLbl}</b></div>${need&&!fut?`<span class="habcount${needDone>=need?" ok":""}">${needDone>=need?"✓ ":""}${needDone}/${need}</span>`:""}</div>
-    <ul class="hablist">${hs.map(({h,on})=>{ const d=habDone(h.id,i); const st=habStreak(h,i); const bv=h.task&&(meta.blood||{})[h.id]; const wk=fut?"":h.task?(d?(bv?`Ferritiini ${bv.ferr??"–"} · Hb ${bv.hb??"–"}`:"Tehty ✓"):"Tehtävä · näkyy, kunnes tehty"):h.week?`${habWeek(h,i)}/${h.week} tällä viikolla`:(st>=2?`🔥 ${st} pv putkeen${habFlexNow(h,i)?" · 🛟 joustopäivä käytetty":""}`:"");
+    <ul class="hablist">${!fut?cycRow(i):""}${hs.map(({h,on})=>{ const d=habDone(h.id,i); const st=habStreak(h,i); const bv=h.task&&(meta.blood||{})[h.id]; const wk=fut?"":h.task?(d?(bv?`Ferritiini ${bv.ferr??"–"} · Hb ${bv.hb??"–"}`:"Tehty ✓"):"Tehtävä · näkyy, kunnes tehty"):h.week?`${habWeek(h,i)}/${h.week} tällä viikolla`:(st>=2?`🔥 ${st} pv putkeen${habFlexNow(h,i)?" · 🛟 joustopäivä käytetty":""}`:"");
       return `<li><button class="hab${d?" done":""}${on.opt?" opt":""}${fut?" fut":""}" ${fut?"disabled":`data-hab="${h.id}" data-hi="${i}"`} aria-pressed="${d}"><span class="hk" aria-hidden="true">${d?"✓":""}</span><span class="hi" aria-hidden="true">${h.ic}</span><span class="ht"><b>${esc(h.name)}${on.opt?` <small>valinnainen</small>`:""}</b>${on.n?`<small>${esc(on.n)}</small>`:""}${wk?`<small class="hs">${wk}</small>`:""}</span></button>${!h.task&&!d&&on.sc.days!=="all"?(on.moved?`<button class="link bgo" data-hmvundo="${h.id}:${on.moved}">↺ Peru siirto</button>`:habMoveOpen===h.id+":"+i?`<div class="hmv">${habMoveTargets(h,i).map(k=>`<button class="btn small" data-hmv="${h.id}:${isoOfIdx(i)}:${isoOfIdx(k)}">${k===i+1?"Huomenna":DOW[dow(k)]+" "+new Date(START_UTC+k*864e5).getUTCDate()+"."}</button>`).join("")}<button class="btn small ghost" data-hmvopen="">Peruuta</button></div>`:`<button class="link bgo" data-hmvopen="${h.id}:${i}">→ Siirrä toiselle päivälle</button>`):""}${h.task&&d&&!fut?`<button class="link bgo" data-bgo="${h.id}">${(meta.blood||{})[h.id]?"Muokkaa arvoja":"＋ Kirjaa ferritiini ja hemoglobiini"}</button>`:""}</li>`; }).join("")}</ul>
     ${i!==ti?`<button class="link" data-seltoday>‹ Takaisin tähän päivään</button>`:yHas?`<button class="link" data-sel="${ti-1}">Unohtuiko eilen? Merkitse eilisen tavat</button>`:""}`; }
 document.addEventListener("click",e=>{ const b=e.target.closest("[data-hab]"); if(b){ const id=b.dataset.hab, i=+b.dataset.hi, d=isoOfIdx(i); meta.hab=meta.hab||{}; const r=meta.hab[d]=meta.hab[d]||{}; if(r[id]) delete r[id]; else { r[id]=1; if(navigator.vibrate) navigator.vibrate(10); } if(!Object.keys(r).length) delete meta.hab[d];
@@ -725,7 +726,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-hab]"); i
 function habGridHTML(ti){ const hs=habits().filter(h=>!h.task); if(!hs.length) return `<p class="note">Ei tapoja.</p>`; const N=28, a=ti-N+1;
   return hs.map(h=>{ let req=0, ok=0; const cells=[]; const f0=idxOfISO(((h.sched||[])[0]||{}).from||isoOfIdx(a)); for(let i=Math.max(a,f0);i<=ti;i++){ const on=habitOn(h,i); const d=habDone(h.id,i); if(on&&!on.opt){ req++; if(d) ok++; } cells.push(`<i class="${d?"y":on?(on.opt?"o":(i===ti?"t":"n")):"x"}" title="${fmt(i)}"></i>`); }
     return `<div class="hgrow"><div class="hgh"><span>${h.ic} ${esc(h.name)}</span><span class="num">${req?Math.round(ok/req*100):0} %</span></div><div class="hgrid">${cells.join("")}</div></div>`; }).join("")+`<p class="tip">Viimeiset 4 viikkoa. Vihreä = tehty, harmaa = jäi, tyhjä = ei ohjelmassa.</p>`; }
-function renderHabitSettings(){ const el=$("habSet"); if(!el) return; habits(); const all=meta.habits;
+function renderHabitSettings(){ const el=$("habSet"); if(!el) return; habits(); const all=meta.habits; const ct=$("cycOn"); if(ct){ ct.checked=!!cyc().on; ct.onchange=()=>{ meta.cycle=meta.cycle||{}; meta.cycle.on=ct.checked; persist(); toast(ct.checked?"Kiertoseuranta päällä: merkitse Tavat-kortista.":"Kiertoseuranta pois. Merkinnät säilyvät."); }; }
   el.innerHTML=`<ul class="evlist">${all.map(h=>`<li><span><b>${h.ic} ${esc(h.name)}</b><small>${h.off?"pois käytöstä":habDesc(h)}</small></span><span class="row"><button class="btn small ghost" data-haboff="${h.id}">${h.off?"Näytä":"Piilota"}</button><button class="btn small ghost" data-habdel="${h.id}" aria-label="Poista ${esc(h.name)}">🗑</button></span></li>`).join("")}</ul>`; }
 function habDesc(h){ if(h.task){ const sc=(h.sched||[])[0]; const done=Object.keys(meta.hab||{}).find(k=>meta.hab[k][h.id]); return done?`tehty ${fmt(idxOfISO(done))}`:`tehtävä ${fmt(idxOfISO(sc.from))}–${fmt(idxOfISO(sc.to))}`; } const d=isoOfIdx(Math.max(0,todayIdx())); const sc=(h.sched||[]).find(x=>x.from<=d&&(!x.to||d<=x.to))||(h.sched||[])[0]; if(!sc) return ""; const when={aamu:"aamuisin",ilta:"iltaisin","päivä":""}[h.when]||"";
   if(sc.days==="all") return `joka päivä ${when}`.trim(); return Object.keys(sc.days).map(k=>DOW[k]+(sc.days[k].opt?" (valinn.)":"")).join(", ")+(sc.label?` · ${sc.label}`:""); }
@@ -736,12 +737,47 @@ $("habAdd").onclick=()=>{ const name=$("habName").value.trim().slice(0,50); if(!
   meta.habits.push({id:"h"+Date.now().toString(36),ic:$("habIc").value.trim()||"✅",name,when:$("habWhen").value,sched:[{from:isoOfIdx(Math.max(0,todayIdx())),days:sc}]});
   persist(); $("habName").value=""; $("habIc").value=""; document.querySelectorAll("#habDays button").forEach(b=>b.setAttribute("aria-pressed","false")); renderHabitSettings(); toast(`Lisätty: ${name}`); };
 $("habDays").onclick=e=>{ const b=e.target.closest("[data-hd]"); if(b) b.setAttribute("aria-pressed",String(b.getAttribute("aria-pressed")!=="true")); };
-function restoreExtras(d){ if(d.habits&&!meta.habits) meta.habits=d.habits; if(d.hab){ meta.hab=meta.hab||{}; for(const k in d.hab) meta.hab[k]={...d.hab[k],...(meta.hab[k]||{})}; } if(d.bGoal&&!meta.bGoal) meta.bGoal=d.bGoal; if(d.rck&&!meta.rck) meta.rck=d.rck; if(d.blood) meta.blood={...d.blood,...(meta.blood||{})}; if(d.habMove&&!meta.habMove) meta.habMove=d.habMove; }
+function restoreExtras(d){ if(d.habits&&!meta.habits) meta.habits=d.habits; if(d.hab){ meta.hab=meta.hab||{}; for(const k in d.hab) meta.hab[k]={...d.hab[k],...(meta.hab[k]||{})}; } if(d.bGoal&&!meta.bGoal) meta.bGoal=d.bGoal; if(d.rck&&!meta.rck) meta.rck=d.rck; if(d.blood) meta.blood={...d.blood,...(meta.blood||{})}; if(d.habMove&&!meta.habMove) meta.habMove=d.habMove; if(d.cycle&&!meta.cycle) meta.cycle=d.cycle; if(d.planned) meta.planned={...d.planned,...(meta.planned||{})}; }
 
 document.addEventListener("click",e=>{ const o=e.target.closest("[data-hmvopen]"); if(o){ habMoveOpen=o.dataset.hmvopen||null; renderHabits(todayIdx()); return; }
   const m=e.target.closest("[data-hmv]"); if(m){ const [id,from,to]=m.dataset.hmv.split(":"); meta.habMove=meta.habMove||{}; const mv=meta.habMove[id]=meta.habMove[id]||{};
     const orig=Object.keys(mv).find(f=>mv[f]===from)||from; mv[orig]=to; if(orig===to) delete mv[orig]; habMoveOpen=null; persist(); render(); const h=meta.habits.find(x=>x.id===id); toast(`${h.ic} ${h.name} siirretty: ${fmt(idxOfISO(to))}`,{l:"Peru",fn:()=>{ if(orig===from) delete mv[orig]; else mv[orig]=from; persist(); render(); }}); return; }
   const u=e.target.closest("[data-hmvundo]"); if(u){ const [id,f]=u.dataset.hmvundo.split(":"); delete meta.habMove[id][f]; persist(); render(); toast("Siirto peruttu."); } });
+
+/* ===== Sunnuntain suunnitteluhetki ===== */
+let planOpen=false, planForce=false;
+function renderPlanWeek(ti){ const el=$("planWeek"); if(!el) return; const t=Math.max(0,ti); const nw=weekOf(t)+1; const show=(dow(t)===6||dow(t)===5&&new Date().getHours()>=17||planForce)&&nw<=36&&t<NUTS;
+  if(!show){ el.hidden=true; return; } el.hidden=false; const done=(meta.planned||{})[nw];
+  if(!planOpen){ el.innerHTML=`<button class="planbtn" data-planopen><span>🗓️</span><span><b>${done?"Ensi viikko suunniteltu ✓":"Suunnittele ensi viikko"}</b><small>${done?"Avaa ja tarkista":"Noin 2 minuuttia · viikko "+nw}</small></span><span aria-hidden="true">›</span></button>`; return; }
+  const cw=weekOf(t), act=weekKm(BASE,logs,cw), tgt=TARGET_EFF[cw-1]; let pl=0,dn=0; const [a,b]=weekRange(cw); for(let i=a;i<=b&&i<BASE.length;i++){ const c=sessionsOn(BASE,logs,ADAPT,i)[0].code; if(c==="L") continue; pl++; const l=logs[isoOfIdx(i)]; if(l&&l.status==="done") dn++; }
+  const a0=(nw-1)*7-1; const days=[]; for(let i=a0;i<=a0+6;i++){ if(i<0||i>=BASE.length) continue; const s0=sessionsOn(BASE,logs,ADAPT,i)[0]; const note=BASE[i][2]; days.push(`<li><time>${DOW[dow(i)]} ${new Date(START_UTC+i*864e5).getUTCDate()}.</time><span>${typeChip(s0.code)} ${esc((s0.text||"").slice(0,60))}${(s0.text||"").length>60?"…":""}${note?` <b>📌 ${esc(note)}</b>`:""} ${habIcons(i)}</span></li>`); }
+  el.innerHTML=`<div class="weekhead"><div><div class="eyebrow">Suunnitteluhetki</div><h2>Viikko ${nw}</h2></div><button class="x" data-planclose aria-label="Sulje">×</button></div>
+    <div class="pstep"><b>1. Mennyt viikko</b><p>${dn}/${pl} treeniä · ${n1(act)} / ${tgt} km${pl&&dn>=pl?" · täysi viikko 💪":""}</p></div>
+    <div class="pstep"><b>2. Ensi viikon treenit</b><ul class="up pdays">${days.join("")}</ul></div>
+    <div class="pstep"><b>3. Menot</b><p class="tip">Onko tulossa juhlia, matkoja tai työkiireitä?</p><button class="btn small" data-addev="${a0+1}">＋ Lisää meno ensi viikolle</button></div>
+    <div class="pstep"><b>4. Kuorma</b>${weekScaleControls(nw,t)}</div>
+    <button class="btn primary big" data-plandone="${nw}">${done?"Valmis ✓":"Valmis, viikko suunniteltu"}</button>`;
+  const lc=el.querySelector("#loadCtl"); if(lc) lc.open=true; }
+document.addEventListener("click",e=>{ if(e.target.closest("[data-planopen]")){ planOpen=true; renderPlanWeek(todayIdx()); return; }
+  if(e.target.closest("[data-planclose]")){ planOpen=false; planForce=false; render(); return; }
+  const d=e.target.closest("[data-plandone]"); if(d){ meta.planned=meta.planned||{}; const first=!meta.planned[d.dataset.plandone]; meta.planned[d.dataset.plandone]=isoOfIdx(todayIdx()); persist(); planOpen=false; planForce=false; render(); if(first){ celebrate(); toast("Ensi viikko suunniteltu ✓"); } return; }
+  if(e.target.closest("[data-planfrom]")){ planForce=true; planOpen=true; location.hash="#tanaan"; setTimeout(()=>{ const el=$("planWeek"); if(el) el.scrollIntoView({behavior:"smooth",block:"start"}); },80); } });
+
+/* ===== Kuukautiskierto (valinnainen) ===== */
+const cyc=()=>meta.cycle||{};
+function cycStarts(){ const D=cyc().days||{}; const ks=Object.keys(D).sort(); const st=[]; let prev=null; for(const k of ks){ const i=idxOfISO(k); if(prev==null||i-prev>2) st.push(i); prev=i; } return st; }
+function cycInfo(i){ const st=cycStarts().filter(x=>x<=i); if(!st.length) return null; const last=st[st.length-1]; const all=cycStarts(); const lens=[]; for(let k=1;k<all.length;k++){ const L=all[k]-all[k-1]; if(L>=20&&L<=40) lens.push(L); } const avg=lens.length?Math.round(lens.reduce((a,b)=>a+b,0)/lens.length):28;
+  const day=i-last+1; const ph= day<=5?"Kuukautiset":day<=avg-15?"Follikulaarivaihe":day<=avg-12?"Ovulaation aika":"Luteaalivaihe"; return {day,avg,ph,next:last+avg,known:lens.length}; }
+function cycRow(i){ if(!cyc().on) return ""; const on=!!(cyc().days||{})[isoOfIdx(i)]; const ci=cycInfo(i);
+  return `<li><button class="hab cyc${on?" done":""}" data-cyc="${i}" aria-pressed="${on}"><span class="hk" aria-hidden="true">${on?"✓":""}</span><span class="hi" aria-hidden="true">🩸</span><span class="ht"><b>Kuukautiset tänään</b><small>${ci?`Kierron päivä ${ci.day} · ${ci.ph}`:"Merkitse ensimmäinen päivä, niin sovellus laskee kierron"}</small></span></button></li>`; }
+document.addEventListener("click",e=>{ const b=e.target.closest("[data-cyc]"); if(!b) return; const d=isoOfIdx(+b.dataset.cyc); meta.cycle=meta.cycle||{on:true}; const D=meta.cycle.days=meta.cycle.days||{}; if(D[d]) delete D[d]; else D[d]=1; persist(); renderHabits(todayIdx()); });
+function cycleHTML(ti){ if(!cyc().on) return ""; const ci=cycInfo(ti); const st=cycStarts();
+  let rows=""; const ph={Kuukautiset:{fe:[],rhr:[]},Follikulaarivaihe:{fe:[],rhr:[]},"Ovulaation aika":{fe:[],rhr:[]},Luteaalivaihe:{fe:[],rhr:[]}};
+  for(let i=Math.max(0,ti-120);i<=ti;i++){ const c=cycInfo(i); if(!c) continue; const l=logs[isoOfIdx(i)]; if(l&&typeof l.feel==="number") ph[c.ph].fe.push(l.feel); if(l&&typeof l.rhr==="number") ph[c.ph].rhr.push(l.rhr); }
+  const av=a=>a.length?(a.reduce((x,y)=>x+y,0)/a.length):null; const enough=st.length>=2;
+  if(enough) rows=Object.entries(ph).map(([k,v])=>`<li><span>${k}</span><span class="num">${av(v.fe)!=null?`fiilis ${av(v.fe).toFixed(1).replace(".",",")}`:"–"} · ${av(v.rhr)!=null?`leposyke ${Math.round(av(v.rhr))}`:"–"}</span></li>`).join("");
+  return `<section class="card"><div class="eyebrow">Kuukautiskierto</div>${ci?`<p><b>Päivä ${ci.day}</b> · ${ci.ph}</p><p class="tip">Seuraavat arviolta ${fmt(ci.next)} · keskipituus ${ci.avg} pv${ci.known?"":" (oletus, tarkentuu)"}</p>`:`<p class="note">Merkitse kuukautisten päivät Tavat-kortista.</p>`}
+    ${enough?`<ul class="blist cyclist">${rows}</ul><p class="tip">Monella kestävyysurheilijalla olo on kevyempi follikulaarivaiheessa ja raskaampi luteaalivaiheessa, mutta erot ovat yksilöllisiä. Runsaat kuukautiset kuluttavat rautavarastoja, joten seuraa ferritiiniä.</p>`:`<p class="tip">Vertailu fiiliksestä ja leposykkeestä vaiheittain näkyy, kun kaksi kiertoa on merkitty.</p>`}</section>`; }
 
 /* ===== Verikoearvot ===== */
 const BLOOD=[["veri1","Marraskuu"],["veri2","Helmikuu"]];
@@ -1073,7 +1109,7 @@ function weeksStatus(){ const t=Math.max(0,todayIdx()), w=weekOf(t), o={}; for(c
 function upcomingStatus(){ const t0=Math.max(0,todayIdx()); const t=Math.max(0,(weekOf(t0)-1)*7-1); const up={}; for(let i=t;i<=Math.min(BASE.length-1,t+21);i++){ const e=effective(BASE,ADAPT,i); up[isoOfIdx(i)]={code:e.code,label:TYPES[e.code].l,text:(e.text||"").slice(0,120),note:(BASE[i][2]||"").slice(0,40)}; } return up; }
 function cloudPayload(){
   const ti=todayIdx(); let ws=[]; try{ ws=computeWarnings(BASE,logs,ADAPT,ti).concat(eventWarnings(ti)).concat(cpWarnings(ti)).map(w=>({level:w.level,title:w.title})); }catch(e){}
-  return { data:{app:"matka-pallakselle",version:3,logs,adjOff,edits,weekScale,shoes,gear,hr:meta.hr||null,defaultShoe:meta.defaultShoe||null,habits:meta.habits||null,hab:meta.hab||{},bGoal:meta.bGoal||null,rck:meta.rck||null,blood:meta.blood||null,habMove:meta.habMove||null}, status:{upcoming:upcomingStatus(),weeks:weeksStatus(),warnings:ws,at:new Date().toISOString()}, refresh:strava.r||null };
+  return { data:{app:"matka-pallakselle",version:3,logs,adjOff,edits,weekScale,shoes,gear,hr:meta.hr||null,defaultShoe:meta.defaultShoe||null,habits:meta.habits||null,hab:meta.hab||{},bGoal:meta.bGoal||null,rck:meta.rck||null,blood:meta.blood||null,habMove:meta.habMove||null,cycle:meta.cycle||null,planned:meta.planned||null}, status:{upcoming:upcomingStatus(),weeks:weeksStatus(),warnings:ws,at:new Date().toISOString()}, refresh:strava.r||null };
 }
 function scheduleCloud(){ if(!stravaConnected()) return; clearTimeout(cloudTimer); cloudTimer=setTimeout(()=>cloudSave(false),8000); }
 async function cloudSave(keepalive){
