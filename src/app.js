@@ -746,7 +746,7 @@ document.addEventListener("click",e=>{ const o=e.target.closest("[data-hmvopen]"
 /* ===== Verikoearvot ===== */
 const BLOOD=[["veri1","Marraskuu"],["veri2","Helmikuu"]];
 let bloodEdit=null;
-const BFIELDS=[["ferr","Ferritiini","µg/l","Rautavarastot"],["hb","Hemoglobiini","g/l","Anemia"],["tfr","Transferriinireseptori (TfR)","mg/l","Raudanpuute, tulehdus ei sotke"],["tsh","TSH","mU/l","Kilpirauhanen"],["t4v","T4-V","pmol/l","Kilpirauhanen"],["crp","CRP","mg/l","Tulehdus (jos mitattu)"]];
+const BFIELDS=[["ferr","Ferritiini","µg/l","Rautavarastot"],["hb","Hemoglobiini","g/l","Anemia"],["tfr","Transferriinireseptori (TfR)","mg/l","Raudanpuute, tulehdus ei sotke"],["tsh","TSH","mU/l","Kilpirauhanen"],["t4v","T4-V","pmol/l","Kilpirauhanen"],["crp","CRP / hs-CRP","mg/l","Tulehdus"],["d25","D-vitamiini","nmol/l","D-vitamiinitaso"]];
 function bloodHTML(){ const B=meta.blood||{}; const a=B.veri1||{}, b=B.veri2||{};
   const rows=BFIELDS.filter(([k])=>typeof a[k]==="number"||typeof b[k]==="number").map(([k,l,u])=>{ const x=a[k], y=b[k]; const d=typeof x==="number"&&typeof y==="number"?y-x:null;
     return `<li><span><b>${l}</b><small>${u}</small></span><span class="bv num">${typeof x==="number"?n1(x):"–"} → ${typeof y==="number"?n1(y):"–"}${d!=null?` <em class="${d<0&&(k==="ferr"||k==="hb")?"neg":""}">(${d>0?"+":""}${n1(d)})</em>`:""}</span></li>`; }).join("");
