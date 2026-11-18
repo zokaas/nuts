@@ -14,6 +14,7 @@
       <div class="herotop"><button class="pill st-ok" id="pill" type="button"></button><span class="wchip" id="weather" hidden></span></div>
       <div id="today"></div>
     </section>
+    <section class="card habcard" id="habits" hidden></section>
     <section class="status" id="status" aria-live="polite" hidden></section>
     <section class="card" id="week"></section>
     <section class="card" id="summary" hidden></section>
@@ -50,6 +51,7 @@
       <section class="card"><div class="eyebrow">Havainnot</div><div id="aInsights"></div></section>
     </div>
     <div class="agroup" data-agroup="vointi" hidden>
+      <section class="card"><div class="eyebrow">Tavat</div><div id="aHab"></div></section>
       <section class="card"><div class="eyebrow">Vointi 30 päivää</div><div id="aHealth"></div></section>
       <section class="card"><div class="eyebrow">Ohjelman muutokset 2 vk</div><div id="aAdapt"></div></section>
       <section class="card"><details class="fold"><summary>Näin ohjelma mukautuu</summary>
@@ -147,6 +149,16 @@
       <div class="row"><button class="btn" data-backup>Tallenna tiedostoon</button>
         <label class="btn file" for="restoreFile">Palauta tiedostosta<input type="file" id="restoreFile" accept="application/json,.json"></label></div>
       <p class="tip" id="restoreMsg"></p></details>
+    </section>
+    <section class="card">
+      <h2>Tavat</h2>
+      <div id="habSet"></div>
+      <details class="fold"><summary>＋ Uusi tapa</summary>
+        <div class="grid2"><div class="field"><label for="habName">Nimi</label><input type="text" id="habName" maxlength="50" placeholder="Esim. venyttely 10 min"></div><div class="field"><label for="habIc">Emoji</label><input type="text" id="habIc" maxlength="4" placeholder="✅"></div></div>
+        <div class="field"><label for="habWhen">Milloin</label><select id="habWhen"><option value="aamu">Aamu</option><option value="päivä">Päivä</option><option value="ilta">Ilta</option></select></div>
+        <div class="field"><label>Päivät (tyhjä = joka päivä)</label><div class="daypick" id="habDays"><button type="button" data-hd="0" aria-pressed="false">ma</button><button type="button" data-hd="1" aria-pressed="false">ti</button><button type="button" data-hd="2" aria-pressed="false">ke</button><button type="button" data-hd="3" aria-pressed="false">to</button><button type="button" data-hd="4" aria-pressed="false">pe</button><button type="button" data-hd="5" aria-pressed="false">la</button><button type="button" data-hd="6" aria-pressed="false">su</button></div></div>
+        <div class="row"><button class="btn" id="habAdd">Lisää tapa</button></div>
+      </details>
     </section>
     <section class="card">
       <div class="weekhead"><h2>Syke</h2></div>

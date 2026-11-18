@@ -566,5 +566,26 @@ body.maint .hero, body.maint #week, body.maint #status, body.maint #summary, bod
 .cc.chg::after{content:""; position:absolute; top:3px; right:4px; width:6px; height:6px; border-radius:50%; background:var(--fell)}
 .callegend{display:flex; align-items:center; gap:6px; flex-wrap:wrap; font-size:12px}
 .lg-chg{display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--fell)}
+.habcard{gap:8px}
+.habhead{display:flex; justify-content:space-between; align-items:center}
+.habcount{font-weight:800; font-size:14px; color:var(--muted)} .habcount.ok{color:var(--ok)}
+.hablist{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:6px}
+.hab{display:grid; grid-template-columns:26px 26px 1fr; gap:8px; align-items:center; width:100%; text-align:left; border:1px solid var(--line); background:transparent; border-radius:12px; padding:9px 10px; color:inherit; font:inherit}
+.hab .hk{width:24px; height:24px; border-radius:7px; border:2px solid var(--line); display:grid; place-items:center; font-weight:900; font-size:14px; color:#fff}
+.hab.done{background:var(--ok-bg); border-color:transparent} .hab.done .hk{background:var(--ok); border-color:var(--ok)}
+.hab.done .ht b{text-decoration:line-through; text-decoration-color:color-mix(in srgb, var(--ink) 40%, transparent)}
+.hab.opt{border-style:dashed}
+.hab .hi{font-size:20px; text-align:center}
+.hab .ht{display:flex; flex-direction:column; gap:1px; min-width:0}
+.hab .ht b{font-size:15px} .hab .ht b small{font-weight:400; color:var(--muted); font-size:12px}
+.hab .ht small{color:var(--muted); font-size:13px} .hab .ht .hs{color:var(--fell); font-weight:700; font-size:12px}
+.hgrow{display:flex; flex-direction:column; gap:4px; padding:6px 0}
+.hgh{display:flex; justify-content:space-between; font-size:14px; font-weight:700}
+.hgrid{display:flex; flex-wrap:wrap; gap:3px}
+.hgrid i{width:9px; height:9px; border-radius:2px; background:var(--line)}
+.hgrid i.y{background:var(--ok)} .hgrid i.o{background:transparent; border:1px dashed var(--line)} .hgrid i.x{background:transparent} .hgrid i.t{background:transparent; border:1.5px solid var(--accent)}
+.daypick{display:grid; grid-template-columns:repeat(7,1fr); gap:4px}
+.daypick button{border:1px solid var(--line); background:transparent; border-radius:8px; padding:8px 0; font-weight:700; color:var(--muted)}
+.daypick button[aria-pressed="true"]{background:var(--ink); color:var(--bg); border-color:var(--ink)}
 </style>
 </head>

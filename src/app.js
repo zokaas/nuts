@@ -105,9 +105,9 @@ function render(){
   document.querySelectorAll(".tabs a").forEach(a=>a.setAttribute("aria-current",a.getAttribute("href")==="#"+r?"page":"false"));
   const st=stats(), bs=badges(st); const ws=computeWarnings(BASE,logs,ADAPT,ti).concat(eventWarnings(ti)).concat(cpWarnings(ti)); checkCont30();
   renderCount(ti,st,bs);
-  if(r==="tanaan"){ renderMaint(); renderRaceWeek(ti); renderStatus(ws); renderToday(t,ti); renderTip(t); renderSummary(ti); renderWeek(t); renderUpcoming(t); }
+  if(r==="tanaan"){ renderHabits(ti); renderMaint(); renderRaceWeek(ti); renderStatus(ws); renderToday(t,ti); renderTip(t); renderSummary(ti); renderWeek(t); renderUpcoming(t); }
   if(r==="historia"){ renderHistory(st); }
-  if(r==="asetukset"){ renderStrava(); renderCloud(); renderPush(); renderZones(); renderLoc(); }
+  if(r==="asetukset"){ renderHabitSettings(); renderStrava(); renderCloud(); renderPush(); renderZones(); renderLoc(); }
   if(r==="analyysi") renderAnalysis(ti,st,t);
   if(r==="merkit") renderBadges(st,bs);
   if(r==="kalenteri") renderCalendar(t);
@@ -374,6 +374,7 @@ function renderAnalysis(ti,st,t0){
   const lr=loadRatio(BASE,logs,ti); const lw=weekOf(ti)-1; const last4=[]; for(let w=Math.max(1,lw-3);w<=Math.max(1,lw);w++) last4.push([w,weekKm(BASE,logs,w),TARGET[w-1]]);
   const comp = last4.length? Math.round(last4.reduce((a,x)=>a+x[1],0)/Math.max(1,last4.reduce((a,x)=>a+x[2],0))*100):0;
   const elevW=w=>{ const [a,z]=weekRange(w); let s2=0; for(const k in logs){ const i=idxOfISO(k); if(i>=a&&i<=z&&logs[k].status==="done"&&typeof logs[k].elev==="number") s2+=logs[k].elev; } return Math.round(s2); };
+  $("aHab").innerHTML=habGridHTML(Math.max(0,ti));
   $("aPred").innerHTML=predictionHTML(ti,true); $("aPredT").textContent=bHalf()?"Puolimaratonin aika-arvio":"Belgradin aika-arvio"; $("aCont").innerHTML=contHTML(ti); $("aCps").innerHTML=cpHTML(ti);
   $("aLoad").innerHTML=`<div class="tiles"><div class="tile"><span>Nousu tällä vk</span><b class="num">${elevW(weekOf(ti))} m</b></div><div class="tile"><span>Nousu viime vk</span><b class="num">${elevW(Math.max(1,weekOf(ti)-1))} m</b></div><div class="tile"><span>Toteuma 4 vk</span><b class="num">${comp} %</b></div><div class="tile"><span>Kuorma&shy;suhde</span><b class="num">${lr?String(Math.round(lr.ratio*100)/100).replace(".",","):"–"}</b></div><div class="tile"><span>7 pv km</span><b class="num">${lr?lr.acute:"–"}</b></div></div>
     <p class="tip">${lr? (lr.ratio>1.5?"Kuorma nousi viime viikolla jyrkästi suhteessa edellisiin viikkoihin. Pidä seuraavat päivät kevyinä.": lr.ratio<0.8?"Viime viikko oli kevyempi kuin edelliset. Hyvä palautumiseen, mutta älä jää pitkäksi aikaa alas.":"Kuorma nousee tasaisesti. Juuri näin pitääkin."):"Kuormasuhde (7 pv / 4 vk keskiarvo) näkyy, kun kirjauksia on 3 viikolta. Turvallinen alue 0,8–1,3."}</p>`;
@@ -494,7 +495,7 @@ $("restoreFile").onchange=async e=>{ const f=e.target.files[0]; if(!f) return;
   try{ const d=JSON.parse(await f.text()); if(d.app!=="matka-pallakselle"||typeof d.logs!=="object") throw 0;
     const n=Object.keys(d.logs).length; const cur=Object.keys(logs).length;
     $("restoreMsg").innerHTML=`Tiedostossa ${n} kirjausta (nyt sovelluksessa ${cur}). <button class="btn small primary" id="doMerge">Yhdistä</button> <button class="btn small" id="doReplace">Korvaa kaikki</button>`;
-    $("doMerge").onclick=()=>{ for(const k in d.logs){ if(!logs[k]||(d.logs[k].updatedAt||"")>(logs[k].updatedAt||"")) logs[k]=d.logs[k]; } adjOff={...adjOff,...(d.adjOff||{})}; edits={...(d.edits||{}),...edits}; weekScale={...(d.weekScale||{}),...weekScale}; (d.shoes||[]).forEach(x=>{ if(!shoes.find(y=>y.id===x.id)) shoes.push(x); }); gear={...(d.gear||{}),...gear}; if(!meta.defaultShoe&&d.defaultShoe) meta.defaultShoe=d.defaultShoe; if(!strava.worker&&d.stravaWorker){ strava.worker=d.stravaWorker; saveStrava(); } persist(); $("restoreMsg").textContent="Yhdistetty ✓"; render(); };
+    $("doMerge").onclick=()=>{ restoreExtras(d); for(const k in d.logs){ if(!logs[k]||(d.logs[k].updatedAt||"")>(logs[k].updatedAt||"")) logs[k]=d.logs[k]; } adjOff={...adjOff,...(d.adjOff||{})}; edits={...(d.edits||{}),...edits}; weekScale={...(d.weekScale||{}),...weekScale}; (d.shoes||[]).forEach(x=>{ if(!shoes.find(y=>y.id===x.id)) shoes.push(x); }); gear={...(d.gear||{}),...gear}; if(!meta.defaultShoe&&d.defaultShoe) meta.defaultShoe=d.defaultShoe; if(!strava.worker&&d.stravaWorker){ strava.worker=d.stravaWorker; saveStrava(); } persist(); $("restoreMsg").textContent="Yhdistetty ✓"; render(); };
     $("doReplace").onclick=()=>{ logs=d.logs; adjOff=d.adjOff||{}; edits=d.edits||{}; weekScale=d.weekScale||{}; shoes=d.shoes||[]; gear=d.gear||{}; meta.defaultShoe=d.defaultShoe||null; persist(); $("restoreMsg").textContent="Palautettu ✓"; render(); };
   }catch(err){ $("restoreMsg").textContent="Tiedostoa ei voitu lukea. Valitse sovelluksen tekemä varmuuskopio (.json)."; }
   e.target.value=""; };
@@ -652,6 +653,46 @@ function renderMaint(){ const ti=todayIdx(), on=ti>NUTS; document.body.classList
     <button class="btn primary big" data-logfree="${ti}">＋ Kirjaa liikunta</button>
     <ul class="up">${items.join("")||`<li class="note">Ei vielä liikuntaa tällä viikolla. Strava-treenit tulevat tähän automaattisesti.</li>`}</ul>
     <p class="tip">Seuraava tavoite? Kerro, niin teen uuden ohjelman.</p>`; }
+
+/* ===== Tavat ===== */
+const HABIT_DEFAULT=[
+  {id:"hera",ic:"🌅",name:"Verenkierron herättely 5 min",when:"aamu",sched:[{from:"2026-11-18",days:"all"}]},
+  {id:"kampa",ic:"🪮",name:"Kampaus puukammalla",when:"aamu",sched:[{from:"2026-11-16",days:"all"}]},
+  {id:"pesu",ic:"🧴",name:"Hiustenpesu",when:"päivä",week:2,sched:[
+    {from:"2026-11-16",to:"2026-12-13",label:"Hilseen rauhoitus (vk 1–4)",days:{0:{n:"Pesupäivä: öljy ensin · ketokonatsoli"},2:{n:"Pikapesu, jos hiukset rasvoittuvat · mieto shampoo",opt:true},4:{n:"Pesupäivä + methi-naamio · ketokonatsoli"}}},
+    {from:"2026-12-14",label:"Ylläpito (vk 5→)",days:{0:{n:"Pesupäivä"},4:{n:"Pesupäivä"}},todo:true}]},
+  {id:"letti",ic:"🌙",name:"Löysä letti yöksi",when:"ilta",sched:[{from:"2026-11-16",days:"all"}]}];
+function habits(){ if(!meta.habits){ meta.habits=JSON.parse(JSON.stringify(HABIT_DEFAULT)); meta.hab=meta.hab||{}; persist(); } return meta.habits.filter(h=>!h.off); }
+function habitOn(h,i){ const d=isoOfIdx(i), w=dow(i); const sc=(h.sched||[]).find(x=>x.from<=d&&(!x.to||d<=x.to)); if(!sc) return null; if(sc.days==="all") return {n:"",opt:false,sc}; const x=sc.days[w]; return x?{...x,sc}:null; }
+function habDone(id,i){ const r=(meta.hab||{})[isoOfIdx(i)]; return !!(r&&r[id]); }
+function habStreak(h,i){ let n=0; for(let k=i;k>i-400;k--){ const on=habitOn(h,k); if(!on||on.opt) continue; if(habDone(h.id,k)) n++; else if(k===i) continue; else break; } return n; }
+function habWeek(h,i){ const a0=(weekOf(i)-1)*7-1; let n=0; for(let k=a0;k<=a0+6;k++) if(habDone(h.id,k)) n++; return n; }
+let habDay=null;
+function renderHabits(ti){ const el=$("habits"); if(!el) return; const i=habDay??ti; const hs=habits().map(h=>({h,on:habitOn(h,i)})).filter(x=>x.on);
+  if(!hs.length){ el.hidden=true; return; } el.hidden=false;
+  const order={aamu:0,"päivä":1,ilta:2}; hs.sort((a,b)=>order[a.h.when]-order[b.h.when]);
+  const done=hs.filter(x=>habDone(x.h.id,i)).length, need=hs.filter(x=>!x.on.opt).length, needDone=hs.filter(x=>!x.on.opt&&habDone(x.h.id,i)).length;
+  el.innerHTML=`<div class="habhead"><div class="eyebrow">Tavat${i!==ti?` · ${fmt(i)}`:""}</div><span class="habcount${needDone>=need?" ok":""}">${needDone>=need?"✓ ":""}${needDone}/${need}</span></div>
+    <ul class="hablist">${hs.map(({h,on})=>{ const d=habDone(h.id,i); const st=habStreak(h,i); const wk=h.week?`${habWeek(h,i)}/${h.week} tällä viikolla`:(st>=2?`🔥 ${st} pv putkeen`:"");
+      return `<li><button class="hab${d?" done":""}${on.opt?" opt":""}" data-hab="${h.id}" data-hi="${i}" aria-pressed="${d}"><span class="hk" aria-hidden="true">${d?"✓":""}</span><span class="hi" aria-hidden="true">${h.ic}</span><span class="ht"><b>${esc(h.name)}${on.opt?` <small>valinnainen</small>`:""}</b>${on.n?`<small>${esc(on.n)}</small>`:""}${wk?`<small class="hs">${wk}</small>`:""}</span></button></li>`; }).join("")}</ul>
+    ${i!==ti?`<button class="link" data-habday="">‹ Tänään</button>`:`<button class="link" data-habday="${ti-1}">Kirjaa eiliselle</button>`}`; }
+document.addEventListener("click",e=>{ const b=e.target.closest("[data-hab]"); if(b){ const id=b.dataset.hab, i=+b.dataset.hi, d=isoOfIdx(i); meta.hab=meta.hab||{}; const r=meta.hab[d]=meta.hab[d]||{}; if(r[id]) delete r[id]; else { r[id]=1; if(navigator.vibrate) navigator.vibrate(10); } if(!Object.keys(r).length) delete meta.hab[d];
+    persist(); renderHabits(todayIdx()); const all=habits().filter(h=>{ const on=habitOn(h,i); return on&&!on.opt; }); if(r[id]&&all.every(h=>habDone(h.id,i))) toast("Päivän tavat tehty ✓"); return; }
+  const hd=e.target.closest("[data-habday]"); if(hd){ habDay= hd.dataset.habday===""?null:+hd.dataset.habday; renderHabits(todayIdx()); } });
+function habGridHTML(ti){ const hs=habits(); if(!hs.length) return `<p class="note">Ei tapoja.</p>`; const N=28, a=ti-N+1;
+  return hs.map(h=>{ let req=0, ok=0; const cells=[]; const f0=idxOfISO(((h.sched||[])[0]||{}).from||isoOfIdx(a)); for(let i=Math.max(a,f0);i<=ti;i++){ const on=habitOn(h,i); const d=habDone(h.id,i); if(on&&!on.opt){ req++; if(d) ok++; } cells.push(`<i class="${d?"y":on?(on.opt?"o":(i===ti?"t":"n")):"x"}" title="${fmt(i)}"></i>`); }
+    return `<div class="hgrow"><div class="hgh"><span>${h.ic} ${esc(h.name)}</span><span class="num">${req?Math.round(ok/req*100):0} %</span></div><div class="hgrid">${cells.join("")}</div></div>`; }).join("")+`<p class="tip">Viimeiset 4 viikkoa. Vihreä = tehty, harmaa = jäi, tyhjä = ei ohjelmassa.</p>`; }
+function renderHabitSettings(){ const el=$("habSet"); if(!el) return; habits(); const all=meta.habits;
+  el.innerHTML=`<ul class="evlist">${all.map(h=>`<li><span><b>${h.ic} ${esc(h.name)}</b><small>${h.off?"pois käytöstä":habDesc(h)}</small></span><button class="btn small ghost" data-haboff="${h.id}">${h.off?"Näytä":"Piilota"}</button></li>`).join("")}</ul>`; }
+function habDesc(h){ const d=isoOfIdx(Math.max(0,todayIdx())); const sc=(h.sched||[]).find(x=>x.from<=d&&(!x.to||d<=x.to))||(h.sched||[])[0]; if(!sc) return ""; const when={aamu:"aamuisin",ilta:"iltaisin","päivä":""}[h.when]||"";
+  if(sc.days==="all") return `joka päivä ${when}`.trim(); return Object.keys(sc.days).map(k=>DOW[k]+(sc.days[k].opt?" (valinn.)":"")).join(", ")+(sc.label?` · ${sc.label}`:""); }
+document.addEventListener("click",e=>{ const b=e.target.closest("[data-haboff]"); if(!b) return; const h=meta.habits.find(x=>x.id===b.dataset.haboff); h.off=!h.off; persist(); renderHabitSettings(); });
+$("habAdd").onclick=()=>{ const name=$("habName").value.trim().slice(0,50); if(!name){ $("habName").focus(); return; } const days=[...document.querySelectorAll("#habDays [aria-pressed='true']")].map(b=>+b.dataset.hd);
+  const sc= days.length===0||days.length===7 ? "all" : Object.fromEntries(days.map(d=>[d,{n:""}])); habits();
+  meta.habits.push({id:"h"+Date.now().toString(36),ic:$("habIc").value.trim()||"✅",name,when:$("habWhen").value,sched:[{from:isoOfIdx(Math.max(0,todayIdx())),days:sc}]});
+  persist(); $("habName").value=""; $("habIc").value=""; document.querySelectorAll("#habDays button").forEach(b=>b.setAttribute("aria-pressed","false")); renderHabitSettings(); toast(`Lisätty: ${name}`); };
+$("habDays").onclick=e=>{ const b=e.target.closest("[data-hd]"); if(b) b.setAttribute("aria-pressed",String(b.getAttribute("aria-pressed")!=="true")); };
+function restoreExtras(d){ if(d.habits&&!meta.habits) meta.habits=d.habits; if(d.hab){ meta.hab=meta.hab||{}; for(const k in d.hab) meta.hab[k]={...d.hab[k],...(meta.hab[k]||{})}; } if(d.bGoal&&!meta.bGoal) meta.bGoal=d.bGoal; if(d.rck&&!meta.rck) meta.rck=d.rck; }
 
 /* ===== Menot ja suunnitelmat ===== */
 let evKind="note";
@@ -957,7 +998,7 @@ function weeksStatus(){ const t=Math.max(0,todayIdx()), w=weekOf(t), o={}; for(c
 function upcomingStatus(){ const t0=Math.max(0,todayIdx()); const t=Math.max(0,(weekOf(t0)-1)*7-1); const up={}; for(let i=t;i<=Math.min(BASE.length-1,t+21);i++){ const e=effective(BASE,ADAPT,i); up[isoOfIdx(i)]={code:e.code,label:TYPES[e.code].l,text:(e.text||"").slice(0,120),note:(BASE[i][2]||"").slice(0,40)}; } return up; }
 function cloudPayload(){
   const ti=todayIdx(); let ws=[]; try{ ws=computeWarnings(BASE,logs,ADAPT,ti).concat(eventWarnings(ti)).concat(cpWarnings(ti)).map(w=>({level:w.level,title:w.title})); }catch(e){}
-  return { data:{app:"matka-pallakselle",version:3,logs,adjOff,edits,weekScale,shoes,gear,hr:meta.hr||null,defaultShoe:meta.defaultShoe||null}, status:{upcoming:upcomingStatus(),weeks:weeksStatus(),warnings:ws,at:new Date().toISOString()}, refresh:strava.r||null };
+  return { data:{app:"matka-pallakselle",version:3,logs,adjOff,edits,weekScale,shoes,gear,hr:meta.hr||null,defaultShoe:meta.defaultShoe||null,habits:meta.habits||null,hab:meta.hab||{},bGoal:meta.bGoal||null,rck:meta.rck||null}, status:{upcoming:upcomingStatus(),weeks:weeksStatus(),warnings:ws,at:new Date().toISOString()}, refresh:strava.r||null };
 }
 function scheduleCloud(){ if(!stravaConnected()) return; clearTimeout(cloudTimer); cloudTimer=setTimeout(()=>cloudSave(false),8000); }
 async function cloudSave(keepalive){
@@ -977,6 +1018,7 @@ async function cloudRestore(){
     adjOff={...(d.adjOff||{}),...adjOff}; edits={...(d.edits||{}),...edits}; weekScale={...(d.weekScale||{}),...weekScale};
     (d.shoes||[]).forEach(x=>{ if(!shoes.find(y=>y.id===x.id)) shoes.push(x); }); gear={...(d.gear||{}),...gear};
     if(!meta.hr&&d.hr) meta.hr=d.hr; if(!meta.defaultShoe&&d.defaultShoe) meta.defaultShoe=d.defaultShoe;
+    restoreExtras(d);
     persist(); render(); toast(`Palautettu pilvestä: ${n} kirjausta.`);
   }catch(e){ toast("Palautus epäonnistui. Tarkista nettiyhteys."); }
 }
