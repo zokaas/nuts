@@ -121,21 +121,7 @@
     <div class="sethead"><a href="#tanaan" class="link">‹ Takaisin</a><h2>Asetukset</h2></div>
     <a href="#ohje" class="card linkcard"><span>❓ Näin sovellus toimii</span><span aria-hidden="true">›</span></a>
   <div class="nag" id="backupNag" hidden><span>Varmuuskopiosta yli viikko.</span><button class="btn small primary" data-backup>Tallenna</button></div>
-    <section class="card" id="icuCard">
-      <div class="weekhead"><h2>Uni ja leposyke</h2><span class="tip">Intervals.icu</span></div>
-      <p class="tip" id="icuStatus"></p>
-      <details class="fold"><summary>Asetukset ja ohje</summary>
-        <ol class="steps">
-          <li>Intervals.icu → Settings → <b>Suunto</b>: yhdistä ja kytke päälle <b>Download wellness data</b> (sleep, HRV, resting HR).</li>
-          <li>Settings → <b>Developer Settings</b>: kopioi <b>Athlete ID</b> (muotoa i123456) ja luo <b>API Key</b>.</li>
-          <li>Liitä ne alle ja paina Tallenna ja hae.</li>
-        </ol>
-        <div class="grid2"><div class="field"><label for="icuAth">Athlete ID</label><input type="text" id="icuAth" autocapitalize="off" autocorrect="off" placeholder="i123456"></div><div class="field"><label for="icuKey">API Key</label><input type="password" id="icuKey" autocapitalize="off" autocorrect="off" autocomplete="off"></div></div>
-        <label class="chk togglerow"><input type="checkbox" id="icuShift"> Yö näkyy päivää liian aikaisin <small>(vertaa Suunnon unipäivään ja kytke tarvittaessa)</small></label>
-        <div class="row"><button class="btn primary small" id="icuSave">Tallenna ja hae</button><button class="btn ghost small" id="icuOff">Poista yhteys</button></div>
-        <p class="tip">Haku tapahtuu automaattisesti, kun avaat sovelluksen (enintään 3 tunnin välein). Käsin kirjattu leposyke tai uni ei korvaudu. API-avain tallentuu vain tähän laitteeseen.</p>
-      </details>
-    </section>
+    <h3 class="setgrp">Yhteydet</h3>
     <section class="card" id="stravaCard">
       <div class="weekhead"><h2>Strava</h2><span class="stv big">S</span></div>
       <p class="tip" id="stStatus"></p>
@@ -153,22 +139,37 @@
         <button class="btn" id="stUseCode">Ota käyttöön</button>
       </details>
     </section>
+    <section class="card" id="icuCard">
+      <div class="weekhead"><h2>Uni ja leposyke</h2><span class="tip">Intervals.icu</span></div>
+      <p class="tip" id="icuStatus"></p>
+      <details class="fold"><summary>Asetukset ja ohje</summary>
+        <ol class="steps">
+          <li>Intervals.icu → Settings → <b>Suunto</b>: yhdistä ja kytke päälle <b>Download wellness data</b> (sleep, HRV, resting HR).</li>
+          <li>Settings → <b>Developer Settings</b>: kopioi <b>Athlete ID</b> (muotoa i123456) ja luo <b>API Key</b>.</li>
+          <li>Liitä ne alle ja paina Tallenna ja hae.</li>
+        </ol>
+        <div class="grid2"><div class="field"><label for="icuAth">Athlete ID</label><input type="text" id="icuAth" autocapitalize="off" autocorrect="off" placeholder="i123456"></div><div class="field"><label for="icuKey">API Key</label><input type="password" id="icuKey" autocapitalize="off" autocorrect="off" autocomplete="off"></div></div>
+        <label class="chk togglerow"><input type="checkbox" id="icuShift"> Yö näkyy päivää liian aikaisin <small>(vertaa Suunnon unipäivään ja kytke tarvittaessa)</small></label>
+        <div class="row"><button class="btn primary small" id="icuSave">Tallenna ja hae</button><button class="btn ghost small" id="icuOff">Poista yhteys</button></div>
+        <p class="tip">Haku tapahtuu automaattisesti, kun avaat sovelluksen (enintään 3 tunnin välein). Käsin kirjattu leposyke tai uni ei korvaudu. API-avain tallentuu vain tähän laitteeseen.</p>
+      </details>
+    </section>
     <section class="card">
       <div class="weekhead"><h2>Ilmoitukset</h2></div>
       <p class="tip" id="pushStatus"></p>
       <div class="row"><button class="btn primary" id="pushOn">Ota ilmoitukset käyttöön</button><button class="btn" id="pushTest" hidden>Testaa</button><button class="btn ghost" id="pushOff" hidden>Poista käytöstä</button></div>
       <p class="tip" id="pushMsg"></p>
     </section>
-    <section class="card backup">
-      <div class="weekhead"><h2>Varmuuskopio</h2></div>
-      <p class="tip" id="cloudStatus"></p>
-      <div class="row"><button class="btn" id="cloudRestore" hidden>Palauta pilvestä</button></div>
-      <details class="fold" id="fileBackup" open><summary>Varmuuskopio tiedostoon</summary>
-        <div class="row"><button class="btn ghost small" id="hCopy">Kopioi treenit taulukkona</button></div>
-      <p class="tip" id="lastBackup"></p>
-      <div class="row"><button class="btn" data-backup>Tallenna tiedostoon</button>
-        <label class="btn file" for="restoreFile">Palauta tiedostosta<input type="file" id="restoreFile" accept="application/json,.json"></label></div>
-      <p class="tip" id="restoreMsg"></p></details>
+    <h3 class="setgrp">Minä</h3>
+    <section class="card">
+      <div class="weekhead"><h2>Syke</h2></div>
+      <div class="grid3">
+        <div class="field"><label for="hrMax">Maksimisyke</label><input type="text" id="hrMax" inputmode="numeric" placeholder="185"></div>
+        <div class="field"><label for="hrAge">tai ikä</label><input type="text" id="hrAge" inputmode="numeric" placeholder="35"></div>
+        <div class="field"><label for="hrRest">Leposyke</label><input type="text" id="hrRest" inputmode="numeric" placeholder="auto"></div>
+      </div>
+      <p class="tip" id="hrRestAuto"></p>
+      <div class="row"><button class="btn" id="hrSave">Tallenna</button></div>
     </section>
     <section class="card">
       <h2>Tavat</h2>
@@ -181,15 +182,17 @@
         <div class="row"><button class="btn" id="habAdd">Lisää tapa</button></div>
       </details>
     </section>
-    <section class="card">
-      <div class="weekhead"><h2>Syke</h2></div>
-      <div class="grid3">
-        <div class="field"><label for="hrMax">Maksimisyke</label><input type="text" id="hrMax" inputmode="numeric" placeholder="185"></div>
-        <div class="field"><label for="hrAge">tai ikä</label><input type="text" id="hrAge" inputmode="numeric" placeholder="35"></div>
-        <div class="field"><label for="hrRest">Leposyke</label><input type="text" id="hrRest" inputmode="numeric" placeholder="auto"></div>
-      </div>
-      <p class="tip" id="hrRestAuto"></p>
-      <div class="row"><button class="btn" id="hrSave">Tallenna</button></div>
+    <h3 class="setgrp">Tiedot</h3>
+    <section class="card backup">
+      <div class="weekhead"><h2>Varmuuskopio</h2></div>
+      <p class="tip" id="cloudStatus"></p>
+      <div class="row"><button class="btn" id="cloudRestore" hidden>Palauta pilvestä</button></div>
+      <details class="fold" id="fileBackup" open><summary>Varmuuskopio tiedostoon</summary>
+        <div class="row"><button class="btn ghost small" id="hCopy">Kopioi treenit taulukkona</button></div>
+      <p class="tip" id="lastBackup"></p>
+      <div class="row"><button class="btn" data-backup>Tallenna tiedostoon</button>
+        <label class="btn file" for="restoreFile">Palauta tiedostosta<input type="file" id="restoreFile" accept="application/json,.json"></label></div>
+      <p class="tip" id="restoreMsg"></p></details>
     </section>
     <section class="card">
       <div class="weekhead"><h2>Sää</h2></div>
