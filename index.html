@@ -1037,14 +1037,17 @@ const TOTAL_SESSIONS=PLAN.filter(p=>p[0]!=="L").length;
 
 /* ---------- johdetut tiedot ---------- */
 function entries(){ return Object.keys(logs).map(k=>({key:k,idx:idxOfISO(k),l:logs[k],code:logType(BASE,k,logs[k])})).filter(e=>e.idx>=0).sort((a,b)=>a.key<b.key?-1:1); }
+/* Putki joustopäivällä: yksi väliin jäänyt päivä/treeni viikossa (ma–su) ei katkaise putkea. ev = [{w, ok}] aikajärjestyksessä */
+function flexStreak(ev, wNow){ let cur=0,best=0; const used=new Set(); for(const e of ev){ if(e.ok){ cur++; best=Math.max(best,cur); } else if(!used.has(e.w)&&cur>0){ used.add(e.w); } else { cur=0; } } return {cur,best,flexNow:used.has(wNow)}; }
 function stats(){
   const es=entries(); let done=0,km=0,longest=0,rMin=0,rKm=0;
   es.forEach(e=>{ if(e.l.status!=="done"||e.code==="L") return; done++; if(RUN.has(e.code)&&typeof e.l.km==="number"){ km+=e.l.km; longest=Math.max(longest,e.l.km); if(typeof e.l.min==="number"&&e.l.min>0){ rMin+=e.l.min; rKm+=e.l.km; } } });
-  const t=todayIdx(); let cur=0,best=0;
+  const t=todayIdx(); const ev=[];
   for(let i=0;i<=Math.min(t,BASE.length-1);i++){ for(const s of sessionsOn(BASE,logs,ADAPT,i)){ if(s.code==="L") continue; const l=logs[s.key]; const fl=flagsOf(l);
-    if(l&&l.status==="done"){ cur++; best=Math.max(best,cur); } else if(l&&l.status==="moved"){} else if(fl.includes("sick")||fl.includes("pain")){} else if((l&&l.status==="skip")||(!l&&i<t)) cur=0; } }
+    if(l&&l.status==="done") ev.push({w:weekOf(i),ok:true}); else if(l&&l.status==="moved"){} else if(fl.includes("sick")||fl.includes("pain")){} else if((l&&l.status==="skip")||(!l&&i<t)) ev.push({w:weekOf(i),ok:false}); } }
+  const FS=flexStreak(ev,weekOf(Math.max(0,t))); const cur=FS.cur, best=FS.best, flexNow=FS.flexNow;
   let elev=0; es.forEach(e=>{ if(e.l.status==="done"&&typeof e.l.elev==="number") elev+=e.l.elev; });
-  return {done,km,longest,cur,best,elev,avgPace:rKm?pace(rKm,rMin):""};
+  return {done,km,longest,cur,best,flexNow,elev,avgPace:rKm?pace(rKm,rMin):""};
 }
 function badges(st){
   const es=entries().filter(e=>e.l.status==="done"); const run=es.filter(e=>RUN.has(e.code)&&typeof e.l.km==="number");
@@ -1082,7 +1085,7 @@ function habStats(){ const H=meta.hab||{}, hs=(meta.habits||[]); const ti=todayI
   for(let i=first;i<=ti;i++){ const r=H[isoOfIdx(i)]||{}; const req=hs.filter(h=>!h.off).filter(h=>{ const on=habitOn(h,i); return on&&!on.opt; });
     for(const id in r){ count[id]=(count[id]||0)+1; xp+=2; }
     if(req.length&&req.every(h=>r[h.id])){ full++; xp+=5; fullDays.add(i); } }
-  for(const h of hs){ let cur=0,best=0; for(let i=first;i<=ti;i++){ const on=habitOn(h,i); if(!on||on.opt) continue; if(habDone(h.id,i)){ cur++; best=Math.max(best,cur); } else if(i<ti) cur=0; } maxStreak[h.id]=best; }
+  for(const h of hs){ maxStreak[h.id]=flexStreak(habEvents(h,Math.min(first,habFirst(h)),ti),weekOf(ti)).best; }
   for(let w=weekOf(Math.max(0,first));w<weekOf(ti)+1;w++){ const a0=(w-1)*7-1; if(a0+6>ti) break; let ok=true; for(let i=a0;i<=a0+6;i++) if(!fullDays.has(i)){ ok=false; break; } if(ok){ perfectWeek=true; break; } }
   const pesu=hs.find(h=>h.id==="pesu"); let kuuri=false; if(pesu){ const sc=pesu.sched&&pesu.sched[0]; if(sc&&sc.to){ let need=0,ok=0; for(let i=idxOfISO(sc.from);i<=idxOfISO(sc.to);i++){ const on=habitOn(pesu,i); if(on&&!on.opt){ need++; if(habDone("pesu",i)) ok++; } } kuuri= need>0 && ok>=need; } }
   return {xp,full,count,maxStreak,perfectWeek,kuuri}; }
@@ -1124,7 +1127,7 @@ function render(){
   renderBackupNag();
 }
 function renderCount(ti,st,bs){ const b=bIdx()-ti,n=NUTS-ti; const {L}=levelOf(xpOf(st,bs));
-  $("count").innerHTML=`<a href="#merkit" class="chip lvl">${L[2]} <b>${L[1]}</b> ›</a>`+(b>=0?`<span class="chip">Belgrad <b class="num">${b}</b> pv</span>`:"")+(n>=0?`<span class="chip">Nuts <b class="num">${n}</b> pv</span>`:"")+(st.cur>=2?`<span class="chip">🔥 <b class="num">${st.cur}</b> putki</span>`:""); }
+  $("count").innerHTML=`<a href="#merkit" class="chip lvl">${L[2]} <b>${L[1]}</b> ›</a>`+(b>=0?`<span class="chip">Belgrad <b class="num">${b}</b> pv</span>`:"")+(n>=0?`<span class="chip">Nuts <b class="num">${n}</b> pv</span>`:"")+(st.cur>=2?`<span class="chip" title="${st.flexNow?"Joustopäivä käytetty tällä viikolla":"Yksi väliin jäänyt treeni viikossa ei katkaise putkea"}">🔥 <b class="num">${st.cur}</b> putki${st.flexNow?" 🛟":""}</span>`:""); }
 function renderStatus(ws){
   const lvl=ws.some(w=>w.level==="crit")?"crit":ws.some(w=>w.level==="warn")?"warn":"ok";
   const sickNow=ws.some(w=>w.title==="Sairastuminen kirjattu");
@@ -1672,7 +1675,10 @@ const HABIT_DEFAULT=[
 function habits(){ if(!meta.habits){ meta.habits=JSON.parse(JSON.stringify(HABIT_DEFAULT)); meta.hab=meta.hab||{}; persist(); } return meta.habits.filter(h=>!h.off); }
 function habitOn(h,i){ const d=isoOfIdx(i), w=dow(i); const sc=(h.sched||[]).find(x=>x.from<=d&&(!x.to||d<=x.to)); if(!sc) return null; if(sc.days==="all") return {n:"",opt:false,sc}; const x=sc.days[w]; return x?{...x,sc}:null; }
 function habDone(id,i){ const r=(meta.hab||{})[isoOfIdx(i)]; return !!(r&&r[id]); }
-function habStreak(h,i){ let n=0; for(let k=i;k>i-400;k--){ const on=habitOn(h,k); if(!on||on.opt) continue; if(habDone(h.id,k)) n++; else if(k===i) continue; else break; } return n; }
+function habEvents(h,from,to){ const ev=[]; for(let k=from;k<=to;k++){ const on=habitOn(h,k); if(!on||on.opt) continue; const d=habDone(h.id,k); if(!d&&k===to) continue; ev.push({w:weekOf(k),ok:d}); } return ev; }
+function habFirst(h){ return idxOfISO(((h.sched||[])[0]||{}).from||isoOfIdx(0)); }
+function habStreak(h,i){ return flexStreak(habEvents(h,habFirst(h),i),weekOf(i)).cur; }
+function habFlexNow(h,i){ return flexStreak(habEvents(h,habFirst(h),i),weekOf(i)).flexNow; }
 function habWeek(h,i){ const a0=(weekOf(i)-1)*7-1; let n=0; for(let k=a0;k<=a0+6;k++) if(habDone(h.id,k)) n++; return n; }
 let habDay=null;
 function renderHabits(ti){ const el=$("habits"); if(!el) return; const i=habDay??ti; const hs=habits().map(h=>({h,on:habitOn(h,i)})).filter(x=>x.on);
@@ -1680,7 +1686,7 @@ function renderHabits(ti){ const el=$("habits"); if(!el) return; const i=habDay?
   const order={aamu:0,"päivä":1,ilta:2}; hs.sort((a,b)=>order[a.h.when]-order[b.h.when]);
   const done=hs.filter(x=>habDone(x.h.id,i)).length, need=hs.filter(x=>!x.on.opt).length, needDone=hs.filter(x=>!x.on.opt&&habDone(x.h.id,i)).length;
   el.innerHTML=`<div class="habhead"><div class="eyebrow">Tavat${i!==ti?` · ${fmt(i)}`:""}</div><span class="habcount${needDone>=need?" ok":""}">${needDone>=need?"✓ ":""}${needDone}/${need}</span></div>
-    <ul class="hablist">${hs.map(({h,on})=>{ const d=habDone(h.id,i); const st=habStreak(h,i); const wk=h.week?`${habWeek(h,i)}/${h.week} tällä viikolla`:(st>=2?`🔥 ${st} pv putkeen`:"");
+    <ul class="hablist">${hs.map(({h,on})=>{ const d=habDone(h.id,i); const st=habStreak(h,i); const wk=h.week?`${habWeek(h,i)}/${h.week} tällä viikolla`:(st>=2?`🔥 ${st} pv putkeen${habFlexNow(h,i)?" · 🛟 joustopäivä käytetty":""}`:"");
       return `<li><button class="hab${d?" done":""}${on.opt?" opt":""}" data-hab="${h.id}" data-hi="${i}" aria-pressed="${d}"><span class="hk" aria-hidden="true">${d?"✓":""}</span><span class="hi" aria-hidden="true">${h.ic}</span><span class="ht"><b>${esc(h.name)}${on.opt?` <small>valinnainen</small>`:""}</b>${on.n?`<small>${esc(on.n)}</small>`:""}${wk?`<small class="hs">${wk}</small>`:""}</span></button></li>`; }).join("")}</ul>
     ${i!==ti?`<button class="link" data-habday="">‹ Tänään</button>`:`<button class="link" data-habday="${ti-1}">Kirjaa eiliselle</button>`}`; }
 document.addEventListener("click",e=>{ const b=e.target.closest("[data-hab]"); if(b){ const id=b.dataset.hab, i=+b.dataset.hi, d=isoOfIdx(i); meta.hab=meta.hab||{}; const r=meta.hab[d]=meta.hab[d]||{}; if(r[id]) delete r[id]; else { r[id]=1; if(navigator.vibrate) navigator.vibrate(10); } if(!Object.keys(r).length) delete meta.hab[d];
