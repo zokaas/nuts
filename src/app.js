@@ -56,7 +56,9 @@ const T0=()=>Math.min(Math.max(todayIdx(),0),BASE.length-1);
 const TOTAL_SESSIONS=PLAN.filter(p=>p[0]!=="L").length;
 
 /* ---------- johdetut tiedot ---------- */
-function entries(){ return Object.keys(logs).map(k=>({key:k,idx:idxOfISO(k),l:logs[k],code:logType(BASE,k,logs[k])})).filter(e=>e.idx>=0).sort((a,b)=>a.key<b.key?-1:1); }
+/* Ohjelma alkaa to 19.11.2026; sitä edeltävät päivät (ti–ke) eivät näy missään. */
+const FIRST = idxOfISO("2026-11-19");
+function entries(){ return Object.keys(logs).map(k=>({key:k,idx:idxOfISO(k),l:logs[k],code:logType(BASE,k,logs[k])})).filter(e=>e.idx>=FIRST).sort((a,b)=>a.key<b.key?-1:1); }
 /* Putki joustopäivällä: yksi väliin jäänyt päivä/treeni viikossa (ma–su) ei katkaise putkea. ev = [{w, ok}] aikajärjestyksessä */
 function flexStreak(ev, wNow){ let cur=0,best=0; const used=new Set(); for(const e of ev){ if(e.ok){ cur++; best=Math.max(best,cur); } else if(!used.has(e.w)&&cur>0){ used.add(e.w); } else { cur=0; } } return {cur,best,flexNow:used.has(wNow)}; }
 function stats(){
@@ -282,7 +284,7 @@ function estMin(code,text){ const m=(text||"").match(/(\d+)(?:[–-](\d+))?\s?mi
 function isKey(i){ const r=(BASE[i]||[]); return ["P","YM","X","R"].includes(r[0]) || (RUN.has(r[0])&&hasIntensity(r[1])); }
 function weekGoals(w){ const a0=(w-1)*7-1; let mod=0, vig=0, n=0; const sDays=new Set(); let keyN=0,keyD=0;
   for(let i=Math.max(0,a0);i<=a0+6;i++){ if(i<BASE.length&&isKey(i)){ keyN++; const l=logs[isoOfIdx(i)]; if(l&&l.status==="done") keyD++; } }
-  for(const k in logs){ const i=idxOfISO(k); if(i<a0||i>a0+6||i<0) continue; const l=logs[k]; if(l.status!=="done") continue; const code=logType(BASE,k,l); if(code==="L") continue;
+  for(const k in logs){ const i=idxOfISO(k); if(i<a0||i>a0+6||i<FIRST) continue; const l=logs[k]; if(l.status!=="done") continue; const code=logType(BASE,k,l); if(code==="L") continue;
     const txt=(BASE[i]&&!/~/.test(k))?BASE[i][1]:""; const min=(typeof l.min==="number"&&l.min>0)?l.min:estMin(code,txt); n++;
     if(VIG.has(code)) vig+=min; else mod+=min;
     if(l.strength||l.strengthStravaId||["K","SA","T","TL"].includes(code)||/lihaskunto/i.test(txt)) sDays.add(k.slice(0,10));
@@ -301,7 +303,7 @@ function renderWeek(t){
   const w=viewWeek,[a,b]=weekRange(w),act=weekKm(BASE,logs,w),tgt=TARGET_EFF[w-1],pct=Math.min(100,tgt?act/tgt*100:0); const sel=selDay==null?t:selDay; let rows="", strip="";
   const a0=(w-1)*7-1;
   for(let i=a0;i<=a0+6;i++){
-    if(i<0||i>=BASE.length){ strip+=`<span class="sd empty" aria-hidden="true"><span class="dw">${DOW[dow(i)]}</span></span>`; continue; }
+    if(i<FIRST||i>=BASE.length){ strip+=`<span class="sd empty" aria-hidden="true"><span class="dw">${DOW[dow(i)]}</span></span>`; continue; }
     const d=new Date(START_UTC+i*864e5), ss=sessionsOn(BASE,logs,ADAPT,i), s0=ss[0], ci=changeInfo(s0);
     strip+=`<button class="sd${i===t?" today":""}${i===sel?" sel":""}${ci?" chg":""}" data-sel="${i}" aria-pressed="${i===sel}" aria-label="${fmt(i)}: ${TYPES[s0.code].l}"><span class="dw">${DOW[dow(i)]}</span><span class="dn num">${d.getUTCDate()}</span><span class="ty ${TYPES[s0.code].c}">${SHORT[s0.code]||""}</span><span class="hics">${habIcons(i)}</span>${i<=t?(dayMark(ss)||`<span class="mark none"></span>`):`<span class="mark none"></span>`}${(ss.length-1+extrasOn(i).length)>0?`<i class="plus">+${ss.length-1+extrasOn(i).length}</i>`:""}</button>`;
   }
@@ -313,7 +315,7 @@ function renderWeek(t){
   if(moveFrom!=null) $("week").querySelectorAll(".sd[data-sel]").forEach(b=>{ const j=+b.dataset.sel; b.classList.toggle("mvfrom",j===moveFrom); b.classList.toggle("mvok",j!==moveFrom&&canSwap(j)); }); $("wNow").onclick=()=>{ viewWeek=weekOf(t); selDay=null; render(); };
 }
 let weekListOpen=false, moveFrom=null, lpT=null, lpFired=false, tx=null;
-function weekGo(dw){ const t=T0(), sel=selDay==null?t:selDay; const nw=Math.min(36,Math.max(1,viewWeek+dw)); if(nw===viewWeek) return; const off=sel-((viewWeek-1)*7-1); viewWeek=nw; const ns=Math.min(BASE.length-1,Math.max(0,(nw-1)*7-1+off)); selDay= ns===t?null:ns; render(); }
+function weekGo(dw){ const t=T0(), sel=selDay==null?t:selDay; const nw=Math.min(36,Math.max(1,viewWeek+dw)); if(nw===viewWeek) return; const off=sel-((viewWeek-1)*7-1); viewWeek=nw; const ns=Math.min(BASE.length-1,Math.max(FIRST,(nw-1)*7-1+off)); selDay= ns===t?null:ns; render(); }
 function canSwap(j){ if(j<todayIdx()||j<0||j>=BASE.length) return false; const r=rawAt(j); if(r[0]==="R") return false; const l=logs[isoOfIdx(j)]; return !(l&&(l.status==="done"||l.status==="skip")); }
 function startMove(i){ if(!canSwap(i)){ toast("Tätä päivää ei voi siirtää."); return; } moveFrom=i; if(navigator.vibrate) navigator.vibrate(25); render(); toast(`Siirrä ${fmt(i)}: napauta uutta päivää.`,{l:"Peru",fn:()=>{ moveFrom=null; render(); }}); }
 function doSwap(i,j){ const di=isoOfIdx(i), dj=isoOfIdx(j), prev={[di]:edits[di],[dj]:edits[dj]}; const A=rawAt(i), B=rawAt(j);
@@ -332,18 +334,18 @@ function renderCalendar(t){
   const want=c=> calFilter==="all" || (calFilter==="run"&&RUN.has(c)) || (calFilter==="key"&&(c==="P"||c==="X"||c==="R"));
   // menneet viikot yhteen riviin
   if(cw>1){ let km=0, pl=0, dn=0, met=0; for(let w=1;w<cw;w++){ const a=weekKm(BASE,logs,w); km+=a; if(TARGET_EFF[w-1]&&a>=TARGET_EFF[w-1]*0.9) met++; }
-    for(let i=0;i<(cw-1)*7-1&&i<BASE.length;i++){ const c=sessionsOn(BASE,logs,ADAPT,i)[0].code; if(c==="L") continue; pl++; const l=logs[isoOfIdx(i)]; if(l&&l.status==="done") dn++; }
+    for(let i=FIRST;i<(cw-1)*7-1&&i<BASE.length;i++){ const c=sessionsOn(BASE,logs,ADAPT,i)[0].code; if(c==="L") continue; pl++; const l=logs[isoOfIdx(i)]; if(l&&l.status==="done") dn++; }
     h+=`<button class="calpast" id="calPast" aria-expanded="${calPastOpen}"><span><b>Vk 1–${cw-1}</b> · ${n1(km)} km · ${dn}/${pl} treeniä · tavoite täynnä ${met}/${cw-1} viikkona</span><span aria-hidden="true">${calPastOpen?"▴":"▾"}</span></button>`; }
   for(let w=calPastOpen?1:cw;w<=36;w++){
     const a0=(w-1)*7-1, ph=PHASE(w); if(ph!==lastPh){ h+=`<div class="calphase">${esc(ph)}</div>`; lastPh=ph; }
     const act=weekKm(BASE,logs,w), tgt=TARGET_EFF[w-1]; let cells="";
     for(let i=a0;i<=a0+6;i++){
-      if(i<0||i>=BASE.length){ cells+=`<span class="cc empty"></span>`; continue; }
+      if(i<FIRST||i>=BASE.length){ cells+=`<span class="cc empty"></span>`; continue; }
       const ss=sessionsOn(BASE,logs,ADAPT,i), s0=ss[0], note=BASE[i][2], c=s0.code, dim=!want(c), chg=changeInfo(s0)||(edits[isoOfIdx(i)]&&!edits[isoOfIdx(i)].ev);
       cells+=`<button class="cc${i===t?" today":""}${i<t?" past":""}${dim?" dim":""}${c==="R"?" race":""}${chg?" chg":""}" data-cal="${i}" aria-label="${fmt(i)}: ${TYPES[c].l}${chg?", muutettu":""}${note?`, ${esc(note)}`:""}"><span class="dn num">${new Date(START_UTC+i*864e5).getUTCDate()}</span><span class="ty ${TYPES[c].c}">${SHORT[c]||""}</span><span class="hics">${note&&i>t?"":habIcons(i)}</span>${i<=t?dayMark(ss)||`<span class="mark none"></span>`:note?`<span class="cn" aria-hidden="true">📌</span>`:`<span class="mark none"></span>`}${extrasOn(i).length?`<i class="plus">+${extrasOn(i).length}</i>`:""}</button>`;
     }
     const past=w<cw, met=tgt?act>=tgt*0.9:true;
-    h+=`<div class="calwk${w===cw?" cur":""}${past?(met?" met":" short"):""}" id="cw${w}"><div class="cwh"><b>Vk ${w}</b><span>${fmtShort(Math.max(0,a0))}–${fmtShort(Math.min(BASE.length-1,a0+6))}</span><span class="cwk num">${past&&met?"✓ ":""}${w<=cw?`${n1(act)} / `:""}${tgt} km</span></div><div class="calgrid">${cells}</div></div>`;
+    h+=`<div class="calwk${w===cw?" cur":""}${past?(met?" met":" short"):""}" id="cw${w}"><div class="cwh"><b>Vk ${w}</b><span>${fmtShort(Math.max(FIRST,a0))}–${fmtShort(Math.min(BASE.length-1,a0+6))}</span><span class="cwk num">${past&&met?"✓ ":""}${w<=cw?`${n1(act)} / `:""}${tgt} km</span></div><div class="calgrid">${cells}</div></div>`;
   }
   h+=`<p class="tip callegend"><span class="lg-chg"></span> ohjelmaa muutettu · ✓ tehty · ⊖ väliin · ○ kirjaamatta</p>`;
   $("calBody").innerHTML=h;
@@ -695,7 +697,7 @@ function renderMaint(){ const ti=todayIdx(), on=ti>NUTS; document.body.classList
 /* ===== Tavat ===== */
 const HABIT_V3=[
   {id:"dvit",ic:"💊",name:"D-vitamiini 10 µg",when:"aamu",sched:[{from:"2026-11-19",to:"2027-03-31",days:"all"},{from:"2027-10-01",to:"2028-03-31",days:"all"}]},
-  {id:"veri1",ic:"🩸",name:"Verikoe: ferritiini ja perusverenkuva",task:true,when:"päivä",note:"Työterveys tai lääkäri. Lähtötaso treenin alussa.",sched:[{from:"2026-11-18",to:"2026-12-31",days:"all"}]},
+  {id:"veri1",ic:"🩸",name:"Verikoe: ferritiini ja perusverenkuva",task:true,when:"päivä",note:"Työterveys tai lääkäri. Lähtötaso treenin alussa.",sched:[{from:"2026-11-19",to:"2026-12-31",days:"all"}]},
   {id:"veri2",ic:"🩸",name:"Verikoe: ferritiini ja perusverenkuva",task:true,when:"päivä",note:"Vertaa lähtötasoon ennen Belgradin kovimpia viikkoja.",sched:[{from:"2027-02-01",to:"2027-03-15",days:"all"}]}];
 const HABIT_DEFAULT=[
   {id:"hera",ic:"🌅",name:"Verenkierron herättely 5 min",when:"aamu",sched:[{from:"2026-11-19",days:"all"}]},
@@ -721,7 +723,7 @@ function habWeek(h,i){ const a0=(weekOf(i)-1)*7-1; let n=0; for(let k=a0;k<=a0+6
 let habMoveOpen=null;
 function habMoveTargets(h,i){ const out=[]; for(let k=i+1;k<=i+6&&out.length<5;k++){ const ex=habitOn(h,k); if(ex&&!ex.opt) continue; out.push(k); } return out; }
 function renderHabits(ti){ const el=$("habits"); if(!el) return; const i=selDay==null?ti:selDay; const fut=i>ti; const hs=habits().map(h=>({h,on:habitOn(h,i)})).filter(x=>x.on);
-  if(!hs.length&&!cyc().on){ el.hidden=true; return; } el.hidden=false; const yHas=ti>0&&habits().some(h=>habitOn(h,ti-1)); const dayLbl= i===ti?`Tänään · ${fmt(i)}`: i===ti-1?`Eilen · ${fmt(i)}`: i===ti+1?`Huomenna · ${fmt(i)}`: fmt(i);
+  if(!hs.length&&!cyc().on){ el.hidden=true; return; } el.hidden=false; const yHas=ti>FIRST&&habits().some(h=>habitOn(h,ti-1)); const dayLbl= i===ti?`Tänään · ${fmt(i)}`: i===ti-1?`Eilen · ${fmt(i)}`: i===ti+1?`Huomenna · ${fmt(i)}`: fmt(i);
   const order={aamu:0,"päivä":1,ilta:2}; hs.sort((a,b)=>order[a.h.when]-order[b.h.when]);
   const need=hs.filter(x=>!x.on.opt&&!x.h.task).length, needDone=hs.filter(x=>!x.on.opt&&!x.h.task&&habDone(x.h.id,i)).length;
   el.innerHTML=`<div class="habhead"><div><div class="eyebrow">Tavat${fut?" · tulossa":""}</div><b class="habday${i!==ti?" past":""}">${dayLbl}</b></div>${need&&!fut?`<span class="habcount${needDone>=need?" ok":""}">${needDone>=need?"✓ ":""}${needDone}/${need}</span>`:""}</div>
@@ -733,7 +735,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-hab]"); i
     persist(); renderHabits(todayIdx()); renderCount(todayIdx(),stats(),badges(stats())); const all=habits().filter(h=>{ if(h.task) return false; const on=habitOn(h,i); return on&&!on.opt; }); if(r[id]&&all.every(h=>habDone(h.id,i))){ celebrate(); toast("Päivän tavat tehty ✓ +5 XP bonus"); } else if(r[id]){ const tk=meta.habits.find(x=>x.id===id)?.task; if(tk&&/^veri/.test(id)) toast("Verikoe kuitattu ✓ +2 XP",{l:"Kirjaa arvot",fn:()=>{ anaTab="vointi"; bloodEdit=id; location.hash="#analyysi"; }}); else toast(tk?"Tehtävä kuitattu ✓ +2 XP":"+2 XP"); } return; }
 });
 function habGridHTML(ti){ const hs=habits().filter(h=>!h.task); if(!hs.length) return `<p class="note">Ei tapoja.</p>`; const N=28, a=ti-N+1;
-  return hs.map(h=>{ let req=0, ok=0; const cells=[]; const f0=idxOfISO(((h.sched||[])[0]||{}).from||isoOfIdx(a)); for(let i=Math.max(a,f0);i<=ti;i++){ const on=habitOn(h,i); const d=habDone(h.id,i); if(on&&!on.opt){ req++; if(d) ok++; } cells.push(`<i class="${d?"y":on?(on.opt?"o":(i===ti?"t":"n")):"x"}" title="${fmt(i)}"></i>`); }
+  return hs.map(h=>{ let req=0, ok=0; const cells=[]; const f0=idxOfISO(((h.sched||[])[0]||{}).from||isoOfIdx(a)); for(let i=Math.max(a,f0,FIRST);i<=ti;i++){ const on=habitOn(h,i); const d=habDone(h.id,i); if(on&&!on.opt){ req++; if(d) ok++; } cells.push(`<i class="${d?"y":on?(on.opt?"o":(i===ti?"t":"n")):"x"}" title="${fmt(i)}"></i>`); }
     return `<div class="hgrow"><div class="hgh"><span>${h.ic} ${esc(h.name)}</span><span class="num">${req?Math.round(ok/req*100):0} %</span></div><div class="hgrid">${cells.join("")}</div></div>`; }).join("")+`<p class="tip">Viimeiset 4 viikkoa. Vihreä = tehty, harmaa = jäi, tyhjä = ei ohjelmassa.</p>`; }
 function renderHabitSettings(){ const el=$("habSet"); if(!el) return; habits(); const all=meta.habits; const ct=$("cycOn"); if(ct){ ct.checked=!!cyc().on; ct.onchange=()=>{ meta.cycle=meta.cycle||{}; meta.cycle.on=ct.checked; persist(); toast(ct.checked?"Kiertoseuranta päällä: merkitse Tavat-kortista.":"Kiertoseuranta pois. Merkinnät säilyvät."); }; }
   el.innerHTML=`<ul class="evlist">${all.map(h=>`<li><span><b>${h.ic} ${esc(h.name)}</b><small>${h.off?"pois käytöstä":habDesc(h)}</small></span><span class="row"><button class="btn small ghost" data-haboff="${h.id}">${h.off?"Näytä":"Piilota"}</button><button class="btn small ghost" data-habdel="${h.id}" aria-label="Poista ${esc(h.name)}">🗑</button></span></li>`).join("")}</ul>`; }
@@ -782,7 +784,7 @@ function renderPlanWeek(ti){ const el=$("planWeek"); if(!el) return; const t=Mat
   if(!show){ el.hidden=true; return; } el.hidden=false; const done=(meta.planned||{})[nw];
   if(!planOpen){ el.innerHTML=`<button class="planbtn" data-planopen><span>🗓️</span><span><b>${done?"Ensi viikko suunniteltu ✓":"Suunnittele ensi viikko"}</b><small>${done?"Avaa ja tarkista":"Noin 2 minuuttia · viikko "+nw}</small></span><span aria-hidden="true">›</span></button>`; return; }
   const cw=weekOf(t), act=weekKm(BASE,logs,cw), tgt=TARGET_EFF[cw-1]; let pl=0,dn=0; const [a,b]=weekRange(cw); for(let i=a;i<=b&&i<BASE.length;i++){ const c=sessionsOn(BASE,logs,ADAPT,i)[0].code; if(c==="L") continue; pl++; const l=logs[isoOfIdx(i)]; if(l&&l.status==="done") dn++; }
-  const a0=(nw-1)*7-1; const days=[]; for(let i=a0;i<=a0+6;i++){ if(i<0||i>=BASE.length) continue; const s0=sessionsOn(BASE,logs,ADAPT,i)[0]; const note=BASE[i][2]; days.push(`<li><time>${DOW[dow(i)]} ${new Date(START_UTC+i*864e5).getUTCDate()}.</time><span>${typeChip(s0.code)} ${esc((s0.text||"").slice(0,60))}${(s0.text||"").length>60?"…":""}${note?` <b>📌 ${esc(note)}</b>`:""} ${habIcons(i)}</span></li>`); }
+  const a0=(nw-1)*7-1; const days=[]; for(let i=a0;i<=a0+6;i++){ if(i<FIRST||i>=BASE.length) continue; const s0=sessionsOn(BASE,logs,ADAPT,i)[0]; const note=BASE[i][2]; days.push(`<li><time>${DOW[dow(i)]} ${new Date(START_UTC+i*864e5).getUTCDate()}.</time><span>${typeChip(s0.code)} ${esc((s0.text||"").slice(0,60))}${(s0.text||"").length>60?"…":""}${note?` <b>📌 ${esc(note)}</b>`:""} ${habIcons(i)}</span></li>`); }
   el.innerHTML=`<div class="weekhead"><div><div class="eyebrow">Suunnitteluhetki</div><h2>Viikko ${nw}</h2></div><button class="x" data-planclose aria-label="Sulje">×</button></div>
     <div class="pstep"><b>1. Mennyt viikko</b><p>${dn}/${pl} treeniä · ${n1(act)} / ${tgt} km${pl&&dn>=pl?" · täysi viikko 💪":""}</p></div>
     <div class="pstep"><b>2. Ensi viikon treenit</b><ul class="up pdays">${days.join("")}</ul></div>
@@ -1012,7 +1014,7 @@ function importActivities(acts){
   let added=0, updated=0; BASE=buildBase(); ADAPT=buildAdapt(BASE,logs,adjOff,todayIdx());
   acts.sort((x,y)=>x.start_date<y.start_date?-1:1);
   for(const a of acts){
-    const date=(a.start_date_local||a.start_date||"").slice(0,10); const i=idxOfISO(date); if(!date||i<0) continue;
+    const date=(a.start_date_local||a.start_date||"").slice(0,10); const i=idxOfISO(date); if(!date||i<FIRST) continue;
     if(i>=PLAN.length){ if(Object.keys(logs).some(k=>logs[k].stravaId===a.id)) continue; const c=CAT(a.sport_type||a.type); logs[`${date}~s${a.id}`]={status:"done",type:CAT_CODE[c]||"MU",km:(c==="run"||c==="hike")?Math.round(a.distance/100)/10:null,min:Math.round((a.moving_time||0)/60),hr:a.average_heartrate?Math.round(a.average_heartrate):null,stravaId:a.id,stravaName:a.name||"",flags:[],note:"",updatedAt:new Date().toISOString()}; added++; continue; }
     const cat=CAT(a.sport_type||a.type);
     if(Object.keys(logs).some(k=>logs[k].strengthStravaId===a.id)) continue;
@@ -1370,7 +1372,7 @@ function sickActive(){ return !!(meta.sick&&!meta.sick.to); }
 function sickFlags(){ return meta.sick&&meta.sick.kind==="fever"?["sick","fever"]:["sick"]; }
 /* Sairastilan aikana jokainen päivä alusta tähän päivään merkitään sairaaksi, jotta ohjelma, putket ja ilmoitukset mukautuvat. */
 function sickSync(ti){ const S=meta.sick; if(!S||S.to||ti<0) return; S.auto=S.auto||[]; let ch=false;
-  for(let i=Math.max(0,idxOfISO(S.from));i<=ti;i++){ const d=isoOfIdx(i); const l=logs[d]; const want=sickFlags();
+  for(let i=Math.max(FIRST,idxOfISO(S.from));i<=ti;i++){ const d=isoOfIdx(i); const l=logs[d]; const want=sickFlags();
     if(!l){ logs[d]={status:"note",flags:want.slice(),note:"",updatedAt:new Date().toISOString(),sickAuto:true}; if(!S.auto.includes(d)) S.auto.push(d); ch=true; continue; }
     const f=Array.isArray(l.flags)?l.flags:[]; const miss=want.filter(x=>!f.includes(x)), extra=S.kind!=="fever"&&S.auto.includes(d)&&f.includes("fever");
     if(miss.length||extra){ l.flags=f.filter(x=>!(extra&&x==="fever")).concat(miss); l.updatedAt=new Date().toISOString(); if(!S.auto.includes(d)) S.auto.push(d); ch=true; } }
@@ -1403,7 +1405,7 @@ const KK=["Tammikuu","Helmikuu","Maaliskuu","Huhtikuu","Toukokuu","Kesäkuu","He
 const KKP=["tammikuuhun","helmikuuhun","maaliskuuhun","huhtikuuhun","toukokuuhun","kesäkuuhun","heinäkuuhun","elokuuhun","syyskuuhun","lokakuuhun","marraskuuhun","joulukuuhun"];
 function mIso(y,m){ return `${y}-${String(m+1).padStart(2,"0")}-01`; }
 function mPrev(y,m){ return m?[y,m-1]:[y-1,11]; } function mNext(y,m){ return m===11?[y+1,0]:[y,m+1]; }
-function monthSum(y,m){ const ti=todayIdx(); const a0=idxOfISO(mIso(y,m)), b=idxOfISO(mIso(...mNext(y,m)))-1, a=Math.max(0,a0); const upto=Math.min(b,ti);
+function monthSum(y,m){ const ti=todayIdx(); const a0=idxOfISO(mIso(y,m)), b=idxOfISO(mIso(...mNext(y,m)))-1, a=Math.max(FIRST,a0); const upto=Math.min(b,ti);
   if(b<0||a0>ti) return null;
   let plan=0,done=0,km=0,min=0,longKm=0,cont=0;
   for(let i=a;i<=Math.min(upto,BASE.length-1);i++) for(const s of sessionsOn(BASE,logs,ADAPT,i)){ if(s.code!=="L") plan++; }
@@ -1430,7 +1432,7 @@ function monthHTML(S,{nav=false,compact=false,title=null}={}){ if(!S) return "";
     S.cont?["Pisin putki",`${S.cont} min`]:["Pisin lenkki",`${n1(S.longKm)} km`], pct!=null?["Tavat",`${pct} %`]:null, S.rhr!=null?["Leposyke ka",`${Math.round(S.rhr)}`]:S.sleep!=null?["Uni ka",`${n1(S.sleep)} h`]:null].filter(Boolean);
   const hi=monthHigh(S);
   const [py,pm]=mPrev(S.y,S.m), [ny,nm]=mNext(S.y,S.m); const ti=todayIdx();
-  const canP=idxOfISO(mIso(S.y,S.m))>0, canN=idxOfISO(mIso(ny,nm))<=ti;
+  const canP=idxOfISO(mIso(S.y,S.m))>FIRST, canN=idxOfISO(mIso(ny,nm))<=ti;
   return `<div class="mhead"><h2>${title||KK[S.m]}${title?"":S.y!==new Date().getFullYear()?` ${S.y}`:""}${S.open?` <small class="tip">kesken</small>`:""}</h2>${nav?`<span class="mnav"><button type="button" data-mon="${py}-${pm}" aria-label="Edellinen kuukausi" ${canP?"":"disabled"}>‹</button><button type="button" data-mon="${ny}-${nm}" aria-label="Seuraava kuukausi" ${canN?"":"disabled"}>›</button></span>`:""}</div>
     ${hi?`<p class="mhi">${hi}</p>`:""}
     <div class="tiles mtiles">${tiles.slice(0,compact?4:6).map(([k,v])=>`<div class="tile"><span>${k}</span><b class="num">${v}</b></div>`).join("")}</div>${cmp}`; }
