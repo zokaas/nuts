@@ -461,6 +461,7 @@ function openEditor(key,pre,mode){
   $("edMove").hidden=!canMove; $("edMove").textContent=l&&l.status==="moved"?"Peru siirto":"Siirrä huomiselle";
   const vo=mode==="vointi"; edMode=mode||null; $("sheetBg").classList.toggle("vmode",vo);
   if(vo){ $("statusRow").hidden=true; $("trainFields").hidden=true; $("shoeField").hidden=true; $("fuelBox").hidden=true; $("planEdit").hidden=true; $("edTitle").textContent="Vointi"; $("edTarget").textContent="Miten voit tänään? Vaikuttaa tuleviin treeneihin."; if(!l) $("edShoe").value=""; }
+  { const r=$("edCycRow"); if(r){ const on=!!cyc().on; r.hidden=!on; if(on){ const d=isoOfIdx(edit.idx); const b=$("edCyc"); const sync=()=>{ const v=!!(cyc().days||{})[d]; b.setAttribute("aria-pressed",String(v)); b.textContent=v?"🩸 Kuukautiset merkitty ✓":"🩸 Kuukautiset tänä päivänä"; }; sync(); b.onclick=()=>{ meta.cycle=meta.cycle||{on:true}; const D=meta.cycle.days=meta.cycle.days||{}; if(D[d]) delete D[d]; else D[d]=1; persist(); sync(); }; } } }
   syncEditor(); $("sheetBg").classList.add("open"); document.body.classList.add("locked");
 }
 function syncEditor(){
@@ -792,8 +793,9 @@ const cyc=()=>meta.cycle||{};
 function cycStarts(){ const D=cyc().days||{}; const ks=Object.keys(D).sort(); const st=[]; let prev=null; for(const k of ks){ const i=idxOfISO(k); if(prev==null||i-prev>2) st.push(i); prev=i; } return st; }
 function cycInfo(i){ const st=cycStarts().filter(x=>x<=i); if(!st.length) return null; const last=st[st.length-1]; const all=cycStarts(); const lens=[]; for(let k=1;k<all.length;k++){ const L=all[k]-all[k-1]; if(L>=20&&L<=40) lens.push(L); } const avg=lens.length?Math.round(lens.reduce((a,b)=>a+b,0)/lens.length):28;
   const day=i-last+1; const ph= day<=5?"Kuukautiset":day<=avg-15?"Follikulaarivaihe":day<=avg-12?"Ovulaation aika":"Luteaalivaihe"; return {day,avg,ph,next:last+avg,known:lens.length}; }
-function cycRow(i){ if(!cyc().on) return ""; const on=!!(cyc().days||{})[isoOfIdx(i)]; const ci=cycInfo(i);
-  return `<li><button class="hab cyc${on?" done":""}" data-cyc="${i}" aria-pressed="${on}"><span class="hk" aria-hidden="true">${on?"✓":""}</span><span class="hi" aria-hidden="true">🩸</span><span class="ht"><b>Kuukautiset tänään</b><small>${ci?`Kierron päivä ${ci.day} · ${ci.ph}`:"Merkitse ensimmäinen päivä, niin sovellus laskee kierron"}</small></span></button></li>`; }
+function cycVisible(i){ const D=cyc().days||{}; if(D[isoOfIdx(i)]||D[isoOfIdx(i-1)]) return true; const ci=cycInfo(i); if(!ci||!ci.known&&cycStarts().length<1) return false; return i>=ci.next-2&&i<=ci.next+5; }
+function cycRow(i){ if(!cyc().on||!cycVisible(i)) return ""; const on=!!(cyc().days||{})[isoOfIdx(i)]; const ci=cycInfo(i);
+  return `<li><button class="hab cyc${on?" done":""}" data-cyc="${i}" aria-pressed="${on}"><span class="hk" aria-hidden="true">${on?"✓":""}</span><span class="hi" aria-hidden="true">🩸</span><span class="ht"><b>${(cyc().days||{})[isoOfIdx(i-1)]&&!on?"Jatkuuko kuukautiset?":"Kuukautiset tänään"}</b><small>${ci&&on?`Kierron päivä ${ci.day}`:ci?`Arvioitu alku ${fmt(ci.next)}`:""}</small></span></button></li>`; }
 document.addEventListener("click",e=>{ const b=e.target.closest("[data-cyc]"); if(!b) return; const d=isoOfIdx(+b.dataset.cyc); meta.cycle=meta.cycle||{on:true}; const D=meta.cycle.days=meta.cycle.days||{}; if(D[d]) delete D[d]; else D[d]=1; persist(); renderHabits(todayIdx()); });
 function cycleHTML(ti){ if(!cyc().on) return ""; const ci=cycInfo(ti); const st=cycStarts();
   let rows=""; const ph={Kuukautiset:{fe:[],rhr:[]},Follikulaarivaihe:{fe:[],rhr:[]},"Ovulaation aika":{fe:[],rhr:[]},Luteaalivaihe:{fe:[],rhr:[]}};

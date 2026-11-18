@@ -173,7 +173,7 @@
     <section class="card">
       <h2>Tavat</h2>
       <div id="habSet"></div>
-      <label class="chk togglerow"><input type="checkbox" id="cycOn"> 🩸 Seuraa kuukautiskiertoa <small>(valinnainen, näkyy Tavat-kortissa ja Analyysissä)</small></label>
+      <label class="chk togglerow"><input type="checkbox" id="cycOn"> 🩸 Seuraa kuukautiskiertoa <small>(merkitse Vointi-ikkunasta; Tavat-kortissa vain arvioidun alun aikaan)</small></label>
       <details class="fold"><summary>＋ Uusi tapa</summary>
         <div class="grid2"><div class="field"><label for="habName">Nimi</label><input type="text" id="habName" maxlength="50" placeholder="Esim. venyttely 10 min"></div><div class="field"><label for="habIc">Emoji</label><input type="text" id="habIc" maxlength="4" placeholder="✅"></div></div>
         <div class="field"><label for="habWhen">Milloin</label><select id="habWhen"><option value="aamu">Aamu</option><option value="päivä">Päivä</option><option value="ilta">Ilta</option></select></div>
@@ -250,6 +250,7 @@
     </details>
     <div class="sec">Vointi</div>
     <div class="chips" id="edFlags" role="group" aria-label="Vointi"></div>
+    <div class="row" id="edCycRow" hidden><button type="button" class="chip cycchip" id="edCyc" aria-pressed="false">🩸 Kuukautiset tänä päivänä</button></div>
     <p class="tip" id="sickHint" hidden>Ohjelma vaihtuu lepoon tälle ja seuraavalle päivälle ja sen jälkeen kevyeen paluuseen. Kirjaa uusi päivä sairaaksi, jos oireet jatkuvat.</p>
     <div class="painbox" id="painBox" hidden>
       <label>Missä kipu tuntuu?</label><div class="chips" id="edArea"></div>

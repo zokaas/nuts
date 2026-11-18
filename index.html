@@ -619,6 +619,7 @@ body.maint .hero, body.maint #week, body.maint #status, body.maint #summary, bod
 .helpfold ul{margin:8px 0 0; padding-left:18px; display:flex; flex-direction:column; gap:6px} .helpfold p{margin:8px 0 0}
 body[data-route="ohje"] .mast{display:none}
 .steps{margin:6px 0; padding-left:20px; display:flex; flex-direction:column; gap:6px; font-size:14px}
+.cycchip[aria-pressed="true"]{background:color-mix(in srgb, var(--crit) 16%, transparent); border-color:var(--crit)}
 </style>
 </head>
 <body>
@@ -796,7 +797,7 @@ body[data-route="ohje"] .mast{display:none}
     <section class="card">
       <h2>Tavat</h2>
       <div id="habSet"></div>
-      <label class="chk togglerow"><input type="checkbox" id="cycOn"> 🩸 Seuraa kuukautiskiertoa <small>(valinnainen, näkyy Tavat-kortissa ja Analyysissä)</small></label>
+      <label class="chk togglerow"><input type="checkbox" id="cycOn"> 🩸 Seuraa kuukautiskiertoa <small>(merkitse Vointi-ikkunasta; Tavat-kortissa vain arvioidun alun aikaan)</small></label>
       <details class="fold"><summary>＋ Uusi tapa</summary>
         <div class="grid2"><div class="field"><label for="habName">Nimi</label><input type="text" id="habName" maxlength="50" placeholder="Esim. venyttely 10 min"></div><div class="field"><label for="habIc">Emoji</label><input type="text" id="habIc" maxlength="4" placeholder="✅"></div></div>
         <div class="field"><label for="habWhen">Milloin</label><select id="habWhen"><option value="aamu">Aamu</option><option value="päivä">Päivä</option><option value="ilta">Ilta</option></select></div>
@@ -873,6 +874,7 @@ body[data-route="ohje"] .mast{display:none}
     </details>
     <div class="sec">Vointi</div>
     <div class="chips" id="edFlags" role="group" aria-label="Vointi"></div>
+    <div class="row" id="edCycRow" hidden><button type="button" class="chip cycchip" id="edCyc" aria-pressed="false">🩸 Kuukautiset tänä päivänä</button></div>
     <p class="tip" id="sickHint" hidden>Ohjelma vaihtuu lepoon tälle ja seuraavalle päivälle ja sen jälkeen kevyeen paluuseen. Kirjaa uusi päivä sairaaksi, jos oireet jatkuvat.</p>
     <div class="painbox" id="painBox" hidden>
       <label>Missä kipu tuntuu?</label><div class="chips" id="edArea"></div>
@@ -1503,6 +1505,7 @@ function openEditor(key,pre,mode){
   $("edMove").hidden=!canMove; $("edMove").textContent=l&&l.status==="moved"?"Peru siirto":"Siirrä huomiselle";
   const vo=mode==="vointi"; edMode=mode||null; $("sheetBg").classList.toggle("vmode",vo);
   if(vo){ $("statusRow").hidden=true; $("trainFields").hidden=true; $("shoeField").hidden=true; $("fuelBox").hidden=true; $("planEdit").hidden=true; $("edTitle").textContent="Vointi"; $("edTarget").textContent="Miten voit tänään? Vaikuttaa tuleviin treeneihin."; if(!l) $("edShoe").value=""; }
+  { const r=$("edCycRow"); if(r){ const on=!!cyc().on; r.hidden=!on; if(on){ const d=isoOfIdx(edit.idx); const b=$("edCyc"); const sync=()=>{ const v=!!(cyc().days||{})[d]; b.setAttribute("aria-pressed",String(v)); b.textContent=v?"🩸 Kuukautiset merkitty ✓":"🩸 Kuukautiset tänä päivänä"; }; sync(); b.onclick=()=>{ meta.cycle=meta.cycle||{on:true}; const D=meta.cycle.days=meta.cycle.days||{}; if(D[d]) delete D[d]; else D[d]=1; persist(); sync(); }; } } }
   syncEditor(); $("sheetBg").classList.add("open"); document.body.classList.add("locked");
 }
 function syncEditor(){
@@ -1834,8 +1837,9 @@ const cyc=()=>meta.cycle||{};
 function cycStarts(){ const D=cyc().days||{}; const ks=Object.keys(D).sort(); const st=[]; let prev=null; for(const k of ks){ const i=idxOfISO(k); if(prev==null||i-prev>2) st.push(i); prev=i; } return st; }
 function cycInfo(i){ const st=cycStarts().filter(x=>x<=i); if(!st.length) return null; const last=st[st.length-1]; const all=cycStarts(); const lens=[]; for(let k=1;k<all.length;k++){ const L=all[k]-all[k-1]; if(L>=20&&L<=40) lens.push(L); } const avg=lens.length?Math.round(lens.reduce((a,b)=>a+b,0)/lens.length):28;
   const day=i-last+1; const ph= day<=5?"Kuukautiset":day<=avg-15?"Follikulaarivaihe":day<=avg-12?"Ovulaation aika":"Luteaalivaihe"; return {day,avg,ph,next:last+avg,known:lens.length}; }
-function cycRow(i){ if(!cyc().on) return ""; const on=!!(cyc().days||{})[isoOfIdx(i)]; const ci=cycInfo(i);
-  return `<li><button class="hab cyc${on?" done":""}" data-cyc="${i}" aria-pressed="${on}"><span class="hk" aria-hidden="true">${on?"✓":""}</span><span class="hi" aria-hidden="true">🩸</span><span class="ht"><b>Kuukautiset tänään</b><small>${ci?`Kierron päivä ${ci.day} · ${ci.ph}`:"Merkitse ensimmäinen päivä, niin sovellus laskee kierron"}</small></span></button></li>`; }
+function cycVisible(i){ const D=cyc().days||{}; if(D[isoOfIdx(i)]||D[isoOfIdx(i-1)]) return true; const ci=cycInfo(i); if(!ci||!ci.known&&cycStarts().length<1) return false; return i>=ci.next-2&&i<=ci.next+5; }
+function cycRow(i){ if(!cyc().on||!cycVisible(i)) return ""; const on=!!(cyc().days||{})[isoOfIdx(i)]; const ci=cycInfo(i);
+  return `<li><button class="hab cyc${on?" done":""}" data-cyc="${i}" aria-pressed="${on}"><span class="hk" aria-hidden="true">${on?"✓":""}</span><span class="hi" aria-hidden="true">🩸</span><span class="ht"><b>${(cyc().days||{})[isoOfIdx(i-1)]&&!on?"Jatkuuko kuukautiset?":"Kuukautiset tänään"}</b><small>${ci&&on?`Kierron päivä ${ci.day}`:ci?`Arvioitu alku ${fmt(ci.next)}`:""}</small></span></button></li>`; }
 document.addEventListener("click",e=>{ const b=e.target.closest("[data-cyc]"); if(!b) return; const d=isoOfIdx(+b.dataset.cyc); meta.cycle=meta.cycle||{on:true}; const D=meta.cycle.days=meta.cycle.days||{}; if(D[d]) delete D[d]; else D[d]=1; persist(); renderHabits(todayIdx()); });
 function cycleHTML(ti){ if(!cyc().on) return ""; const ci=cycInfo(ti); const st=cycStarts();
   let rows=""; const ph={Kuukautiset:{fe:[],rhr:[]},Follikulaarivaihe:{fe:[],rhr:[]},"Ovulaation aika":{fe:[],rhr:[]},Luteaalivaihe:{fe:[],rhr:[]}};
