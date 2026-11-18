@@ -691,8 +691,9 @@ const HABIT_DEFAULT=[
   {id:"pesu",ic:"🧴",name:"Hiustenpesu",when:"päivä",week:2,sched:[
     {from:"2026-11-16",to:"2026-12-13",label:"Hilseen rauhoitus (vk 1–4)",days:{0:{n:"Pesupäivä: öljy ensin · ketokonatsoli"},2:{n:"Pikapesu, jos hiukset rasvoittuvat · mieto shampoo",opt:true},4:{n:"Pesupäivä + methi-naamio · ketokonatsoli"}}},
     {from:"2026-12-14",label:"Ylläpito (vk 5→)",days:{0:{n:"Pesupäivä"},4:{n:"Pesupäivä"}},todo:true}]},
-  {id:"letti",ic:"🌙",name:"Löysä letti yöksi",when:"ilta",sched:[{from:"2026-11-16",days:"all"}]}];
-function habits(){ if(!meta.habits){ meta.habits=JSON.parse(JSON.stringify(HABIT_DEFAULT)); meta.hab=meta.hab||{}; persist(); } return meta.habits.filter(h=>!h.off); }
+];
+function habits(){ if(!meta.habits){ meta.habits=JSON.parse(JSON.stringify(HABIT_DEFAULT)); meta.hab=meta.hab||{}; meta.habMig=1; persist(); }
+  if(!meta.habMig){ meta.habits=meta.habits.filter(h=>h.id!=="letti"); meta.habMig=1; persist(); } return meta.habits.filter(h=>!h.off); }
 function habitOn(h,i){ const d=isoOfIdx(i), w=dow(i); const sc=(h.sched||[]).find(x=>x.from<=d&&(!x.to||d<=x.to)); if(!sc) return null; if(sc.days==="all") return {n:"",opt:false,sc}; const x=sc.days[w]; return x?{...x,sc}:null; }
 function habDone(id,i){ const r=(meta.hab||{})[isoOfIdx(i)]; return !!(r&&r[id]); }
 function habEvents(h,from,to){ const ev=[]; for(let k=from;k<=to;k++){ const on=habitOn(h,k); if(!on||on.opt) continue; const d=habDone(h.id,k); if(!d&&k===to) continue; ev.push({w:weekOf(k),ok:d}); } return ev; }
@@ -716,9 +717,10 @@ function habGridHTML(ti){ const hs=habits(); if(!hs.length) return `<p class="no
   return hs.map(h=>{ let req=0, ok=0; const cells=[]; const f0=idxOfISO(((h.sched||[])[0]||{}).from||isoOfIdx(a)); for(let i=Math.max(a,f0);i<=ti;i++){ const on=habitOn(h,i); const d=habDone(h.id,i); if(on&&!on.opt){ req++; if(d) ok++; } cells.push(`<i class="${d?"y":on?(on.opt?"o":(i===ti?"t":"n")):"x"}" title="${fmt(i)}"></i>`); }
     return `<div class="hgrow"><div class="hgh"><span>${h.ic} ${esc(h.name)}</span><span class="num">${req?Math.round(ok/req*100):0} %</span></div><div class="hgrid">${cells.join("")}</div></div>`; }).join("")+`<p class="tip">Viimeiset 4 viikkoa. Vihreä = tehty, harmaa = jäi, tyhjä = ei ohjelmassa.</p>`; }
 function renderHabitSettings(){ const el=$("habSet"); if(!el) return; habits(); const all=meta.habits;
-  el.innerHTML=`<ul class="evlist">${all.map(h=>`<li><span><b>${h.ic} ${esc(h.name)}</b><small>${h.off?"pois käytöstä":habDesc(h)}</small></span><button class="btn small ghost" data-haboff="${h.id}">${h.off?"Näytä":"Piilota"}</button></li>`).join("")}</ul>`; }
+  el.innerHTML=`<ul class="evlist">${all.map(h=>`<li><span><b>${h.ic} ${esc(h.name)}</b><small>${h.off?"pois käytöstä":habDesc(h)}</small></span><span class="row"><button class="btn small ghost" data-haboff="${h.id}">${h.off?"Näytä":"Piilota"}</button><button class="btn small ghost" data-habdel="${h.id}" aria-label="Poista ${esc(h.name)}">🗑</button></span></li>`).join("")}</ul>`; }
 function habDesc(h){ const d=isoOfIdx(Math.max(0,todayIdx())); const sc=(h.sched||[]).find(x=>x.from<=d&&(!x.to||d<=x.to))||(h.sched||[])[0]; if(!sc) return ""; const when={aamu:"aamuisin",ilta:"iltaisin","päivä":""}[h.when]||"";
   if(sc.days==="all") return `joka päivä ${when}`.trim(); return Object.keys(sc.days).map(k=>DOW[k]+(sc.days[k].opt?" (valinn.)":"")).join(", ")+(sc.label?` · ${sc.label}`:""); }
+document.addEventListener("click",e=>{ const d=e.target.closest("[data-habdel]"); if(!d) return; const i=meta.habits.findIndex(x=>x.id===d.dataset.habdel); if(i<0) return; const [h]=meta.habits.splice(i,1); persist(); renderHabitSettings(); toast(`Poistettu: ${h.name}`,{l:"Peru",fn:()=>{ meta.habits.splice(i,0,h); persist(); renderHabitSettings(); }}); });
 document.addEventListener("click",e=>{ const b=e.target.closest("[data-haboff]"); if(!b) return; const h=meta.habits.find(x=>x.id===b.dataset.haboff); h.off=!h.off; persist(); renderHabitSettings(); });
 $("habAdd").onclick=()=>{ const name=$("habName").value.trim().slice(0,50); if(!name){ $("habName").focus(); return; } const days=[...document.querySelectorAll("#habDays [aria-pressed='true']")].map(b=>+b.dataset.hd);
   const sc= days.length===0||days.length===7 ? "all" : Object.fromEntries(days.map(d=>[d,{n:""}])); habits();
