@@ -728,7 +728,7 @@ body[data-route="ohje"] .mast{display:none}
       <section class="card"><div class="eyebrow">Ohjelman muutokset 2 vk</div><div id="aAdapt"></div></section>
       <section class="card"><details class="fold"><summary>Näin ohjelma mukautuu</summary>
       <ul class="ins">
-        <li><b>Sairas:</b> sinä ja seuraava päivä lepoa, sitten kevyt paluu (50 → 75 %, ei vetoja). Paluu kestää kaksi kertaa niin monta päivää kuin sairastit, 3–10 pv.</li>
+        <li><b>Sairas:</b> merkitse Vointiin 🤒 Sairas, niin sairastila käynnistyy: lepoa, kunnes painat <i>Olen terve</i>. Sen jälkeen kevyt paluu (50 → 75 %, ei vetoja), kaksi päivää jokaista sairaspäivää kohden: nuhan jälkeen 3–10 pv, kuumeen jälkeen 7–14 pv.</li>
         <li><b>Kova kipu tai kipua 2 päivänä:</b> 3 päivää ilman juoksua (spinning tai kävely, jos kivutonta), sitten 50 % ilman vetoja.</li>
         <li><b>Kohtalainen kipu:</b> 2 seuraavaa päivää kevennetty. <b>Lievä kipu:</b> seuraavana päivänä ei vetoja.</li>
         <li><b>Väsymys, huono uni, stressi tai darra</b> (2 merkintää 3 päivässä), <b>leposyke 7 lyöntiä normaalia korkeampi</b> tai kolme raskasta treeniä: kovat treenit vaihtuvat kevyeksi.</li>
@@ -1345,7 +1345,7 @@ async function loadRaceWx(R, ridx){ const day=isoOfIdx(ridx); const ck="pallas.r
 function renderToday(t,ti){ const d=selDay==null?t:selDay; const w=weekOf(d);
   const label = d!==t ? fmt(d) : ti<0?"Ohjelma alkaa":ti>t?"Viimeinen päivä":`Tänään · ${fmt(d)}`;
   $("today").closest(".hero").classList.toggle("other", d!==t);
-  $("today").innerHTML=`<div class="herohead"><div class="eyebrow">${label} · vk ${w} · ${PHASE(w)}</div>${d!==t?`<button class="link" data-seltoday>‹ Tänään</button>`:""}</div>`+sessionsOn(BASE,logs,ADAPT,d).map((s,k)=>sessionBlock(s,k===0,ti)).join("")+extrasOn(d).map(extraBlock).join("")+(d===t&&ti>=0&&!sickActive()?`<button class="link sicklink" data-sickon>🤒 Olen kipeä</button>`:""); }
+  $("today").innerHTML=`<div class="herohead"><div class="eyebrow">${label} · vk ${w} · ${PHASE(w)}</div>${d!==t?`<button class="link" data-seltoday>‹ Tänään</button>`:""}</div>`+sessionsOn(BASE,logs,ADAPT,d).map((s,k)=>sessionBlock(s,k===0,ti)).join("")+extrasOn(d).map(extraBlock).join(""); }
 let keepSel=false;
 function quickDone(key){ const s=sessionByKey(key), l=logs[key]||{}; logs[key]={...l,status:"done",type:s.code,km:l.km??null,min:l.min??null,flags:l.flags||[],note:l.note||"",quick:true,updatedAt:new Date().toISOString()}; persist(); render(); celebrate(); toast(stravaConnected()?"Tehty ✓ Strava täydentää km:t.":"Tehty ✓",{l:"Peru",fn:()=>undone(key)}); }
 function undone(key){ const l=logs[key]; if(!l) return; const keep=flagsOf(l).length||l.rhr!=null||l.sleepH!=null||l.note; if(l.stravaId){ toast("Stravasta tullutta treeniä ei voi perua tästä. Avaa treeni ja tyhjennä."); return; } if(keep){ logs[key]={flags:l.flags||[],rhr:l.rhr??null,sleepH:l.sleepH??null,note:l.note||"",feel:null,status:"note",type:l.type,updatedAt:new Date().toISOString()}; } else delete logs[key]; persist(); render(); }
@@ -1601,7 +1601,10 @@ $("edSave").onclick=()=>{
   if(!draft.status&&!anyInfo){ showErr(edMode==="vointi"?"Valitse jokin vointi tai kirjaa leposyke, uni tai muistiinpano.":s.code==="L"?"Kirjaa jotain: vointi, leposyke, uni tai muistiinpano.":"Valitse Tehty tai Jäi väliin, tai kirjaa vointi."); return; }
   const was=logs[s.key]?.status==="done";
   const doc={status:draft.status||"note",type:s.code,km:hasKm(s.code)?km:null,min,hr,feel:draft.feel??null,flags:draft.flags,painArea:pain?draft.painArea:null,painLevel:pain?draft.painLevel:null,rhr,sleepH,cont:(typeof cont==="number"?cont:null),note,shoeId:$("edShoe").value||null,fuel:$("edFuel").value.trim().slice(0,300)||null,carbsH,gut:draft.gut||null,updatedAt:new Date().toISOString()};
-  logs[s.key]=doc; persist(); const sick=draft.flags.includes("sick")&&!(logs[s.key]&&was); closeEditor(); render();
+  logs[s.key]=doc; persist();
+  /* Sairas-merkintä tälle päivälle tai eiliselle käynnistää sairastilan: seuraavat päivät merkitään itsestään, kunnes painat "Olen terve". */
+  const tN=todayIdx(); if(draft.flags.includes("sick")&&!sickActive()&&s.idx>=tN-1&&s.idx<=tN){ meta.sick={from:isoOfIdx(s.idx),kind:"neck",auto:[]}; persist(); closeEditor(); render(); scrollTo({top:0,behavior:"smooth"}); toast("Sairastila päällä. Lepää, ohjelma odottaa."); return; }
+  closeEditor(); render();
   if(doc.status==="done"&&!was) celebrate(); else if(doc.flags.includes("sick")||doc.flags.includes("pain")) toast("Kirjattu. Ohjelma mukautuu: katso Tänään- ja Analyysi-näkymä.");
 };
 $("edMove").onclick=()=>{ const s=edit,l=logs[s.key];
