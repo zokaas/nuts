@@ -587,6 +587,7 @@ body.maint .hero, body.maint #week, body.maint #status, body.maint #summary, bod
 .daypick{display:grid; grid-template-columns:repeat(7,1fr); gap:4px}
 .daypick button{border:1px solid var(--line); background:transparent; border-radius:8px; padding:8px 0; font-weight:700; color:var(--muted)}
 .daypick button[aria-pressed="true"]{background:var(--ink); color:var(--bg); border-color:var(--ink)}
+.ins .muted{color:var(--muted)}
 </style>
 </head>
 <body>
@@ -643,6 +644,7 @@ body.maint .hero, body.maint #week, body.maint #status, body.maint #summary, bod
     </div>
     <div class="agroup" data-agroup="vointi" hidden>
       <section class="card"><div class="eyebrow">Tavat</div><div id="aHab"></div></section>
+      <section class="card"><div class="eyebrow">Tavat ja vointi</div><div id="aHabIns"></div></section>
       <section class="card"><div class="eyebrow">Vointi 30 päivää</div><div id="aHealth"></div></section>
       <section class="card"><div class="eyebrow">Ohjelman muutokset 2 vk</div><div id="aAdapt"></div></section>
       <section class="card"><details class="fold"><summary>Näin ohjelma mukautuu</summary>
@@ -1061,7 +1063,7 @@ function badges(st){
     ["🌴","Tropiikin tossu","Treeni Costa Ricassa",inR("2027-01-05","2027-01-24")>=1],
     ["🎯","Testi läpi","Tarkistuspisteen testi tehty",es.some(e=>e.code==="X")],
     ["⏳","Viiden tunnin retki","Treeni, jonka kesto vähintään 5 h",es.some(e=>typeof e.l.min==="number"&&e.l.min>=300)],
-    ["🇷🇸","Belgradin maratoonari","Maraton 18.4. maalissa",!!(logs["2027-04-18"]&&logs["2027-04-18"].status==="done")],
+    ["🇷🇸",bHalf()?"Belgradin puolimaratoonari":"Belgradin maratoonari",bHalf()?"Puolimaraton 17.4. maalissa":"Maraton 18.4. maalissa",!!(logs[isoOfIdx(bIdx())]&&logs[isoOfIdx(bIdx())].status==="done")],
     ["🦌","Tunturin valloittaja","Nuts 66 km maalissa",!!(logs["2027-07-23"]&&logs["2027-07-23"].status==="done")],
     ["💪","Voimaa jaloissa","10 lihaskuntotreeniä",entries().filter(e=>e.l.strength).length>=10],
     ["⛰️","Tuhat nousumetriä","Yhteensä 1000 m nousua",st.elev>=1000],
@@ -1069,9 +1071,36 @@ function badges(st){
     ["📝","Rehellinen kirjaaja","Kirjasit väliin jääneen treenin",all.some(e=>e.l.status==="skip")],
     ["🛌","Viisas lepääjä","Lepäsit sairaana etkä juossut",all.some(e=>flagsOf(e.l).includes("sick"))&&!all.some(e=>flagsOf(e.l).includes("sick")&&e.l.status==="done"&&RUN.has(e.code))],
     ["💾","Varmuuskopioija","Varmuuskopio tallennettu",!!meta.lastBackup],
+    ...habitBadges(),
   ].map(([icon,name,desc,got])=>({icon,name,desc,got}));
 }
-function xpOf(st,bs){ return st.done*10+Math.round(st.km)+bs.filter(b=>b.got).length*25; }
+function xpOf(st,bs){ return st.done*10+Math.round(st.km)+bs.filter(b=>b.got).length*25+habitXP().xp; }
+/* Tavat: XP, merkit */
+function habStats(){ const H=meta.hab||{}, hs=(meta.habits||[]); const ti=todayIdx(); let xp=0, full=0, perfectWeek=false; const count={}, maxStreak={};
+  const dates=Object.keys(H).sort(); if(!dates.length) return {xp:0,full:0,count,maxStreak,perfectWeek,kuuri:false};
+  const first=Math.min(idxOfISO(dates[0]),ti), fullDays=new Set();
+  for(let i=first;i<=ti;i++){ const r=H[isoOfIdx(i)]||{}; const req=hs.filter(h=>!h.off).filter(h=>{ const on=habitOn(h,i); return on&&!on.opt; });
+    for(const id in r){ count[id]=(count[id]||0)+1; xp+=2; }
+    if(req.length&&req.every(h=>r[h.id])){ full++; xp+=5; fullDays.add(i); } }
+  for(const h of hs){ let cur=0,best=0; for(let i=first;i<=ti;i++){ const on=habitOn(h,i); if(!on||on.opt) continue; if(habDone(h.id,i)){ cur++; best=Math.max(best,cur); } else if(i<ti) cur=0; } maxStreak[h.id]=best; }
+  for(let w=weekOf(Math.max(0,first));w<weekOf(ti)+1;w++){ const a0=(w-1)*7-1; if(a0+6>ti) break; let ok=true; for(let i=a0;i<=a0+6;i++) if(!fullDays.has(i)){ ok=false; break; } if(ok){ perfectWeek=true; break; } }
+  const pesu=hs.find(h=>h.id==="pesu"); let kuuri=false; if(pesu){ const sc=pesu.sched&&pesu.sched[0]; if(sc&&sc.to){ let need=0,ok=0; for(let i=idxOfISO(sc.from);i<=idxOfISO(sc.to);i++){ const on=habitOn(pesu,i); if(on&&!on.opt){ need++; if(habDone("pesu",i)) ok++; } } kuuri= need>0 && ok>=need; } }
+  return {xp,full,count,maxStreak,perfectWeek,kuuri}; }
+let _hx=null, _hxKey="";
+function habitXP(){ const k=JSON.stringify(meta.hab||{})+JSON.stringify(meta.habits||[]).length+":"+todayIdx(); if(k!==_hxKey){ _hx=habStats(); _hxKey=k; } return _hx; }
+function habitBadges(){ const S=habitXP(); const best=Math.max(0,...Object.values(S.maxStreak));
+  return [["🔆","Tapojen alku","Ensimmäinen täysi tapapäivä",S.full>=1],["🔥","Tapaputki 7","Sama tapa 7 päivää putkeen",best>=7],["🌅","Aamuvirkku","30 aamuherättelyä",(S.count.hera||0)>=30],
+    ["🪮","Kampamestari","30 kampausta",(S.count.kampa||0)>=30],["💆","Hiuskuuri","4 viikon hiuskuuri tehty",S.kuuri],["🌟","Täydellinen viikko","Kaikki tavat joka päivä ma–su",S.perfectWeek],["🗓️","Tapa juurtuu","Sama tapa 30 päivää putkeen",best>=30]]; }
+/* Tavat ja vointi */
+function habitInsights(ti){ const hs=habits(); const out=[]; const avg=a=>a.reduce((x,y)=>x+y,0)/a.length;
+  for(const h of hs){ if(h.week) continue; const g={y:{rhr:[],sl:[],fe:[]},n:{rhr:[],sl:[],fe:[]}};
+    for(let i=Math.max(0,ti-90);i<ti;i++){ const on=habitOn(h,i); if(!on) continue; const k=habDone(h.id,i)?"y":"n"; if(k==="n"&&on.opt) continue;
+      const nx=logs[isoOfIdx(i+1)], td=logs[isoOfIdx(i)]; if(nx&&typeof nx.rhr==="number") g[k].rhr.push(nx.rhr); if(nx&&typeof nx.sleepH==="number") g[k].sl.push(nx.sleepH); if(td&&typeof td.feel==="number") g[k].fe.push(td.feel); }
+    const cmp=(m,th,fmtd)=>{ if(g.y[m].length<4||g.n[m].length<4) return null; const d=avg(g.y[m])-avg(g.n[m]); return Math.abs(d)>=th?fmtd(d):null; };
+    const r=[cmp("rhr",2,d=>`leposyke seuraavana aamuna ${Math.abs(d).toFixed(0)} lyöntiä ${d<0?"matalampi":"korkeampi"}`),cmp("sl",0.3,d=>`uni ${Math.abs(d).toFixed(1).replace(".",",")} h ${d>0?"pidempi":"lyhyempi"}`),cmp("fe",0.3,d=>`treenifiilis ${Math.abs(d).toFixed(1).replace(".",",")} ${d>0?"parempi":"heikompi"}`)].filter(Boolean);
+    if(r.length) out.push(`${h.ic} Päivinä, joina teit tavan "${esc(h.name)}": ${r.join(", ")}.`);
+}
+  return out.length?`<ul class="ins">${out.map(x=>`<li>${x}</li>`).join("")}</ul><p class="tip">Yhteys ei todista syytä: hyvinä päivinä on myös helpompi muistaa tavat.</p>`:`<p class="note">Ei vielä selviä eroja. Vertailu tarvitsee vähintään 4 päivää, joina tapa on tehty, ja 4, joina se jäi, sekä aamuisin kirjatun leposykkeen tai unen.</p>`; }
 function levelOf(xp){ let L=LEVELS[0],next=null; LEVELS.forEach((x,i)=>{ if(xp>=x[0]){ L=x; next=LEVELS[i+1]||null; } }); return {L,next}; }
 
 /* ---------- näkymät ---------- */
@@ -1352,7 +1381,7 @@ function renderAnalysis(ti,st,t0){
   const lr=loadRatio(BASE,logs,ti); const lw=weekOf(ti)-1; const last4=[]; for(let w=Math.max(1,lw-3);w<=Math.max(1,lw);w++) last4.push([w,weekKm(BASE,logs,w),TARGET[w-1]]);
   const comp = last4.length? Math.round(last4.reduce((a,x)=>a+x[1],0)/Math.max(1,last4.reduce((a,x)=>a+x[2],0))*100):0;
   const elevW=w=>{ const [a,z]=weekRange(w); let s2=0; for(const k in logs){ const i=idxOfISO(k); if(i>=a&&i<=z&&logs[k].status==="done"&&typeof logs[k].elev==="number") s2+=logs[k].elev; } return Math.round(s2); };
-  $("aHab").innerHTML=habGridHTML(Math.max(0,ti));
+  $("aHab").innerHTML=habGridHTML(Math.max(0,ti)); $("aHabIns").innerHTML=habitInsights(Math.max(0,ti));
   $("aPred").innerHTML=predictionHTML(ti,true); $("aPredT").textContent=bHalf()?"Puolimaratonin aika-arvio":"Belgradin aika-arvio"; $("aCont").innerHTML=contHTML(ti); $("aCps").innerHTML=cpHTML(ti);
   $("aLoad").innerHTML=`<div class="tiles"><div class="tile"><span>Nousu tällä vk</span><b class="num">${elevW(weekOf(ti))} m</b></div><div class="tile"><span>Nousu viime vk</span><b class="num">${elevW(Math.max(1,weekOf(ti)-1))} m</b></div><div class="tile"><span>Toteuma 4 vk</span><b class="num">${comp} %</b></div><div class="tile"><span>Kuorma&shy;suhde</span><b class="num">${lr?String(Math.round(lr.ratio*100)/100).replace(".",","):"–"}</b></div><div class="tile"><span>7 pv km</span><b class="num">${lr?lr.acute:"–"}</b></div></div>
     <p class="tip">${lr? (lr.ratio>1.5?"Kuorma nousi viime viikolla jyrkästi suhteessa edellisiin viikkoihin. Pidä seuraavat päivät kevyinä.": lr.ratio<0.8?"Viime viikko oli kevyempi kuin edelliset. Hyvä palautumiseen, mutta älä jää pitkäksi aikaa alas.":"Kuorma nousee tasaisesti. Juuri näin pitääkin."):"Kuormasuhde (7 pv / 4 vk keskiarvo) näkyy, kun kirjauksia on 3 viikolta. Turvallinen alue 0,8–1,3."}</p>`;
@@ -1655,7 +1684,7 @@ function renderHabits(ti){ const el=$("habits"); if(!el) return; const i=habDay?
       return `<li><button class="hab${d?" done":""}${on.opt?" opt":""}" data-hab="${h.id}" data-hi="${i}" aria-pressed="${d}"><span class="hk" aria-hidden="true">${d?"✓":""}</span><span class="hi" aria-hidden="true">${h.ic}</span><span class="ht"><b>${esc(h.name)}${on.opt?` <small>valinnainen</small>`:""}</b>${on.n?`<small>${esc(on.n)}</small>`:""}${wk?`<small class="hs">${wk}</small>`:""}</span></button></li>`; }).join("")}</ul>
     ${i!==ti?`<button class="link" data-habday="">‹ Tänään</button>`:`<button class="link" data-habday="${ti-1}">Kirjaa eiliselle</button>`}`; }
 document.addEventListener("click",e=>{ const b=e.target.closest("[data-hab]"); if(b){ const id=b.dataset.hab, i=+b.dataset.hi, d=isoOfIdx(i); meta.hab=meta.hab||{}; const r=meta.hab[d]=meta.hab[d]||{}; if(r[id]) delete r[id]; else { r[id]=1; if(navigator.vibrate) navigator.vibrate(10); } if(!Object.keys(r).length) delete meta.hab[d];
-    persist(); renderHabits(todayIdx()); const all=habits().filter(h=>{ const on=habitOn(h,i); return on&&!on.opt; }); if(r[id]&&all.every(h=>habDone(h.id,i))) toast("Päivän tavat tehty ✓"); return; }
+    persist(); renderHabits(todayIdx()); renderCount(todayIdx(),stats(),badges(stats())); const all=habits().filter(h=>{ const on=habitOn(h,i); return on&&!on.opt; }); if(r[id]&&all.every(h=>habDone(h.id,i))){ celebrate(); toast("Päivän tavat tehty ✓ +5 XP bonus"); } else if(r[id]) toast("+2 XP"); return; }
   const hd=e.target.closest("[data-habday]"); if(hd){ habDay= hd.dataset.habday===""?null:+hd.dataset.habday; renderHabits(todayIdx()); } });
 function habGridHTML(ti){ const hs=habits(); if(!hs.length) return `<p class="note">Ei tapoja.</p>`; const N=28, a=ti-N+1;
   return hs.map(h=>{ let req=0, ok=0; const cells=[]; const f0=idxOfISO(((h.sched||[])[0]||{}).from||isoOfIdx(a)); for(let i=Math.max(a,f0);i<=ti;i++){ const on=habitOn(h,i); const d=habDone(h.id,i); if(on&&!on.opt){ req++; if(d) ok++; } cells.push(`<i class="${d?"y":on?(on.opt?"o":(i===ti?"t":"n")):"x"}" title="${fmt(i)}"></i>`); }
