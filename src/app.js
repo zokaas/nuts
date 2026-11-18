@@ -138,7 +138,7 @@ function render(){
   renderCount(ti,st,bs);
   if(r==="tanaan"){ renderPlanWeek(ti); renderHabits(ti); renderMaint(); renderRaceWeek(ti); renderStatus(ws); renderToday(t,ti); renderTip(t); renderSummary(ti); renderWeek(t); renderUpcoming(t); }
   if(r==="historia"){ renderHistory(st); }
-  if(r==="asetukset"){ renderIcu(); renderHabitSettings(); renderStrava(); renderCloud(); renderPush(); renderZones(); renderLoc(); }
+  if(r==="asetukset"){ renderTheme(); renderIcu(); renderHabitSettings(); renderStrava(); renderCloud(); renderPush(); renderZones(); renderLoc(); }
   if(r==="analyysi") renderAnalysis(ti,st,t);
   if(r==="merkit") renderBadges(st,bs);
   if(r==="kalenteri") renderCalendar(t);
@@ -542,7 +542,7 @@ $("restoreFile").onchange=async e=>{ const f=e.target.files[0]; if(!f) return;
 function toast(m,act){ const t=$("toast"); t.textContent=m; t.classList.toggle("act",!!act); if(act){ const b=document.createElement("button"); b.className="tbtn"; b.textContent=act.l; b.onclick=()=>{ t.classList.remove("show"); act.fn(); }; t.append(" ",b); } t.classList.add("show"); clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove("show"),act?5000:2800); }
 function celebrate(){ const st=stats(); toast(`${pick(CHEERS,st.done)} +10 XP`); if(navigator.vibrate) navigator.vibrate(30);
   if(matchMedia("(prefers-reduced-motion: reduce)").matches) return; const c=$("fx"),ctx=c.getContext("2d"); c.width=innerWidth; c.height=innerHeight; c.hidden=false;
-  const cols=[getComputedStyle(document.documentElement).getPropertyValue("--accent").trim()||"#d9661f","#2e4a52","#e0b440","#5fbf8a"];
+  const cs=getComputedStyle(document.documentElement), cols=["--accent","--hl","--fell","--ok"].map(v=>cs.getPropertyValue(v).trim()||"#1d5b6c");
   const ps=Array.from({length:70},()=>({x:innerWidth/2,y:innerHeight*.65,vx:(Math.random()-.5)*9,vy:-Math.random()*11-4,r:Math.random()*4+3,c:cols[Math.floor(Math.random()*cols.length)],a:Math.random()*6}));
   let f=0; (function step(){ ctx.clearRect(0,0,c.width,c.height); ps.forEach(p=>{ p.x+=p.vx; p.y+=p.vy; p.vy+=.35; p.a+=.2; ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.a); ctx.fillStyle=p.c; ctx.fillRect(-p.r,-p.r/2,p.r*2,p.r); ctx.restore(); }); if(++f<70) requestAnimationFrame(step); else { ctx.clearRect(0,0,c.width,c.height); c.hidden=true; } })(); }
 
@@ -1364,6 +1364,23 @@ const standalone = matchMedia("(display-mode: standalone)").matches || navigator
 $("installHint").hidden = !!standalone;
 $("edX").onclick=()=>closeEditor();
 handleStravaReturn();
+/* ===== v10: teemat ===== */
+const PALS=[{id:"tunturi",n:"Tunturi",d:"jäkälä ja lakka",bg:"#e9ece5",ac:"#1d5b6c",hl:"#d99a1e"},
+  {id:"ruska",n:"Ruska",d:"puolukka ja koivunlehti",bg:"#efe8e6",ac:"#972a3b",hl:"#c98a1c"},
+  {id:"kaamos",n:"Kaamos",d:"sininen hetki",bg:"#e6e9f1",ac:"#34449a",hl:"#1f9d78"}];
+function applyTheme(){ const r=document.documentElement, p=meta.pal||"tunturi", m=meta.mode||"auto";
+  if(p==="tunturi") delete r.dataset.pal; else r.dataset.pal=p;
+  if(m==="auto") delete r.dataset.theme; else r.dataset.theme=m;
+  const mt=document.querySelector('meta[name="theme-color"]'); if(mt) mt.content=getComputedStyle(r).getPropertyValue("--bg").trim()||"#e9ece5"; }
+function renderTheme(){ const el=$("palPick"); if(!el) return; const p=meta.pal||"tunturi", m=meta.mode||"auto";
+  el.innerHTML=PALS.map(x=>`<button type="button" data-pal-pick="${x.id}" aria-pressed="${x.id===p}"><span class="sw" style="background:${x.bg}"><u style="background:${x.hl}"></u><i style="background:${x.ac}"></i></span><span><b>${x.n}</b><small>${x.d}</small></span></button>`).join("");
+  document.querySelectorAll("[data-mode-pick]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.modePick===m))); }
+document.addEventListener("click",e=>{ const b=e.target.closest("[data-pal-pick],[data-mode-pick]"); if(!b) return;
+  if(b.dataset.palPick) meta.pal=b.dataset.palPick; else meta.mode=b.dataset.modePick;
+  persist(); applyTheme(); renderTheme(); render(); });
+matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change",()=>applyTheme());
+applyTheme();
+
 render();
 loadWeather();
 if(icu().key&&(!icu().last||Date.now()-icu().last>3*3600e3)) setTimeout(()=>icuSync(false),1500);
