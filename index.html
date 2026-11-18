@@ -1093,7 +1093,7 @@ let _hx=null, _hxKey="";
 function habitXP(){ const k=JSON.stringify(meta.hab||{})+JSON.stringify(meta.habits||[]).length+":"+todayIdx(); if(k!==_hxKey){ _hx=habStats(); _hxKey=k; } return _hx; }
 function habitBadges(){ const S=habitXP(); const best=Math.max(0,...Object.values(S.maxStreak));
   return [["🔆","Tapojen alku","Ensimmäinen täysi tapapäivä",S.full>=1],["🔥","Tapaputki 7","Sama tapa 7 päivää putkeen",best>=7],["🌅","Aamuvirkku","30 aamuherättelyä",(S.count.hera||0)>=30],
-    ["🪮","Kampamestari","30 kampausta",(S.count.kampa||0)>=30],["💆","Hiuskuuri","4 viikon hiuskuuri tehty",S.kuuri],["🌟","Täydellinen viikko","Kaikki tavat joka päivä ma–su",S.perfectWeek],["🗓️","Tapa juurtuu","Sama tapa 30 päivää putkeen",best>=30]]; }
+["💆","Hiuskuuri","4 viikon hiuskuuri tehty",S.kuuri],["🌟","Täydellinen viikko","Kaikki tavat joka päivä ma–su",S.perfectWeek],["🗓️","Tapa juurtuu","Sama tapa 30 päivää putkeen",best>=30]]; }
 /* Tavat ja vointi */
 function habitInsights(ti){ const hs=habits(); const out=[]; const avg=a=>a.reduce((x,y)=>x+y,0)/a.length;
   for(const h of hs){ if(h.week) continue; const g={y:{rhr:[],sl:[],fe:[]},n:{rhr:[],sl:[],fe:[]}};
@@ -1667,13 +1667,12 @@ function renderMaint(){ const ti=todayIdx(), on=ti>NUTS; document.body.classList
 /* ===== Tavat ===== */
 const HABIT_DEFAULT=[
   {id:"hera",ic:"🌅",name:"Verenkierron herättely 5 min",when:"aamu",sched:[{from:"2026-11-18",days:"all"}]},
-  {id:"kampa",ic:"🪮",name:"Kampaus puukammalla",when:"aamu",sched:[{from:"2026-11-16",days:"all"}]},
   {id:"pesu",ic:"🧴",name:"Hiustenpesu",when:"päivä",week:2,sched:[
     {from:"2026-11-16",to:"2026-12-13",label:"Hilseen rauhoitus (vk 1–4)",days:{0:{n:"Pesupäivä: öljy ensin · ketokonatsoli"},2:{n:"Pikapesu, jos hiukset rasvoittuvat · mieto shampoo",opt:true},4:{n:"Pesupäivä + methi-naamio · ketokonatsoli"}}},
     {from:"2026-12-14",label:"Ylläpito (vk 5→)",days:{0:{n:"Pesupäivä"},4:{n:"Pesupäivä"}},todo:true}]},
 ];
-function habits(){ if(!meta.habits){ meta.habits=JSON.parse(JSON.stringify(HABIT_DEFAULT)); meta.hab=meta.hab||{}; meta.habMig=1; persist(); }
-  if(!meta.habMig){ meta.habits=meta.habits.filter(h=>h.id!=="letti"); meta.habMig=1; persist(); } return meta.habits.filter(h=>!h.off); }
+function habits(){ if(!meta.habits){ meta.habits=JSON.parse(JSON.stringify(HABIT_DEFAULT)); meta.hab=meta.hab||{}; meta.habMig=2; persist(); }
+  if((meta.habMig||0)<2){ meta.habits=meta.habits.filter(h=>h.id!=="letti"&&h.id!=="kampa"); meta.habMig=2; persist(); } return meta.habits.filter(h=>!h.off); }
 function habitOn(h,i){ const d=isoOfIdx(i), w=dow(i); const sc=(h.sched||[]).find(x=>x.from<=d&&(!x.to||d<=x.to)); if(!sc) return null; if(sc.days==="all") return {n:"",opt:false,sc}; const x=sc.days[w]; return x?{...x,sc}:null; }
 function habDone(id,i){ const r=(meta.hab||{})[isoOfIdx(i)]; return !!(r&&r[id]); }
 function habEvents(h,from,to){ const ev=[]; for(let k=from;k<=to;k++){ const on=habitOn(h,k); if(!on||on.opt) continue; const d=habDone(h.id,k); if(!d&&k===to) continue; ev.push({w:weekOf(k),ok:d}); } return ev; }
