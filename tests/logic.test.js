@@ -53,3 +53,11 @@ test("viikon km lasketaan myös Strava-lisätreeneistä", () => {
   const logs = { "2026-11-17": { status: "done", km: 4 }, "2026-11-20~s9": { status: "done", km: 3, type: "J" } };
   assert.strictEqual(L.weekKm(plan, logs, 1), 7);
 });
+test("kuume: paluu vähintään viikko, nuha 3 pv", () => {
+  assert.strictEqual(L.sickRec(1, false), 3); assert.strictEqual(L.sickRec(1, true), 7); assert.strictEqual(L.sickRec(9, true), 14);
+  const t = L.idxOfISO("2027-03-17");
+  const logs = filled(t, { [iso(t)]: { status: "note", flags: ["sick", "fever"] } });
+  const ad = L.buildAdapt(plan, logs, {}, t);
+  const ret = Object.keys(ad).map(Number).filter(i => i > t + 1 && ad[i].kind === "sick");
+  assert.ok(ret.length && Math.max(...ret) > t + 4 && Math.max(...ret) <= t + 7);
+});

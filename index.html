@@ -655,6 +655,12 @@ body[data-route="ohje"] .mast{display:none}
 .mdelta{font-size:14px; color:var(--muted); margin:0}
 .mdelta .up{color:var(--ok); font-weight:700} .mdelta .dn{color:var(--muted); font-weight:700}
 .mtiles b{font-size:20px; white-space:nowrap}
+.sicklink{align-self:flex-start; margin-top:2px; font-size:14px; color:var(--muted)}
+.sickcard{border:2px solid color-mix(in srgb, var(--crit) 35%, var(--line)); background:color-mix(in srgb, var(--crit) 5%, var(--surface))}
+.sickcard.ret{border-color:color-mix(in srgb, var(--ok) 35%, var(--line)); background:color-mix(in srgb, var(--ok) 5%, var(--surface))}
+.sickhead{display:flex; align-items:baseline; justify-content:space-between; gap:8px} .sickhead h2{font-size:20px; font-stretch:110%}
+.sickcard p{margin:0} .sicklist{margin:0; padding-left:18px; display:flex; flex-direction:column; gap:4px; font-size:15px}
+.sickcard .seg2 button[aria-pressed="true"]{background:var(--surface); box-shadow:0 1px 2px rgba(0,0,0,.12)} .sickcard .seg2 small{font-size:12px; text-align:center}
 </style>
 </head>
 <body>
@@ -669,6 +675,7 @@ body[data-route="ohje"] .mast{display:none}
   <div data-view="tanaan" class="view">
     <section class="card maintcard" id="maint" hidden></section>
     <section class="card racecard" id="raceWeek" hidden></section>
+    <section class="card sickcard" id="sickCard" hidden></section>
     <section class="card hero">
       <div class="herotop"><button class="pill st-ok" id="pill" type="button"></button><span class="wchip" id="weather" hidden></span></div>
       <div id="today"></div>
@@ -1011,7 +1018,8 @@ function buildAdapt(plan, logs, adjOff, today){
     if(ls>=0){
       if(ls>=i-1){ res[i]={code:"L", text:"Sairaana: lepoa. Kevyt kävely ok, jos oireet ovat vain kaulan yläpuolella eikä ole kuumetta.", reason:"Sairaus", kind:"sick"}; continue; }
       let len=0; for(let k=ls;k>=Math.max(0,ls-14);k--){ if(flagsOf(logAt(k)).includes("sick")) len++; else if(k<ls-1) break; }
-      const rec = Math.min(10, Math.max(3, len*2)); const since = i-ls;
+      let fev=false; for(let k=ls;k>=Math.max(0,ls-len-1);k--){ if(flagsOf(logAt(k)).includes("fever")) fev=true; }
+      const rec = sickRec(len,fev); const since = i-ls;
       if(since<=rec){ if(RUN.has(code)||code==="PT"){ const f = since<=Math.ceil(rec/2)?0.5:0.75; res[i]={code: code==="X"?"J":code, text: scaleText(code,text,f,true)+(code==="X"?" Testi siirtyy myöhemmäksi.":""), reason:`Paluu sairastelusta (${len} pv): ${Math.round(f*100)} % määrästä, ei vetoja`, kind:"sick"}; }
         else if(/Tribe|kuntopiiri|Kuntopiiri/.test(text)) res[i]={code:"S", text:"Kevyt spinning tai kävely 30 min.", reason:"Paluu sairastelusta", kind:"sick"};
         continue; }
@@ -1083,6 +1091,8 @@ function computeWarnings(plan, logs, adapt, today){
   if(act.length) add("info",`Ohjelmaa mukautettu ${act.length} päivälle`,[...new Set(act.map(i=>adapt[i].reason))].join(" · "));
   return out;
 }
+/* Paluun pituus: 2 pv jokaista sairaspäivää kohden; kuumeen jälkeen vähintään viikko. */
+function sickRec(len,fev){ return fev ? Math.min(14, Math.max(7, len*2)) : Math.min(10, Math.max(3, len*2)); }
 function recentFlag(logs,today,flag,win){ for(let k=today;k>=Math.max(0,today-win);k--){ if(flagsOf(logs[isoOfIdx(k)]).includes(flag)) return true; } return false; }
 function loadRatio(plan,logs,today){ const kmDay=k=>{ let s=0; const d=isoOfIdx(k); for(const key in logs){ if(key.slice(0,10)!==d) continue; const l=logs[key]; if(l&&l.status==="done"&&RUN.has(logType(plan,key,l))&&typeof l.km==="number") s+=l.km; } return s; };
   if(today<21) return null; let a=0,c=0; for(let k=today-6;k<=today;k++) a+=kmDay(k); for(let k=today-27;k<=today;k++) c+=kmDay(k); c=c/4; if(c<5) return null; return {acute:Math.round(a), chronic:Math.round(c), ratio:a/c}; }
@@ -1103,7 +1113,7 @@ const TYPES = {
 const SPORTS = [["UI","🏊",1.15,0],["PY","🚴",1.4,0],["S","🚲",1,1],["HI","⛷️",1.1,1],["SK","🥢",1.6,0],["KA","🚶",2,0],["SA","🏋️",1,0],["JO","🧘",1,0],["PA","⚽",1,1],["MU","✨",1,0],["J","🏃",1,1]];
 const VIG = new Set(["J","JL","P","X","R","S","SH","SL","T","TL","K","PA","HI"]);
 const FLAGS = [["sick","🤒 Sairas"],["pain","🩹 Kipu"],["tired","😮‍💨 Väsynyt"],["sleep","😴 Huono uni"],["stress","🧠 Stressi"],["hangover","🍾 Darra"],["travel","✈️ Matkalla"],["great","⚡ Huippufiilis"]];
-const FLAG_L = Object.fromEntries(FLAGS);
+const FLAG_L = Object.fromEntries(FLAGS.concat([["fever","🌡️ Kuume"]]));
 const AREAS = ["sääri","polvi","akillesjänne","pohje","jalkapohja","nilkka","lonkka","reisi","selkä","muu"];
 const DOW = ["ma","ti","ke","to","pe","la","su"];
 const SHORT = {V:"Vapaa",UI:"Uinti",PY:"Pyörä",HI:"Hiihto",SK:"Sauva",KA:"Kävely",SA:"Sali",JO:"Jooga",PA:"Pallo",MU:"Muu",J:"Juoksu",JL:"Juoksu",P:"Pitkä",PT:"Patikka",YM:"Ylämäki",K:"Piiri",T:"Tribe",TL:"Tribe",S:"Spin",SH:"Spin",SL:"Spin",LH:"Huolto",X:"Testi",R:"Kisa",L:"Lepo"};
@@ -1220,12 +1230,12 @@ function levelOf(xp){ let L=LEVELS[0],next=null; LEVELS.forEach((x,i)=>{ if(xp>=
 function route(){ const h=(location.hash||"").slice(1); if(h==="kisa") return "opas"; return ["historia","kalenteri","analyysi","opas","merkit","asetukset","ohje"].includes(h)?h:"tanaan"; }
 function render(){
   const ti=todayIdx(), t=T0(); if(viewWeek===null) viewWeek=weekOf(t);
-  BASE = buildBase(); ADAPT = buildAdapt(BASE, logs, adjOff, ti);
+  sickSync(ti); BASE = buildBase(); ADAPT = buildAdapt(BASE, logs, adjOff, ti);
   const r=route(); document.body.dataset.route=r; $("pageTitle").textContent=TITLES[r]||""; document.querySelectorAll("[data-view]").forEach(v=>v.hidden=v.dataset.view!==r);
   document.querySelectorAll(".tabs a").forEach(a=>a.setAttribute("aria-current",a.getAttribute("href")==="#"+r?"page":"false"));
   const st=stats(), bs=badges(st); const ws=computeWarnings(BASE,logs,ADAPT,ti).concat(eventWarnings(ti)).concat(cpWarnings(ti)).concat(bloodWarnings()); checkCont30();
   renderCount(ti,st,bs);
-  if(r==="tanaan"){ renderPlanWeek(ti); renderMonthCard(); renderHabits(ti); renderMaint(); renderRaceWeek(ti); renderStatus(ws); renderToday(t,ti); renderTip(t); renderSummary(ti); renderWeek(t); renderUpcoming(t); }
+  if(r==="tanaan"){ renderSick(ti); renderPlanWeek(ti); renderMonthCard(); renderHabits(ti); renderMaint(); renderRaceWeek(ti); renderStatus(ws); renderToday(t,ti); renderTip(t); renderSummary(ti); renderWeek(t); renderUpcoming(t); }
   if(r==="historia"){ renderHistory(st); }
   if(r==="asetukset"){ renderTheme(); renderIcu(); renderHabitSettings(); renderStrava(); renderCloud(); renderPush(); renderZones(); renderLoc(); }
   if(r==="analyysi") renderAnalysis(ti,st,t);
@@ -1333,7 +1343,7 @@ async function loadRaceWx(R, ridx){ const day=isoOfIdx(ridx); const ck="pallas.r
 function renderToday(t,ti){ const d=selDay==null?t:selDay; const w=weekOf(d);
   const label = d!==t ? fmt(d) : ti<0?"Ohjelma alkaa":ti>t?"Viimeinen päivä":`Tänään · ${fmt(d)}`;
   $("today").closest(".hero").classList.toggle("other", d!==t);
-  $("today").innerHTML=`<div class="herohead"><div class="eyebrow">${label} · vk ${w} · ${PHASE(w)}</div>${d!==t?`<button class="link" data-seltoday>‹ Tänään</button>`:""}</div>`+sessionsOn(BASE,logs,ADAPT,d).map((s,k)=>sessionBlock(s,k===0,ti)).join("")+extrasOn(d).map(extraBlock).join(""); }
+  $("today").innerHTML=`<div class="herohead"><div class="eyebrow">${label} · vk ${w} · ${PHASE(w)}</div>${d!==t?`<button class="link" data-seltoday>‹ Tänään</button>`:""}</div>`+sessionsOn(BASE,logs,ADAPT,d).map((s,k)=>sessionBlock(s,k===0,ti)).join("")+extrasOn(d).map(extraBlock).join("")+(d===t&&ti>=0&&!sickActive()?`<button class="link sicklink" data-sickon>🤒 Olen kipeä</button>`:""); }
 let keepSel=false;
 function quickDone(key){ const s=sessionByKey(key), l=logs[key]||{}; logs[key]={...l,status:"done",type:s.code,km:l.km??null,min:l.min??null,flags:l.flags||[],note:l.note||"",quick:true,updatedAt:new Date().toISOString()}; persist(); render(); celebrate(); toast(stravaConnected()?"Tehty ✓ Strava täydentää km:t.":"Tehty ✓",{l:"Peru",fn:()=>undone(key)}); }
 function undone(key){ const l=logs[key]; if(!l) return; const keep=flagsOf(l).length||l.rhr!=null||l.sleepH!=null||l.note; if(l.stravaId){ toast("Stravasta tullutta treeniä ei voi perua tästä. Avaa treeni ja tyhjennä."); return; } if(keep){ logs[key]={flags:l.flags||[],rhr:l.rhr??null,sleepH:l.sleepH??null,note:l.note||"",feel:null,status:"note",type:l.type,updatedAt:new Date().toISOString()}; } else delete logs[key]; persist(); render(); }
@@ -1801,7 +1811,7 @@ function habitOnBase(h,i){ const d=isoOfIdx(i), w=dow(i); const sc=(h.sched||[])
   if(h.task){ const H=meta.hab||{}; for(const k in H){ if(k>=sc.from&&k<d&&H[k][h.id]) return null; } return {n:h.note||"",opt:false,task:true,sc}; } if(sc.days==="all") return {n:"",opt:false,sc}; const x=sc.days[w]; return x?{...x,sc}:null; }
 function habIcons(i,max=1){ if(!meta.habits) return ""; return meta.habits.filter(h=>!h.off&&!h.task).map(h=>({h,on:habitOn(h,i)})).filter(x=>x.on&&x.on.sc.days!=="all").map(x=>`<span class="hic${x.on.opt?" opt":""}${habDone(x.h.id,i)?" done":""}" title="${esc(x.h.name)}">${x.h.ic}</span>`).slice(0,max).join(""); }
 function habDone(id,i){ const r=(meta.hab||{})[isoOfIdx(i)]; return !!(r&&r[id]); }
-function habEvents(h,from,to){ const ev=[]; for(let k=from;k<=to;k++){ const on=habitOn(h,k); if(!on||on.opt) continue; const d=habDone(h.id,k); if(!d&&k===to) continue; ev.push({w:weekOf(k),ok:d}); } return ev; }
+function habEvents(h,from,to){ const ev=[]; for(let k=from;k<=to;k++){ const on=habitOn(h,k); if(!on||on.opt) continue; if(!habDone(h.id,k)&&flagsOf(logs[isoOfIdx(k)]).includes("sick")) continue; const d=habDone(h.id,k); if(!d&&k===to) continue; ev.push({w:weekOf(k),ok:d}); } return ev; }
 function habFirst(h){ return idxOfISO(((h.sched||[])[0]||{}).from||isoOfIdx(0)); }
 function habStreak(h,i){ return flexStreak(habEvents(h,habFirst(h),i),weekOf(i)).cur; }
 function habFlexNow(h,i){ return flexStreak(habEvents(h,habFirst(h),i),weekOf(i)).flexNow; }
@@ -1834,7 +1844,7 @@ $("habAdd").onclick=()=>{ const name=$("habName").value.trim().slice(0,50); if(!
   meta.habits.push({id:"h"+Date.now().toString(36),ic:$("habIc").value.trim()||"✅",name,when:$("habWhen").value,sched:[{from:isoOfIdx(Math.max(0,todayIdx())),days:sc}]});
   persist(); $("habName").value=""; $("habIc").value=""; document.querySelectorAll("#habDays button").forEach(b=>b.setAttribute("aria-pressed","false")); renderHabitSettings(); toast(`Lisätty: ${name}`); };
 $("habDays").onclick=e=>{ const b=e.target.closest("[data-hd]"); if(b) b.setAttribute("aria-pressed",String(b.getAttribute("aria-pressed")!=="true")); };
-function restoreExtras(d){ if(d.habits&&!meta.habits) meta.habits=d.habits; if(d.hab){ meta.hab=meta.hab||{}; for(const k in d.hab) meta.hab[k]={...d.hab[k],...(meta.hab[k]||{})}; } if(d.bGoal&&!meta.bGoal) meta.bGoal=d.bGoal; if(d.rck&&!meta.rck) meta.rck=d.rck; if(d.blood) meta.blood={...d.blood,...(meta.blood||{})}; if(d.habMove&&!meta.habMove) meta.habMove=d.habMove; if(d.cycle&&!meta.cycle) meta.cycle=d.cycle; if(d.planned) meta.planned={...d.planned,...(meta.planned||{})}; }
+function restoreExtras(d){ if(d.habits&&!meta.habits) meta.habits=d.habits; if(d.hab){ meta.hab=meta.hab||{}; for(const k in d.hab) meta.hab[k]={...d.hab[k],...(meta.hab[k]||{})}; } if(d.bGoal&&!meta.bGoal) meta.bGoal=d.bGoal; if(d.rck&&!meta.rck) meta.rck=d.rck; if(d.blood) meta.blood={...d.blood,...(meta.blood||{})}; if(d.habMove&&!meta.habMove) meta.habMove=d.habMove; if(d.cycle&&!meta.cycle) meta.cycle=d.cycle; if(d.planned) meta.planned={...d.planned,...(meta.planned||{})}; if(d.sick&&!meta.sick) meta.sick=d.sick; }
 
 document.addEventListener("click",e=>{ const o=e.target.closest("[data-hmvopen]"); if(o){ habMoveOpen=o.dataset.hmvopen||null; renderHabits(todayIdx()); return; }
   const m=e.target.closest("[data-hmv]"); if(m){ const [id,from,to]=m.dataset.hmv.split(":"); meta.habMove=meta.habMove||{}; const mv=meta.habMove[id]=meta.habMove[id]||{};
@@ -2230,7 +2240,7 @@ function weeksStatus(){ const t=Math.max(0,todayIdx()), w=weekOf(t), o={}; for(c
 function upcomingStatus(){ const t0=Math.max(0,todayIdx()); const t=Math.max(0,(weekOf(t0)-1)*7-1); const up={}; for(let i=t;i<=Math.min(BASE.length-1,t+21);i++){ const e=effective(BASE,ADAPT,i); up[isoOfIdx(i)]={code:e.code,label:TYPES[e.code].l,text:(e.text||"").slice(0,120),note:(BASE[i][2]||"").slice(0,40)}; } return up; }
 function cloudPayload(){
   const ti=todayIdx(); let ws=[]; try{ ws=computeWarnings(BASE,logs,ADAPT,ti).concat(eventWarnings(ti)).concat(cpWarnings(ti)).map(w=>({level:w.level,title:w.title})); }catch(e){}
-  return { data:{app:"matka-pallakselle",version:3,logs,adjOff,edits,weekScale,shoes,gear,hr:meta.hr||null,defaultShoe:meta.defaultShoe||null,habits:meta.habits||null,hab:meta.hab||{},bGoal:meta.bGoal||null,rck:meta.rck||null,blood:meta.blood||null,habMove:meta.habMove||null,cycle:meta.cycle||null,planned:meta.planned||null}, status:{upcoming:upcomingStatus(),weeks:weeksStatus(),warnings:ws,at:new Date().toISOString()}, refresh:strava.r||null };
+  return { data:{app:"matka-pallakselle",version:3,logs,adjOff,edits,weekScale,shoes,gear,hr:meta.hr||null,defaultShoe:meta.defaultShoe||null,habits:meta.habits||null,hab:meta.hab||{},bGoal:meta.bGoal||null,rck:meta.rck||null,blood:meta.blood||null,habMove:meta.habMove||null,cycle:meta.cycle||null,planned:meta.planned||null,sick:meta.sick||null}, status:{upcoming:upcomingStatus(),weeks:weeksStatus(),warnings:ws,at:new Date().toISOString()}, refresh:strava.r||null };
 }
 function scheduleCloud(){ if(!stravaConnected()) return; clearTimeout(cloudTimer); cloudTimer=setTimeout(()=>cloudSave(false),8000); }
 async function cloudSave(keepalive){
@@ -2453,6 +2463,39 @@ const standalone = matchMedia("(display-mode: standalone)").matches || navigator
 $("installHint").hidden = !!standalone;
 $("edX").onclick=()=>closeEditor();
 handleStravaReturn();
+/* ===== v12: sairastila ===== */
+function sickActive(){ return !!(meta.sick&&!meta.sick.to); }
+function sickFlags(){ return meta.sick&&meta.sick.kind==="fever"?["sick","fever"]:["sick"]; }
+/* Sairastilan aikana jokainen päivä alusta tähän päivään merkitään sairaaksi, jotta ohjelma, putket ja ilmoitukset mukautuvat. */
+function sickSync(ti){ const S=meta.sick; if(!S||S.to||ti<0) return; S.auto=S.auto||[]; let ch=false;
+  for(let i=Math.max(0,idxOfISO(S.from));i<=ti;i++){ const d=isoOfIdx(i); const l=logs[d]; const want=sickFlags();
+    if(!l){ logs[d]={status:"note",flags:want.slice(),note:"",updatedAt:new Date().toISOString(),sickAuto:true}; if(!S.auto.includes(d)) S.auto.push(d); ch=true; continue; }
+    const f=Array.isArray(l.flags)?l.flags:[]; const miss=want.filter(x=>!f.includes(x)), extra=S.kind!=="fever"&&S.auto.includes(d)&&f.includes("fever");
+    if(miss.length||extra){ l.flags=f.filter(x=>!(extra&&x==="fever")).concat(miss); l.updatedAt=new Date().toISOString(); if(!S.auto.includes(d)) S.auto.push(d); ch=true; } }
+  if(ch) persist(); }
+function sickUnflag(d){ const l=logs[d]; if(!l) return; l.flags=(l.flags||[]).filter(x=>x!=="sick"&&x!=="fever"); l.updatedAt=new Date().toISOString();
+  if(l.sickAuto&&l.status==="note"&&!l.flags.length&&!l.note&&l.rhr==null&&l.sleepH==null) delete logs[d]; }
+function sickLen(){ const S=meta.sick; if(!S) return 0; const a=idxOfISO(S.from), b=S.to?idxOfISO(S.to):todayIdx(); return Math.max(1,b-a+1); }
+function renderSick(ti){ const el=$("sickCard"); if(!el) return; const S=meta.sick; let html="";
+  if(S&&!S.to){ const n=sickLen(), fev=S.kind==="fever", rec=sickRec(n,fev);
+    const half=Math.ceil(rec/2);
+    html=`<div class="sickhead"><h2>Sairastila</h2><span class="tip">päivä ${n}</span></div>
+      <div class="seg2" role="group" aria-label="Oireet"><button type="button" data-sickkind="neck" aria-pressed="${!fev}"><b>Nuha tai kurkku</b><small>kaulan yläpuolella</small></button><button type="button" data-sickkind="fever" aria-pressed="${fev}"><b>Kuume tai koko keho</b><small>särky, väsymys, rintakehä</small></button></div>
+      <p>${fev?"Täysi lepo. Treenit jatkuvat vasta, kun olet ollut vuorokauden kuumeeton. Kuumeisena treenaaminen rasittaa sydäntä.":"Kevyt kävely ulkona on ok, jos olo sallii. Ei juoksua, salia eikä spinningiä. Juo ja nuku."}</p>
+      <ul class="sicklist"><li>Treenit on vaihdettu lepoon, eivätkä ne näy väliin jääneinä.</li><li>Tapojen putket ovat tauolla, eli flunssa ei katkaise niitä. Jos jaksat tehdä tavan, kuittaa se normaalisti.</li><li>Kun olet terve: ${rec} pv kevyttä paluuta (${half} pv 50 % ja ${rec-half} pv 75 % määrästä, ei vetoja${fev?", testi siirtyy":""}).</li></ul>
+      ${n>=7?`<p class="tip">Jos oireet jatkuvat yli viikon tai pahenevat, ota yhteys terveydenhuoltoon.</p>`:""}
+      <div class="row"><button class="btn primary" data-sickoff>Olen terve</button><button class="btn ghost" data-sickcancel>Merkitsin vahingossa</button></div>`; }
+  else if(S&&S.to){ const end=idxOfISO(S.to)+(S.rec||0); const k=ti-idxOfISO(S.to);
+    if(k>=1&&ti<=end){ html=`<div class="sickhead"><h2>Paluu sairastelusta</h2><span class="tip">päivä ${k}/${S.rec}</span></div><p class="tip">Juoksut ovat lyhyempiä ja ilman vetoja ${fmt(end)} asti. Jos olo huononee, palaa sairastilaan.</p><div class="row"><button class="btn ghost" data-sickresume>Olen taas kipeä</button></div>`; } }
+  el.hidden=!html; el.innerHTML=html; el.classList.toggle("ret",!!(S&&S.to)); }
+document.addEventListener("click",e=>{ const t=todayIdx(), tIso=isoOfIdx(Math.max(0,t));
+  if(e.target.closest("[data-sickon]")){ meta.sick={from:tIso,kind:"neck",auto:[]}; persist(); render(); scrollTo({top:0,behavior:"smooth"}); toast("Sairastila päällä. Lepää, ohjelma odottaa."); return; }
+  const k=e.target.closest("[data-sickkind]"); if(k&&meta.sick){ meta.sick.kind=k.dataset.sickkind; persist(); render(); return; }
+  if(e.target.closest("[data-sickoff]")&&meta.sick){ const S=meta.sick; const fromI=idxOfISO(S.from);
+    const toI=fromI>=t?t:t-1; if(toI<t){ sickUnflag(tIso); } S.to=isoOfIdx(toI); S.rec=sickRec(toI-fromI+1,S.kind==="fever"); persist(); render(); toast(`Hienoa! ${S.rec} päivän kevyt paluu alkaa.`); return; }
+  if(e.target.closest("[data-sickcancel]")&&meta.sick){ const S=meta.sick; (S.auto||[]).forEach(sickUnflag); meta.sick=null; persist(); render(); toast("Sairastila poistettu."); return; }
+  if(e.target.closest("[data-sickresume]")&&meta.sick){ delete meta.sick.to; delete meta.sick.rec; persist(); render(); toast("Sairastila jatkuu."); } });
+
 /* ===== v11: kuukausikatsaus ===== */
 const KK=["Tammikuu","Helmikuu","Maaliskuu","Huhtikuu","Toukokuu","Kesäkuu","Heinäkuu","Elokuu","Syyskuu","Lokakuu","Marraskuu","Joulukuu"];
 const KKP=["tammikuuhun","helmikuuhun","maaliskuuhun","huhtikuuhun","toukokuuhun","kesäkuuhun","heinäkuuhun","elokuuhun","syyskuuhun","lokakuuhun","marraskuuhun","joulukuuhun"];

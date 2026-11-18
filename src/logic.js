@@ -38,7 +38,8 @@ function buildAdapt(plan, logs, adjOff, today){
     if(ls>=0){
       if(ls>=i-1){ res[i]={code:"L", text:"Sairaana: lepoa. Kevyt kävely ok, jos oireet ovat vain kaulan yläpuolella eikä ole kuumetta.", reason:"Sairaus", kind:"sick"}; continue; }
       let len=0; for(let k=ls;k>=Math.max(0,ls-14);k--){ if(flagsOf(logAt(k)).includes("sick")) len++; else if(k<ls-1) break; }
-      const rec = Math.min(10, Math.max(3, len*2)); const since = i-ls;
+      let fev=false; for(let k=ls;k>=Math.max(0,ls-len-1);k--){ if(flagsOf(logAt(k)).includes("fever")) fev=true; }
+      const rec = sickRec(len,fev); const since = i-ls;
       if(since<=rec){ if(RUN.has(code)||code==="PT"){ const f = since<=Math.ceil(rec/2)?0.5:0.75; res[i]={code: code==="X"?"J":code, text: scaleText(code,text,f,true)+(code==="X"?" Testi siirtyy myöhemmäksi.":""), reason:`Paluu sairastelusta (${len} pv): ${Math.round(f*100)} % määrästä, ei vetoja`, kind:"sick"}; }
         else if(/Tribe|kuntopiiri|Kuntopiiri/.test(text)) res[i]={code:"S", text:"Kevyt spinning tai kävely 30 min.", reason:"Paluu sairastelusta", kind:"sick"};
         continue; }
@@ -110,7 +111,9 @@ function computeWarnings(plan, logs, adapt, today){
   if(act.length) add("info",`Ohjelmaa mukautettu ${act.length} päivälle`,[...new Set(act.map(i=>adapt[i].reason))].join(" · "));
   return out;
 }
+/* Paluun pituus: 2 pv jokaista sairaspäivää kohden; kuumeen jälkeen vähintään viikko. */
+function sickRec(len,fev){ return fev ? Math.min(14, Math.max(7, len*2)) : Math.min(10, Math.max(3, len*2)); }
 function recentFlag(logs,today,flag,win){ for(let k=today;k>=Math.max(0,today-win);k--){ if(flagsOf(logs[isoOfIdx(k)]).includes(flag)) return true; } return false; }
 function loadRatio(plan,logs,today){ const kmDay=k=>{ let s=0; const d=isoOfIdx(k); for(const key in logs){ if(key.slice(0,10)!==d) continue; const l=logs[key]; if(l&&l.status==="done"&&RUN.has(logType(plan,key,l))&&typeof l.km==="number") s+=l.km; } return s; };
   if(today<21) return null; let a=0,c=0; for(let k=today-6;k<=today;k++) a+=kmDay(k); for(let k=today-27;k<=today;k++) c+=kmDay(k); c=c/4; if(c<5) return null; return {acute:Math.round(a), chronic:Math.round(c), ratio:a/c}; }
-if(typeof module!=="undefined") module.exports={buildAdapt,computeWarnings,weekKm,sessionsOn,effective,idxOfISO,isoOfIdx,weekOf,weekRange,TARGET,RUN,scaleText,loadRatio};
+if(typeof module!=="undefined") module.exports={buildAdapt,computeWarnings,weekKm,sessionsOn,effective,idxOfISO,isoOfIdx,weekOf,weekRange,TARGET,RUN,scaleText,loadRatio,sickRec};
