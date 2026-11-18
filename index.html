@@ -603,6 +603,10 @@ body.maint .hero, body.maint #week, body.maint #status, body.maint #summary, bod
 .bgrid > *{padding:7px 4px; border-top:1px solid var(--line)} .bgrid > b{border-top:0; font-size:12px; color:var(--muted)} .bgrid b small{display:block; font-weight:400}
 .bgrid .bl{font-weight:700; font-size:14px} .bgrid .bl small{display:block; font-weight:400; color:var(--muted); font-size:11px} .bgrid .neg{color:var(--warn); font-weight:800}
 .hmv{display:flex; flex-wrap:wrap; gap:6px; margin-left:44px}
+.bhead{display:flex; justify-content:space-between; font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.05em} .bhead small{text-transform:none; font-weight:400}
+.blist{list-style:none; margin:0; padding:0} .blist li{display:flex; justify-content:space-between; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid var(--line)}
+.blist small{display:block; color:var(--muted); font-size:12px} .bv{font-weight:700; text-align:right; white-space:nowrap} .bv em{font-style:normal; font-weight:400; color:var(--muted)} .bv em.neg{color:var(--warn); font-weight:700}
+.bform label small{font-weight:400; color:var(--muted)}
 </style>
 </head>
 <body>
@@ -1742,21 +1746,24 @@ document.addEventListener("click",e=>{ const o=e.target.closest("[data-hmvopen]"
 /* ===== Verikoearvot ===== */
 const BLOOD=[["veri1","Marraskuu"],["veri2","Helmikuu"]];
 let bloodEdit=null;
-function bloodHTML(){ const B=meta.blood||{}; const a=B.veri1, b=B.veri2; const f=(o,k)=>o&&typeof o[k]==="number"?o[k]:null;
-  const row=(lbl,k,u)=>{ const x=f(a,k), y=f(b,k); const d=x!=null&&y!=null?y-x:null; return `<span class="bl">${lbl}<small>${u}</small></span><span class="num">${x??"–"}</span><span class="num">${y??"–"}</span><span class="num${d!=null&&d<0&&k!=="crp"?" neg":""}">${d==null?"":(d>0?"+":"")+n1(d)}</span>`; };
-  const form=id=>{ const o=B[id]||{}; return `<div class="bform"><div class="grid3"><div class="field"><label for="bF">Ferritiini (µg/l)</label><input id="bF" inputmode="decimal" value="${o.ferr??""}"></div><div class="field"><label for="bH">Hemoglobiini (g/l)</label><input id="bH" inputmode="numeric" value="${o.hb??""}"></div><div class="field"><label for="bC">CRP (valinn.)</label><input id="bC" inputmode="decimal" value="${o.crp??""}"></div></div><div class="field"><label for="bD">Näytteenottopäivä</label><input type="date" id="bD" value="${o.date||isoOfIdx(Math.max(0,todayIdx()))}"></div><div class="row"><button class="btn primary small" data-bsave="${id}">Tallenna</button><button class="btn ghost small" data-bcancel>Peruuta</button></div></div>`; };
-  return `<div class="bgrid"><b></b><b>Marras${a&&a.date?`<small>${fmtShort(idxOfISO(a.date))}</small>`:""}</b><b>Helmi${b&&b.date?`<small>${fmtShort(idxOfISO(b.date))}</small>`:""}</b><b>Muutos</b>${row("Ferritiini","ferr","µg/l")}${row("Hemoglobiini","hb","g/l")}${(f(a,"crp")!=null||f(b,"crp")!=null)?row("CRP","crp","mg/l"):""}</div>
+const BFIELDS=[["ferr","Ferritiini","µg/l","Rautavarastot"],["hb","Hemoglobiini","g/l","Anemia"],["tfr","Transferriinireseptori (TfR)","mg/l","Raudanpuute, tulehdus ei sotke"],["tsh","TSH","mU/l","Kilpirauhanen"],["t4v","T4-V","pmol/l","Kilpirauhanen"],["crp","CRP","mg/l","Tulehdus (jos mitattu)"]];
+function bloodHTML(){ const B=meta.blood||{}; const a=B.veri1||{}, b=B.veri2||{};
+  const rows=BFIELDS.filter(([k])=>typeof a[k]==="number"||typeof b[k]==="number").map(([k,l,u])=>{ const x=a[k], y=b[k]; const d=typeof x==="number"&&typeof y==="number"?y-x:null;
+    return `<li><span><b>${l}</b><small>${u}</small></span><span class="bv num">${typeof x==="number"?n1(x):"–"} → ${typeof y==="number"?n1(y):"–"}${d!=null?` <em class="${d<0&&(k==="ferr"||k==="hb")?"neg":""}">(${d>0?"+":""}${n1(d)})</em>`:""}</span></li>`; }).join("");
+  const form=id=>{ const o=B[id]||{}; return `<div class="bform">${BFIELDS.map(([k,l,u,why])=>`<div class="field"><label for="b_${k}">${l} <small>${u} · ${why}</small></label><input id="b_${k}" inputmode="decimal" value="${o[k]??""}"></div>`).join("")}<div class="field"><label for="bD">Näytteenottopäivä</label><input type="date" id="bD" value="${o.date||isoOfIdx(Math.max(0,todayIdx()))}"></div><div class="row"><button class="btn primary small" data-bsave="${id}">Tallenna</button><button class="btn ghost small" data-bcancel>Peruuta</button></div></div>`; };
+  return `<div class="bhead"><span>Marraskuu${a.date?` <small>${fmtShort(idxOfISO(a.date))}</small>`:""}</span><span>→</span><span>Helmikuu${b.date?` <small>${fmtShort(idxOfISO(b.date))}</small>`:""}</span></div>
+    ${rows?`<ul class="blist">${rows}</ul>`:`<p class="note">Ei vielä arvoja. Kirjaa ne, kun saat tulokset.</p>`}
     ${bloodEdit?form(bloodEdit):`<div class="row">${BLOOD.map(([id,l])=>`<button class="btn small" data-bedit="${id}">${(B[id]?"Muokkaa ":"Kirjaa ")+l.toLowerCase()+"n arvot"}</button>`).join("")}</div>`}
-    ${bloodNotes().map(x=>`<p class="tip">${x}</p>`).join("")}<p class="tip">Ferritiini nousee tulehduksessa, joten flunssassa tai kovan treenin jälkeen otettu arvo voi näyttää todellista paremmalta. Tulkinta: lääkäri.</p>`; }
+    ${bloodNotes().map(x=>`<p class="tip">${x}</p>`).join("")}<p class="tip">Ferritiini nousee tulehduksessa, joten flunssan tai yskän aikana se voi näyttää todellista paremmalta. Transferriinireseptori kertoo silloin raudanpuutteesta luotettavammin. Viitearvot vaihtelevat laboratorioittain, joten tulkinta lääkärin kanssa.</p>`; }
 function bloodNotes(){ const B=meta.blood||{}, a=B.veri1, b=B.veri2, out=[];
   const last=b&&b.ferr!=null?b:a; if(last&&typeof last.ferr==="number"&&last.ferr<30) out.push(`⚠️ Ferritiini ${n1(last.ferr)} µg/l on alle 30, jota käytetään yleisesti raudanpuutteen rajana. Keskustele lääkärin kanssa raudasta.`);
   if(a&&b&&typeof a.ferr==="number"&&typeof b.ferr==="number"&&b.ferr<=a.ferr*0.7) out.push(`⚠️ Ferritiini laski ${n1(a.ferr)} → ${n1(b.ferr)} µg/l (${Math.round((1-b.ferr/a.ferr)*100)} %). Treenimäärän kasvu kuluttaa rautavarastoja.`);
   if(a&&b&&typeof a.hb==="number"&&typeof b.hb==="number"&&a.hb-b.hb>=10) out.push(`⚠️ Hemoglobiini laski ${a.hb} → ${b.hb} g/l.`);
   return out; }
 function bloodWarnings(){ return bloodNotes().length?[{level:"warn",title:"Verikoe: ferritiini vaatii huomiota",detail:bloodNotes().join(" ").replace(/⚠️ /g,"")+" Katso Analyysi → Vointi."}]:[]; }
-document.addEventListener("click",e=>{ const ed=e.target.closest("[data-bedit]"); if(ed){ bloodEdit=ed.dataset.bedit; $("aBlood").innerHTML=bloodHTML(); setTimeout(()=>$("bF").focus(),30); return; }
+document.addEventListener("click",e=>{ const ed=e.target.closest("[data-bedit]"); if(ed){ bloodEdit=ed.dataset.bedit; $("aBlood").innerHTML=bloodHTML(); setTimeout(()=>$("b_ferr").focus(),30); return; }
   if(e.target.closest("[data-bcancel]")){ bloodEdit=null; $("aBlood").innerHTML=bloodHTML(); return; }
-  const sv=e.target.closest("[data-bsave]"); if(sv){ const num=id=>{ const v=parseFloat($(id).value.replace(",",".")); return isFinite(v)&&v>0?v:null; }; const o={ferr:num("bF"),hb:num("bH"),crp:num("bC"),date:$("bD").value||null};
+  const sv=e.target.closest("[data-bsave]"); if(sv){ const num=id=>{ const v=parseFloat($(id).value.replace(",",".")); return isFinite(v)&&v>0?v:null; }; const o={date:$("bD").value||null}; BFIELDS.forEach(([k])=>o[k]=num("b_"+k));
     if(o.ferr==null&&o.hb==null){ toast("Kirjaa vähintään ferritiini tai hemoglobiini."); return; } if(o.hb!=null&&o.hb<50) o.hb=Math.round(o.hb*10); // g/dl → g/l
     meta.blood=meta.blood||{}; meta.blood[sv.dataset.bsave]=o; meta.hab=meta.hab||{}; const d=o.date||isoOfIdx(todayIdx()); (meta.hab[d]=meta.hab[d]||{})[sv.dataset.bsave]=1;
     bloodEdit=null; persist(); render(); toast(bloodNotes().length?"Tallennettu. Katso huomio.":"Verikoearvot tallennettu ✓"); return; }
