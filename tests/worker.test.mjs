@@ -8,6 +8,7 @@ globalThis.fetch = async (u, o={}) => { u=String(u);
   if (u.endsWith("/api/v3/athlete")) return new Response(JSON.stringify({id:42}),{status:o.headers?.Authorization==="Bearer good"?200:401});
   if (u.includes("/oauth/token")) return new Response(JSON.stringify({access_token:"A",refresh_token:"R2",expires_at:9}),{status:200});
   if (u.includes("/athlete/activities")) return new Response(JSON.stringify([]),{status:200});
+  if (u.startsWith("https://intervals.icu/api/v1/athlete/i123/wellness")) return o.headers.Authorization==="Basic "+btoa("API_KEY:goodkey123") ? new Response(JSON.stringify([{id:"2026-11-17",restingHR:54,hrv:77,sleepSecs:25740,sleepScore:80}]),{status:200}) : new Response("",{status:401});
   if (u.startsWith("https://push.example")) { pushes.push(o.headers.Authorization); return new Response("",{status:201}); }
   return new Response("?",{status:500}); };
 const call=(path,opt={},env)=>w.fetch(new Request("https://nuts.x.workers.dev"+path,opt),env);
@@ -67,4 +68,13 @@ test("sunnuntain viikkokatsaus", async()=>{
   assert.strictEqual(pushes.length,1);
   const msg=JSON.parse([...kv.m.entries()].find(([k])=>k.startsWith("msg:"))[1]);
   assert.strictEqual(msg.title,"Viikon katsaus"); assert.match(msg.body,/Vk 1: 3\/\d treeniä, 7,5 \/ 8 km/); assert.match(msg.body,/Ensi viikko: .*tavoite 10 km.*pitkä lenkki la 50 min/); assert.match(msg.body,/Pikkujoulut/);
+});
+
+test("Intervals.icu-hyvinvointidata välitetään ja validoidaan", async()=>{
+  const env={...base};
+  const post=b=>call("/icu/wellness",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b)},env);
+  const ok=await (await post({athlete:"i123",key:"goodkey123",oldest:"2026-11-10",newest:"2026-11-18"})).json();
+  assert.deepStrictEqual(ok[0],{d:"2026-11-17",rhr:54,hrv:77,sleep:25740,score:80});
+  assert.strictEqual((await post({athlete:"i123",key:"badkey1234",oldest:"2026-11-10",newest:"2026-11-18"})).status,401);
+  assert.strictEqual((await post({athlete:"../x",key:"goodkey123",oldest:"2026-11-10",newest:"2026-11-18"})).status,400);
 });

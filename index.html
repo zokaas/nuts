@@ -618,6 +618,7 @@ body.maint .hero, body.maint #week, body.maint #status, body.maint #summary, bod
 .helpfold summary{font-family:var(--display); font-stretch:110%; font-weight:800; font-size:17px; cursor:pointer}
 .helpfold ul{margin:8px 0 0; padding-left:18px; display:flex; flex-direction:column; gap:6px} .helpfold p{margin:8px 0 0}
 body[data-route="ohje"] .mast{display:none}
+.steps{margin:6px 0; padding-left:20px; display:flex; flex-direction:column; gap:6px; font-size:14px}
 </style>
 </head>
 <body>
@@ -743,6 +744,21 @@ body[data-route="ohje"] .mast{display:none}
     <div class="sethead"><a href="#tanaan" class="link">‹ Takaisin</a><h2>Asetukset</h2></div>
     <a href="#ohje" class="card linkcard"><span>❓ Näin sovellus toimii</span><span aria-hidden="true">›</span></a>
   <div class="nag" id="backupNag" hidden><span>Varmuuskopiosta yli viikko.</span><button class="btn small primary" data-backup>Tallenna</button></div>
+    <section class="card" id="icuCard">
+      <div class="weekhead"><h2>Uni ja leposyke</h2><span class="tip">Intervals.icu</span></div>
+      <p class="tip" id="icuStatus"></p>
+      <details class="fold"><summary>Asetukset ja ohje</summary>
+        <ol class="steps">
+          <li>Intervals.icu → Settings → <b>Suunto</b>: yhdistä ja kytke päälle <b>Download wellness data</b> (sleep, HRV, resting HR).</li>
+          <li>Settings → <b>Developer Settings</b>: kopioi <b>Athlete ID</b> (muotoa i123456) ja luo <b>API Key</b>.</li>
+          <li>Liitä ne alle ja paina Tallenna ja hae.</li>
+        </ol>
+        <div class="grid2"><div class="field"><label for="icuAth">Athlete ID</label><input type="text" id="icuAth" autocapitalize="off" autocorrect="off" placeholder="i123456"></div><div class="field"><label for="icuKey">API Key</label><input type="password" id="icuKey" autocapitalize="off" autocorrect="off" autocomplete="off"></div></div>
+        <label class="chk togglerow"><input type="checkbox" id="icuShift"> Yö näkyy päivää liian aikaisin <small>(vertaa Suunnon unipäivään ja kytke tarvittaessa)</small></label>
+        <div class="row"><button class="btn primary small" id="icuSave">Tallenna ja hae</button><button class="btn ghost small" id="icuOff">Poista yhteys</button></div>
+        <p class="tip">Haku tapahtuu automaattisesti, kun avaat sovelluksen (enintään 3 tunnin välein). Käsin kirjattu leposyke tai uni ei korvaudu. API-avain tallentuu vain tähän laitteeseen.</p>
+      </details>
+    </section>
     <section class="card" id="stravaCard">
       <div class="weekhead"><h2>Strava</h2><span class="stv big">S</span></div>
       <p class="tip" id="stStatus"></p>
@@ -1164,7 +1180,7 @@ function render(){
   renderCount(ti,st,bs);
   if(r==="tanaan"){ renderPlanWeek(ti); renderHabits(ti); renderMaint(); renderRaceWeek(ti); renderStatus(ws); renderToday(t,ti); renderTip(t); renderSummary(ti); renderWeek(t); renderUpcoming(t); }
   if(r==="historia"){ renderHistory(st); }
-  if(r==="asetukset"){ renderHabitSettings(); renderStrava(); renderCloud(); renderPush(); renderZones(); renderLoc(); }
+  if(r==="asetukset"){ renderIcu(); renderHabitSettings(); renderStrava(); renderCloud(); renderPush(); renderZones(); renderLoc(); }
   if(r==="analyysi") renderAnalysis(ti,st,t);
   if(r==="merkit") renderBadges(st,bs);
   if(r==="kalenteri") renderCalendar(t);
@@ -1443,6 +1459,7 @@ function renderAnalysis(ti,st,t0){
   tr+=`<div class="trend"><div><b>Fiilis</b><span>${avg(feel)?`keskiarvo ${n1(avg(feel))} / 5`:"ei vielä dataa"}</span></div>${has(feel)?spark(feel,{min:1,max:5,label:"Fiilis 30 päivää"}):""}</div>`;
   tr+=`<div class="trend"><div><b>Leposyke</b><span>${avg(rhr)?`keskiarvo ${Math.round(avg(rhr))}`:"kirjaa aamuisin vointiin"}</span></div>${has(rhr)?spark(rhr,{min:Math.min(...rhr.filter(x=>x))-3,max:Math.max(...rhr.filter(x=>x))+3,color:"var(--crit)",label:"Leposyke 30 päivää"}):""}</div>`;
   tr+=`<div class="trend"><div><b>Uni</b><span>${avg(sleep)?`keskiarvo ${n1(avg(sleep))} h`:"kirjaa vointiin"}</span></div>${has(sleep)?spark(sleep,{min:4,max:10,color:"var(--fell)",label:"Uni 30 päivää"}):""}</div>`;
+  const hrv=g("hrv"); if(has(hrv)) tr+=`<div class="trend"><div><b>HRV</b><span>keskiarvo ${Math.round(avg(hrv))} ms</span></div>${spark(hrv,{min:Math.min(...hrv.filter(x=>x))-5,max:Math.max(...hrv.filter(x=>x))+5,color:"var(--ok)",label:"HRV 30 päivää"})}</div>`;
   $("aTrends").innerHTML=tr;
   // vointi 30 pv
   const cnt={}, areas={}; days.forEach(i=>{ const l=logs[isoOfIdx(i)]; flagsOf(l).forEach(f=>cnt[f]=(cnt[f]||0)+1); if(l&&l.painArea&&flagsOf(l).includes("pain")) areas[l.painArea]=(areas[l.painArea]||0)+1; });
@@ -1769,6 +1786,29 @@ document.addEventListener("click",e=>{ const o=e.target.closest("[data-hmvopen]"
   const m=e.target.closest("[data-hmv]"); if(m){ const [id,from,to]=m.dataset.hmv.split(":"); meta.habMove=meta.habMove||{}; const mv=meta.habMove[id]=meta.habMove[id]||{};
     const orig=Object.keys(mv).find(f=>mv[f]===from)||from; mv[orig]=to; if(orig===to) delete mv[orig]; habMoveOpen=null; persist(); render(); const h=meta.habits.find(x=>x.id===id); toast(`${h.ic} ${h.name} siirretty: ${fmt(idxOfISO(to))}`,{l:"Peru",fn:()=>{ if(orig===from) delete mv[orig]; else mv[orig]=from; persist(); render(); }}); return; }
   const u=e.target.closest("[data-hmvundo]"); if(u){ const [id,f]=u.dataset.hmvundo.split(":"); delete meta.habMove[id][f]; persist(); render(); toast("Siirto peruttu."); } });
+
+/* ===== Intervals.icu: uni, leposyke, HRV Suunnosta ===== */
+const icu=()=>meta.icu||{};
+async function icuSync(manual){ const c=icu(); if(!c.ath||!c.key){ if(manual) toast("Anna ensin Intervals.icu-tunnus ja API-avain."); return; } if(!workerBase()){ if(manual) toast("Välipalvelin puuttuu (Strava-asetukset)."); return; }
+  const t=todayIdx(); const oldest=isoOfIdx(t-(c.last?6:30)), newest=isoOfIdx(t);
+  try{ const r=await fetch(`${workerBase()}/icu/wellness`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({athlete:c.ath,key:c.key,oldest,newest})});
+    if(r.status===401){ meta.icu.err="Tunnus tai API-avain ei kelpaa."; persist(); renderIcu(); if(manual) toast(meta.icu.err); return; }
+    if(!r.ok){ meta.icu.err=r.status===404?"Välipalvelin päivittyy vielä. Yritä hetken päästä uudelleen.":"Haku epäonnistui, yritetään myöhemmin."; persist(); renderIcu(); if(manual) toast(meta.icu.err); return; }
+    const rows=await r.json(); let n=0, latest=null;
+    for(const w of rows){ if(!w||!w.d) continue; const d=c.shift?isoOfIdx(idxOfISO(w.d)+1):w.d; const i=idxOfISO(d); if(i<0) continue;
+      const vals={rhr:typeof w.rhr==="number"&&w.rhr>25?Math.round(w.rhr):null, sleepH:typeof w.sleep==="number"&&w.sleep>0?Math.round(w.sleep/360)/10:null, hrv:typeof w.hrv==="number"&&w.hrv>0?Math.round(w.hrv):null};
+      if(vals.rhr==null&&vals.sleepH==null&&vals.hrv==null) continue;
+      const prev=logs[d]; const old=(prev&&prev.icu)||{}; const l=prev?{...prev}:{status:"note",type:i<BASE.length?BASE[i][0]:"L",flags:[],note:""};
+      let ch=false; for(const k of ["rhr","sleepH","hrv"]){ if(vals[k]==null) continue; if(l[k]==null||l[k]===old[k]){ if(l[k]!==vals[k]){ l[k]=vals[k]; ch=true; } } }
+      l.icu=vals; if(ch||!prev){ l.updatedAt=new Date().toISOString(); logs[d]=l; n++; } if(!latest||d>latest.d) latest={d,...vals}; }
+    meta.icu.last=Date.now(); meta.icu.latest=latest; delete meta.icu.err; persist(); if(n) render(); else renderIcu();
+    if(manual) toast(n?`Haettu ${n} päivän uni- ja leposyketiedot.`:"Ei uutta dataa. Tarkista, että Suunnon wellness-tuonti on päällä Intervals.icu:ssa."); }
+  catch(e){ if(manual) toast("Yhteys Intervals.icu:hun epäonnistui."); } }
+function renderIcu(){ const el=$("icuStatus"); if(!el) return; const c=icu(); $("icuAth").value=c.ath||""; $("icuKey").value=c.key?"••••••••":""; $("icuShift").checked=!!c.shift;
+  const L=c.latest; el.innerHTML= c.err?`⚠️ ${esc(c.err)}`: c.last?`✓ Yhdistetty · haettu ${new Date(c.last).toLocaleString("fi-FI",{day:"numeric",month:"numeric",hour:"2-digit",minute:"2-digit"})}${L?`<br>Viimeisin: ${fmt(idxOfISO(L.d))} · uni ${L.sleepH!=null?n1(L.sleepH)+" h":"–"} · leposyke ${L.rhr??"–"} · HRV ${L.hrv??"–"}`:""}`:"Ei yhdistetty. Hakee Suunnon unen, leposykkeen ja HRV:n automaattisesti."; }
+$("icuSave").onclick=()=>{ const ath=$("icuAth").value.trim(), k=$("icuKey").value.trim(); meta.icu=meta.icu||{}; if(ath) meta.icu.ath=ath.replace(/\s/g,""); if(k&&!/^•+$/.test(k)) meta.icu.key=k; meta.icu.shift=$("icuShift").checked; delete meta.icu.last; persist(); icuSync(true); };
+$("icuShift").onchange=()=>{ meta.icu=meta.icu||{}; meta.icu.shift=$("icuShift").checked; delete meta.icu.last; persist(); };
+$("icuOff").onclick=()=>{ delete meta.icu; persist(); renderIcu(); toast("Intervals.icu-yhteys poistettu. Haetut tiedot säilyvät."); };
 
 /* ===== Sunnuntain suunnitteluhetki ===== */
 let planOpen=false, planForce=false;
@@ -2359,6 +2399,7 @@ $("edX").onclick=()=>closeEditor();
 handleStravaReturn();
 render();
 loadWeather();
+if(icu().key&&(!icu().last||Date.now()-icu().last>3*3600e3)) setTimeout(()=>icuSync(false),1500);
 if(stravaConnected() && (!strava.lastSync || Date.now()-new Date(strava.lastSync).getTime()>30*60000)) setTimeout(()=>syncStrava(false),800);
 if("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js").catch(()=>{});
 

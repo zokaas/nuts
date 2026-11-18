@@ -69,6 +69,19 @@ export default {
       return new Response(await r.text(), { status: r.status, headers: { ...cors, "Content-Type": "application/json" } });
     }
 
+    /* ---------- Intervals.icu (uni, leposyke, HRV) ---------- */
+    if (url.pathname === "/icu/wellness" && req.method === "POST") {
+      let b; try { b = await req.json(); } catch { return json({ error: "bad_request" }, 400); }
+      const ath = String(b.athlete || "").trim(), key = String(b.key || "").trim();
+      const d = /^\d{4}-\d{2}-\d{2}$/;
+      if (!/^i?\d{1,12}$/.test(ath) || !/^[A-Za-z0-9_-]{8,128}$/.test(key) || !d.test(b.oldest || "") || !d.test(b.newest || "")) return json({ error: "bad_request" }, 400);
+      const r = await fetch(`https://intervals.icu/api/v1/athlete/${ath}/wellness?oldest=${b.oldest}&newest=${b.newest}`, { headers: { Authorization: "Basic " + btoa("API_KEY:" + key) } });
+      if (r.status === 401 || r.status === 403) return json({ error: "auth" }, 401);
+      if (!r.ok) return json({ error: "upstream", status: r.status }, 502);
+      const rows = await r.json();
+      return json((Array.isArray(rows) ? rows : []).map(w => ({ d: w.id, rhr: w.restingHR ?? null, hrv: w.hrv ?? null, sleep: w.sleepSecs ?? null, score: w.sleepScore ?? null })));
+    }
+
     /* ---------- Tallennustilaa vaativat reitit ---------- */
     const kvRoutes = ["/backup", "/push/key", "/push/subscribe", "/push/pending", "/push/test"];
     if (kvRoutes.includes(url.pathname)) {
