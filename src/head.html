@@ -15,22 +15,22 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
-<script>try{var _m=JSON.parse(localStorage.getItem("pallas.meta.v1")||"{}");if(_m.pal&&_m.pal!=="tunturi")document.documentElement.dataset.pal=_m.pal;if(_m.mode==="light"||_m.mode==="dark")document.documentElement.dataset.theme=_m.mode;}catch(e){}</script>
+<script>try{var _m=JSON.parse(localStorage.getItem("pallas.meta.v1")||"{}");var _p=_m.pal||"kausi";if(_p==="kausi"){var _k=new Date().getMonth();_p=(_k>=10||_k<=0)?"kaamos":(_k>=8)?"ruska":"tunturi";}if(_p!=="tunturi")document.documentElement.dataset.pal=_p;if(_m.mode==="light"||_m.mode==="dark")document.documentElement.dataset.theme=_m.mode;}catch(e){}</script>
 <style>
 /* Layout idea: one phone-width column read top to bottom — status, today, this week, the route profile, what is coming. */
 /* Teemat: Tunturi (jäkälä, tunturijärvi, lakka), Ruska (puolukka, koivunlehti), Kaamos (sininen hetki, revontuli). */
-:root{ --bg:#e9ece5; --surface:#fafbf7; --ink:#18241f; --muted:#4f5c55; --line:#d3d9cf; --accent:#1d5b6c; --hl:#d99a1e; --fell:#4b6a5c; --info-bg:#e3ecea; --on-accent:#ffffff; --acc-bg:#dceaee; --ok:#2f7d55; --warn:#9a6c00; --crit:#b3332a; --ok-bg:#e2f0e7; --warn-bg:#f6edd2; --crit-bg:#f6e0dd;
+:root{ --c-run:#2b6a9a; --c-long:#1f7a6a; --c-test:#b4532c; --c-bike:#a77d0c; --c-gym:#8b3a74; --c-hike:#4c7d2a; --c-swim:#1b86a6; --c-free:#6852a6; --cbg:17%; --cfg:74%; --bg:#e9ece5; --surface:#fafbf7; --ink:#18241f; --muted:#4f5c55; --line:#d3d9cf; --accent:#1d5b6c; --hl:#d99a1e; --fell:#4b6a5c; --info-bg:#e3ecea; --on-accent:#ffffff; --acc-bg:#dceaee; --ok:#2f7d55; --warn:#9a6c00; --crit:#b3332a; --ok-bg:#e2f0e7; --warn-bg:#f6edd2; --crit-bg:#f6e0dd;
   --display:"Archivo", "Arial Narrow", system-ui, sans-serif;
   --body:"Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
   color-scheme: light; }
-:root[data-pal="ruska"]{ --bg:#efe8e6; --surface:#fcfaf9; --ink:#2a1a1c; --muted:#6a5557; --line:#e2d5d2; --accent:#972a3b; --hl:#c98a1c; --fell:#6b4a3a; --info-bg:#f2e6e3; --on-accent:#ffffff; --acc-bg:#f4dfe2; }
-:root[data-pal="kaamos"]{ --bg:#e6e9f1; --surface:#fbfcfe; --ink:#161b2d; --muted:#535a72; --line:#d2d7e4; --accent:#34449a; --hl:#1f9d78; --fell:#4c5a86; --info-bg:#e4e8f3; --on-accent:#ffffff; --acc-bg:#e0e4f6; }
+:root[data-pal="ruska"]{ --c-run:#3d5c8c; --c-long:#8a5527; --c-test:#a12d40; --c-bike:#b98114; --c-gym:#7d3463; --c-hike:#5b7a2a; --c-swim:#2b7690; --c-free:#6a4888; --bg:#efe8e6; --surface:#fcfaf9; --ink:#2a1a1c; --muted:#6a5557; --line:#e2d5d2; --accent:#972a3b; --hl:#c98a1c; --fell:#6b4a3a; --info-bg:#f2e6e3; --on-accent:#ffffff; --acc-bg:#f4dfe2; }
+:root[data-pal="kaamos"]{ --c-run:#3a4fb0; --c-long:#23798a; --c-test:#b04558; --c-bike:#a8820f; --c-gym:#7a46a6; --c-hike:#1d9474; --c-swim:#2584bd; --c-free:#8a54b0; --bg:#e6e9f1; --surface:#fbfcfe; --ink:#161b2d; --muted:#535a72; --line:#d2d7e4; --accent:#34449a; --hl:#1f9d78; --fell:#4c5a86; --info-bg:#e4e8f3; --on-accent:#ffffff; --acc-bg:#e0e4f6; }
 @media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){ --bg:#0f1715; --surface:#17211e; --ink:#e6eeea; --muted:#a6b5ae; --line:#283733; --accent:#62aebf; --hl:#f0bd55; --fell:#93b5a6; --info-bg:#1a2b2b; --on-accent:#0d1a1d; --acc-bg:#17323a; --ok:#5fbf8a; --warn:#e0b440; --crit:#f07068; --ok-bg:#16301f; --warn-bg:#352b10; --crit-bg:#3a1a18; color-scheme: dark; }
+  :root:not([data-theme="light"]){ --bg:#0f1715; --surface:#17211e; --ink:#e6eeea; --muted:#a6b5ae; --line:#283733; --accent:#62aebf; --hl:#f0bd55; --fell:#93b5a6; --info-bg:#1a2b2b; --on-accent:#0d1a1d; --cbg:26%; --cfg:36%; --acc-bg:#17323a; --ok:#5fbf8a; --warn:#e0b440; --crit:#f07068; --ok-bg:#16301f; --warn-bg:#352b10; --crit-bg:#3a1a18; color-scheme: dark; }
   :root[data-pal="ruska"]:not([data-theme="light"]){ --bg:#161011; --surface:#211a1b; --ink:#f2e8e6; --muted:#bba8a6; --line:#3b2c2d; --accent:#dc7482; --hl:#eab350; --fell:#cfa38c; --info-bg:#2c1f20; --on-accent:#22090e; --acc-bg:#3e2227; }
   :root[data-pal="kaamos"]:not([data-theme="light"]){ --bg:#0c0f1d; --surface:#151a2d; --ink:#e5e9f6; --muted:#a2a9c4; --line:#282f4c; --accent:#8595ec; --hl:#4fd6a8; --fell:#8f9ccc; --info-bg:#1c2340; --on-accent:#0c0f1d; --acc-bg:#232b55; }
 }
-:root[data-theme="dark"]{ --bg:#0f1715; --surface:#17211e; --ink:#e6eeea; --muted:#a6b5ae; --line:#283733; --accent:#62aebf; --hl:#f0bd55; --fell:#93b5a6; --info-bg:#1a2b2b; --on-accent:#0d1a1d; --acc-bg:#17323a; --ok:#5fbf8a; --warn:#e0b440; --crit:#f07068; --ok-bg:#16301f; --warn-bg:#352b10; --crit-bg:#3a1a18; color-scheme: dark; }
+:root[data-theme="dark"]{ --bg:#0f1715; --surface:#17211e; --ink:#e6eeea; --muted:#a6b5ae; --line:#283733; --accent:#62aebf; --hl:#f0bd55; --fell:#93b5a6; --info-bg:#1a2b2b; --on-accent:#0d1a1d; --cbg:26%; --cfg:36%; --acc-bg:#17323a; --ok:#5fbf8a; --warn:#e0b440; --crit:#f07068; --ok-bg:#16301f; --warn-bg:#352b10; --crit-bg:#3a1a18; color-scheme: dark; }
 :root[data-theme="dark"][data-pal="ruska"]{ --bg:#161011; --surface:#211a1b; --ink:#f2e8e6; --muted:#bba8a6; --line:#3b2c2d; --accent:#dc7482; --hl:#eab350; --fell:#cfa38c; --info-bg:#2c1f20; --on-accent:#22090e; --acc-bg:#3e2227; }
 :root[data-theme="dark"][data-pal="kaamos"]{ --bg:#0c0f1d; --surface:#151a2d; --ink:#e5e9f6; --muted:#a2a9c4; --line:#282f4c; --accent:#8595ec; --hl:#4fd6a8; --fell:#8f9ccc; --info-bg:#1c2340; --on-accent:#0c0f1d; --acc-bg:#232b55; }
 *{box-sizing:border-box}
@@ -70,10 +70,8 @@ button:focus-visible, input:focus-visible, textarea:focus-visible{outline:3px so
 .today-title{display:flex; align-items:center; gap:10px; flex-wrap:wrap}
 .today-title h2{font-size:26px; font-stretch:112%; font-weight:800}
 .type{display:inline-block; padding:3px 9px; border-radius:6px; font-size:13px; font-weight:700; background:var(--info-bg); color:var(--ink)}
-.t-run{background:#dbe8f5; color:#173a5c} .t-long{background:#d6ece8; color:#124a40} .t-test{background:#f7dcd3; color:#7a2410} .t-race{background:var(--accent); color:var(--on-accent)}
-.t-bike{background:#f6ecc9; color:#5a4400} .t-gym{background:#f3dcec; color:#5e1f4a} .t-hike{background:#dcefd7; color:#204d17} .t-rest{background:transparent; color:var(--muted); border:1px dashed var(--line)}
-:root[data-theme="dark"] .t-run{background:#1d3550;color:#cfe2f7} :root[data-theme="dark"] .t-long{background:#183f39;color:#c7ece5} :root[data-theme="dark"] .t-test{background:#4a2418;color:#f7d3c6} :root[data-theme="dark"] .t-bike{background:#3d3410;color:#f3e3a6} :root[data-theme="dark"] .t-gym{background:#3e1c33;color:#f1cfe6} :root[data-theme="dark"] .t-hike{background:#1f3a1b;color:#cfeac8}
-@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .t-run{background:#1d3550;color:#cfe2f7} :root:not([data-theme="light"]) .t-long{background:#183f39;color:#c7ece5} :root:not([data-theme="light"]) .t-test{background:#4a2418;color:#f7d3c6} :root:not([data-theme="light"]) .t-bike{background:#3d3410;color:#f3e3a6} :root:not([data-theme="light"]) .t-gym{background:#3e1c33;color:#f1cfe6} :root:not([data-theme="light"]) .t-hike{background:#1f3a1b;color:#cfeac8} }
+.t-race{background:var(--accent); color:var(--on-accent)}
+.t-rest{background:transparent; color:var(--muted); border:1px dashed var(--line)}
 .target{font-size:17px; margin:0}
 .tip{font-size:14px; color:var(--muted); margin:0}
 .state{font-weight:700}
@@ -499,9 +497,6 @@ input[type="date"]{min-height:44px}
 .ia{font-size:11.5px; padding:8px 2px}
 
 /* ===== v9: lajit, tavoitteet, ylläpito ===== */
-.t-swim{background:#d6ebf7; color:#0f4a68} .t-free{background:#ece4f7; color:#432a6b}
-:root[data-theme="dark"] .t-swim{background:#123a4f;color:#cbe8f8} :root[data-theme="dark"] .t-free{background:#2f2445;color:#e2d6f5}
-@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .t-swim{background:#123a4f;color:#cbe8f8} :root:not([data-theme="light"]) .t-free{background:#2f2445;color:#e2d6f5} }
 .goals{display:grid; grid-template-columns:1fr 1fr; gap:8px}
 .goal{display:flex; flex-direction:column; gap:4px; text-align:left; border:1px solid var(--line); background:var(--bg); border-radius:12px; padding:10px; color:inherit; font:inherit}
 .gh{display:flex; align-items:center; gap:8px}
@@ -645,5 +640,20 @@ body[data-route="ohje"] .mast{display:none}
 #modePick{margin-top:10px}
 #modePick button[aria-pressed="true"]{background:var(--acc-bg)}
 #modePick button[aria-pressed="true"] b{color:var(--accent)}
+.t-run,.t-long,.t-test,.t-bike,.t-gym,.t-hike,.t-swim,.t-free{background:color-mix(in srgb, var(--c) var(--cbg), var(--surface)); color:color-mix(in srgb, var(--c) var(--cfg), var(--ink))}
+.t-run{--c:var(--c-run)} .t-long{--c:var(--c-long)} .t-test{--c:var(--c-test)} .t-bike{--c:var(--c-bike)} .t-gym{--c:var(--c-gym)} .t-hike{--c:var(--c-hike)} .t-swim{--c:var(--c-swim)} .t-free{--c:var(--c-free)}
+.palpick{grid-template-columns:1fr 1fr}
+.palpick .sw.kausi{background:linear-gradient(90deg,#e6e9f1 0 33%,#e9ece5 33% 67%,#efe8e6 67%)}
+.palpick .sw.kausi i{background:linear-gradient(90deg,#34449a 0 33%,#1d5b6c 33% 67%,#972a3b 67%)}
+.mhead{display:flex; align-items:center; justify-content:space-between; gap:8px}
+.mhead h2{font-size:20px; font-stretch:110%}
+.mhead .mnav{display:flex; gap:6px}
+.mhead .mnav button{width:36px; height:36px; border-radius:10px; border:1px solid var(--line); background:var(--surface); font-size:18px}
+.mhead .mnav button:disabled{opacity:.35}
+.mhi{margin:0; padding:10px 12px; border-radius:10px; background:var(--acc-bg); font-size:15px}
+.mhi b{color:var(--accent)}
+.mdelta{font-size:14px; color:var(--muted); margin:0}
+.mdelta .up{color:var(--ok); font-weight:700} .mdelta .dn{color:var(--muted); font-weight:700}
+.mtiles b{font-size:20px; white-space:nowrap}
 </style>
 </head>

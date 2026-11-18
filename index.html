@@ -15,22 +15,22 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
-<script>try{var _m=JSON.parse(localStorage.getItem("pallas.meta.v1")||"{}");if(_m.pal&&_m.pal!=="tunturi")document.documentElement.dataset.pal=_m.pal;if(_m.mode==="light"||_m.mode==="dark")document.documentElement.dataset.theme=_m.mode;}catch(e){}</script>
+<script>try{var _m=JSON.parse(localStorage.getItem("pallas.meta.v1")||"{}");var _p=_m.pal||"kausi";if(_p==="kausi"){var _k=new Date().getMonth();_p=(_k>=10||_k<=0)?"kaamos":(_k>=8)?"ruska":"tunturi";}if(_p!=="tunturi")document.documentElement.dataset.pal=_p;if(_m.mode==="light"||_m.mode==="dark")document.documentElement.dataset.theme=_m.mode;}catch(e){}</script>
 <style>
 /* Layout idea: one phone-width column read top to bottom — status, today, this week, the route profile, what is coming. */
 /* Teemat: Tunturi (jäkälä, tunturijärvi, lakka), Ruska (puolukka, koivunlehti), Kaamos (sininen hetki, revontuli). */
-:root{ --bg:#e9ece5; --surface:#fafbf7; --ink:#18241f; --muted:#4f5c55; --line:#d3d9cf; --accent:#1d5b6c; --hl:#d99a1e; --fell:#4b6a5c; --info-bg:#e3ecea; --on-accent:#ffffff; --acc-bg:#dceaee; --ok:#2f7d55; --warn:#9a6c00; --crit:#b3332a; --ok-bg:#e2f0e7; --warn-bg:#f6edd2; --crit-bg:#f6e0dd;
+:root{ --c-run:#2b6a9a; --c-long:#1f7a6a; --c-test:#b4532c; --c-bike:#a77d0c; --c-gym:#8b3a74; --c-hike:#4c7d2a; --c-swim:#1b86a6; --c-free:#6852a6; --cbg:17%; --cfg:74%; --bg:#e9ece5; --surface:#fafbf7; --ink:#18241f; --muted:#4f5c55; --line:#d3d9cf; --accent:#1d5b6c; --hl:#d99a1e; --fell:#4b6a5c; --info-bg:#e3ecea; --on-accent:#ffffff; --acc-bg:#dceaee; --ok:#2f7d55; --warn:#9a6c00; --crit:#b3332a; --ok-bg:#e2f0e7; --warn-bg:#f6edd2; --crit-bg:#f6e0dd;
   --display:"Archivo", "Arial Narrow", system-ui, sans-serif;
   --body:"Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
   color-scheme: light; }
-:root[data-pal="ruska"]{ --bg:#efe8e6; --surface:#fcfaf9; --ink:#2a1a1c; --muted:#6a5557; --line:#e2d5d2; --accent:#972a3b; --hl:#c98a1c; --fell:#6b4a3a; --info-bg:#f2e6e3; --on-accent:#ffffff; --acc-bg:#f4dfe2; }
-:root[data-pal="kaamos"]{ --bg:#e6e9f1; --surface:#fbfcfe; --ink:#161b2d; --muted:#535a72; --line:#d2d7e4; --accent:#34449a; --hl:#1f9d78; --fell:#4c5a86; --info-bg:#e4e8f3; --on-accent:#ffffff; --acc-bg:#e0e4f6; }
+:root[data-pal="ruska"]{ --c-run:#3d5c8c; --c-long:#8a5527; --c-test:#a12d40; --c-bike:#b98114; --c-gym:#7d3463; --c-hike:#5b7a2a; --c-swim:#2b7690; --c-free:#6a4888; --bg:#efe8e6; --surface:#fcfaf9; --ink:#2a1a1c; --muted:#6a5557; --line:#e2d5d2; --accent:#972a3b; --hl:#c98a1c; --fell:#6b4a3a; --info-bg:#f2e6e3; --on-accent:#ffffff; --acc-bg:#f4dfe2; }
+:root[data-pal="kaamos"]{ --c-run:#3a4fb0; --c-long:#23798a; --c-test:#b04558; --c-bike:#a8820f; --c-gym:#7a46a6; --c-hike:#1d9474; --c-swim:#2584bd; --c-free:#8a54b0; --bg:#e6e9f1; --surface:#fbfcfe; --ink:#161b2d; --muted:#535a72; --line:#d2d7e4; --accent:#34449a; --hl:#1f9d78; --fell:#4c5a86; --info-bg:#e4e8f3; --on-accent:#ffffff; --acc-bg:#e0e4f6; }
 @media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){ --bg:#0f1715; --surface:#17211e; --ink:#e6eeea; --muted:#a6b5ae; --line:#283733; --accent:#62aebf; --hl:#f0bd55; --fell:#93b5a6; --info-bg:#1a2b2b; --on-accent:#0d1a1d; --acc-bg:#17323a; --ok:#5fbf8a; --warn:#e0b440; --crit:#f07068; --ok-bg:#16301f; --warn-bg:#352b10; --crit-bg:#3a1a18; color-scheme: dark; }
+  :root:not([data-theme="light"]){ --bg:#0f1715; --surface:#17211e; --ink:#e6eeea; --muted:#a6b5ae; --line:#283733; --accent:#62aebf; --hl:#f0bd55; --fell:#93b5a6; --info-bg:#1a2b2b; --on-accent:#0d1a1d; --cbg:26%; --cfg:36%; --acc-bg:#17323a; --ok:#5fbf8a; --warn:#e0b440; --crit:#f07068; --ok-bg:#16301f; --warn-bg:#352b10; --crit-bg:#3a1a18; color-scheme: dark; }
   :root[data-pal="ruska"]:not([data-theme="light"]){ --bg:#161011; --surface:#211a1b; --ink:#f2e8e6; --muted:#bba8a6; --line:#3b2c2d; --accent:#dc7482; --hl:#eab350; --fell:#cfa38c; --info-bg:#2c1f20; --on-accent:#22090e; --acc-bg:#3e2227; }
   :root[data-pal="kaamos"]:not([data-theme="light"]){ --bg:#0c0f1d; --surface:#151a2d; --ink:#e5e9f6; --muted:#a2a9c4; --line:#282f4c; --accent:#8595ec; --hl:#4fd6a8; --fell:#8f9ccc; --info-bg:#1c2340; --on-accent:#0c0f1d; --acc-bg:#232b55; }
 }
-:root[data-theme="dark"]{ --bg:#0f1715; --surface:#17211e; --ink:#e6eeea; --muted:#a6b5ae; --line:#283733; --accent:#62aebf; --hl:#f0bd55; --fell:#93b5a6; --info-bg:#1a2b2b; --on-accent:#0d1a1d; --acc-bg:#17323a; --ok:#5fbf8a; --warn:#e0b440; --crit:#f07068; --ok-bg:#16301f; --warn-bg:#352b10; --crit-bg:#3a1a18; color-scheme: dark; }
+:root[data-theme="dark"]{ --bg:#0f1715; --surface:#17211e; --ink:#e6eeea; --muted:#a6b5ae; --line:#283733; --accent:#62aebf; --hl:#f0bd55; --fell:#93b5a6; --info-bg:#1a2b2b; --on-accent:#0d1a1d; --cbg:26%; --cfg:36%; --acc-bg:#17323a; --ok:#5fbf8a; --warn:#e0b440; --crit:#f07068; --ok-bg:#16301f; --warn-bg:#352b10; --crit-bg:#3a1a18; color-scheme: dark; }
 :root[data-theme="dark"][data-pal="ruska"]{ --bg:#161011; --surface:#211a1b; --ink:#f2e8e6; --muted:#bba8a6; --line:#3b2c2d; --accent:#dc7482; --hl:#eab350; --fell:#cfa38c; --info-bg:#2c1f20; --on-accent:#22090e; --acc-bg:#3e2227; }
 :root[data-theme="dark"][data-pal="kaamos"]{ --bg:#0c0f1d; --surface:#151a2d; --ink:#e5e9f6; --muted:#a2a9c4; --line:#282f4c; --accent:#8595ec; --hl:#4fd6a8; --fell:#8f9ccc; --info-bg:#1c2340; --on-accent:#0c0f1d; --acc-bg:#232b55; }
 *{box-sizing:border-box}
@@ -70,10 +70,8 @@ button:focus-visible, input:focus-visible, textarea:focus-visible{outline:3px so
 .today-title{display:flex; align-items:center; gap:10px; flex-wrap:wrap}
 .today-title h2{font-size:26px; font-stretch:112%; font-weight:800}
 .type{display:inline-block; padding:3px 9px; border-radius:6px; font-size:13px; font-weight:700; background:var(--info-bg); color:var(--ink)}
-.t-run{background:#dbe8f5; color:#173a5c} .t-long{background:#d6ece8; color:#124a40} .t-test{background:#f7dcd3; color:#7a2410} .t-race{background:var(--accent); color:var(--on-accent)}
-.t-bike{background:#f6ecc9; color:#5a4400} .t-gym{background:#f3dcec; color:#5e1f4a} .t-hike{background:#dcefd7; color:#204d17} .t-rest{background:transparent; color:var(--muted); border:1px dashed var(--line)}
-:root[data-theme="dark"] .t-run{background:#1d3550;color:#cfe2f7} :root[data-theme="dark"] .t-long{background:#183f39;color:#c7ece5} :root[data-theme="dark"] .t-test{background:#4a2418;color:#f7d3c6} :root[data-theme="dark"] .t-bike{background:#3d3410;color:#f3e3a6} :root[data-theme="dark"] .t-gym{background:#3e1c33;color:#f1cfe6} :root[data-theme="dark"] .t-hike{background:#1f3a1b;color:#cfeac8}
-@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .t-run{background:#1d3550;color:#cfe2f7} :root:not([data-theme="light"]) .t-long{background:#183f39;color:#c7ece5} :root:not([data-theme="light"]) .t-test{background:#4a2418;color:#f7d3c6} :root:not([data-theme="light"]) .t-bike{background:#3d3410;color:#f3e3a6} :root:not([data-theme="light"]) .t-gym{background:#3e1c33;color:#f1cfe6} :root:not([data-theme="light"]) .t-hike{background:#1f3a1b;color:#cfeac8} }
+.t-race{background:var(--accent); color:var(--on-accent)}
+.t-rest{background:transparent; color:var(--muted); border:1px dashed var(--line)}
 .target{font-size:17px; margin:0}
 .tip{font-size:14px; color:var(--muted); margin:0}
 .state{font-weight:700}
@@ -499,9 +497,6 @@ input[type="date"]{min-height:44px}
 .ia{font-size:11.5px; padding:8px 2px}
 
 /* ===== v9: lajit, tavoitteet, ylläpito ===== */
-.t-swim{background:#d6ebf7; color:#0f4a68} .t-free{background:#ece4f7; color:#432a6b}
-:root[data-theme="dark"] .t-swim{background:#123a4f;color:#cbe8f8} :root[data-theme="dark"] .t-free{background:#2f2445;color:#e2d6f5}
-@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .t-swim{background:#123a4f;color:#cbe8f8} :root:not([data-theme="light"]) .t-free{background:#2f2445;color:#e2d6f5} }
 .goals{display:grid; grid-template-columns:1fr 1fr; gap:8px}
 .goal{display:flex; flex-direction:column; gap:4px; text-align:left; border:1px solid var(--line); background:var(--bg); border-radius:12px; padding:10px; color:inherit; font:inherit}
 .gh{display:flex; align-items:center; gap:8px}
@@ -645,6 +640,21 @@ body[data-route="ohje"] .mast{display:none}
 #modePick{margin-top:10px}
 #modePick button[aria-pressed="true"]{background:var(--acc-bg)}
 #modePick button[aria-pressed="true"] b{color:var(--accent)}
+.t-run,.t-long,.t-test,.t-bike,.t-gym,.t-hike,.t-swim,.t-free{background:color-mix(in srgb, var(--c) var(--cbg), var(--surface)); color:color-mix(in srgb, var(--c) var(--cfg), var(--ink))}
+.t-run{--c:var(--c-run)} .t-long{--c:var(--c-long)} .t-test{--c:var(--c-test)} .t-bike{--c:var(--c-bike)} .t-gym{--c:var(--c-gym)} .t-hike{--c:var(--c-hike)} .t-swim{--c:var(--c-swim)} .t-free{--c:var(--c-free)}
+.palpick{grid-template-columns:1fr 1fr}
+.palpick .sw.kausi{background:linear-gradient(90deg,#e6e9f1 0 33%,#e9ece5 33% 67%,#efe8e6 67%)}
+.palpick .sw.kausi i{background:linear-gradient(90deg,#34449a 0 33%,#1d5b6c 33% 67%,#972a3b 67%)}
+.mhead{display:flex; align-items:center; justify-content:space-between; gap:8px}
+.mhead h2{font-size:20px; font-stretch:110%}
+.mhead .mnav{display:flex; gap:6px}
+.mhead .mnav button{width:36px; height:36px; border-radius:10px; border:1px solid var(--line); background:var(--surface); font-size:18px}
+.mhead .mnav button:disabled{opacity:.35}
+.mhi{margin:0; padding:10px 12px; border-radius:10px; background:var(--acc-bg); font-size:15px}
+.mhi b{color:var(--accent)}
+.mdelta{font-size:14px; color:var(--muted); margin:0}
+.mdelta .up{color:var(--ok); font-weight:700} .mdelta .dn{color:var(--muted); font-weight:700}
+.mtiles b{font-size:20px; white-space:nowrap}
 </style>
 </head>
 <body>
@@ -664,6 +674,7 @@ body[data-route="ohje"] .mast{display:none}
       <div id="today"></div>
     </section>
     <section class="card plancard" id="planWeek" hidden></section>
+    <section class="card" id="monthCard" hidden></section>
     <section class="card habcard" id="habits" hidden></section>
     <section class="status" id="status" aria-live="polite" hidden></section>
     <section class="card" id="week"></section>
@@ -689,6 +700,7 @@ body[data-route="ohje"] .mast{display:none}
       <section class="card trail" id="trail"></section>
       <section class="card profile"><div class="eyebrow">Viikkokilometrit</div><div id="profile"></div>
         <div class="legend"><span><i style="background:var(--line)"></i>Tavoite</span><span><i style="background:var(--accent)"></i>Juostu</span></div></section>
+      <section class="card" id="aMonth"></section>
       <section class="card"><div class="eyebrow">Viikkokoosteet</div><div id="aWeeks"></div></section>
       <a href="#merkit" class="card linkcard"><span>🏅 Taso ja merkit</span><span aria-hidden="true">›</span></a>
     </div>
@@ -1213,7 +1225,7 @@ function render(){
   document.querySelectorAll(".tabs a").forEach(a=>a.setAttribute("aria-current",a.getAttribute("href")==="#"+r?"page":"false"));
   const st=stats(), bs=badges(st); const ws=computeWarnings(BASE,logs,ADAPT,ti).concat(eventWarnings(ti)).concat(cpWarnings(ti)).concat(bloodWarnings()); checkCont30();
   renderCount(ti,st,bs);
-  if(r==="tanaan"){ renderPlanWeek(ti); renderHabits(ti); renderMaint(); renderRaceWeek(ti); renderStatus(ws); renderToday(t,ti); renderTip(t); renderSummary(ti); renderWeek(t); renderUpcoming(t); }
+  if(r==="tanaan"){ renderPlanWeek(ti); renderMonthCard(); renderHabits(ti); renderMaint(); renderRaceWeek(ti); renderStatus(ws); renderToday(t,ti); renderTip(t); renderSummary(ti); renderWeek(t); renderUpcoming(t); }
   if(r==="historia"){ renderHistory(st); }
   if(r==="asetukset"){ renderTheme(); renderIcu(); renderHabitSettings(); renderStrava(); renderCloud(); renderPush(); renderZones(); renderLoc(); }
   if(r==="analyysi") renderAnalysis(ti,st,t);
@@ -1472,7 +1484,7 @@ function spark(vals,{min,max,w=320,h=96,color="var(--accent)",label,fmtv=v=>Math
 function renderAnalysis(ti,st,t0){
   document.querySelectorAll("[data-agroup]").forEach(g=>g.hidden=g.dataset.agroup!==anaTab);
   document.querySelectorAll("[data-atab]").forEach(b=>b.setAttribute("aria-selected",String(b.dataset.atab===anaTab)));
-  if(anaTab==="matka"){ renderTrail(st); renderProfile(t0); }
+  if(anaTab==="matka"){ renderTrail(st); renderProfile(t0); renderMonth(); }
   renderWeeklyList(ti);
   const t=Math.min(Math.max(ti,0),BASE.length-1);
   // mukautukset
@@ -2441,16 +2453,62 @@ const standalone = matchMedia("(display-mode: standalone)").matches || navigator
 $("installHint").hidden = !!standalone;
 $("edX").onclick=()=>closeEditor();
 handleStravaReturn();
+/* ===== v11: kuukausikatsaus ===== */
+const KK=["Tammikuu","Helmikuu","Maaliskuu","Huhtikuu","Toukokuu","Kesäkuu","Heinäkuu","Elokuu","Syyskuu","Lokakuu","Marraskuu","Joulukuu"];
+const KKP=["tammikuuhun","helmikuuhun","maaliskuuhun","huhtikuuhun","toukokuuhun","kesäkuuhun","heinäkuuhun","elokuuhun","syyskuuhun","lokakuuhun","marraskuuhun","joulukuuhun"];
+function mIso(y,m){ return `${y}-${String(m+1).padStart(2,"0")}-01`; }
+function mPrev(y,m){ return m?[y,m-1]:[y-1,11]; } function mNext(y,m){ return m===11?[y+1,0]:[y,m+1]; }
+function monthSum(y,m){ const ti=todayIdx(); const a0=idxOfISO(mIso(y,m)), b=idxOfISO(mIso(...mNext(y,m)))-1, a=Math.max(0,a0); const upto=Math.min(b,ti);
+  if(b<0||a0>ti) return null;
+  let plan=0,done=0,km=0,min=0,longKm=0,cont=0;
+  for(let i=a;i<=Math.min(upto,BASE.length-1);i++) for(const s of sessionsOn(BASE,logs,ADAPT,i)){ if(s.code!=="L") plan++; }
+  entries().forEach(e=>{ if(e.idx<a||e.idx>b||e.l.status!=="done"||e.code==="L") return; done++; if(typeof e.l.min==="number") min+=e.l.min;
+    if(RUN.has(e.code)){ if(typeof e.l.km==="number"){ km+=e.l.km; longKm=Math.max(longKm,e.l.km); } const c=contOf(e); if(c!=null) cont=Math.max(cont,c); } });
+  let need=0,got=0,full=0,days=0; const hs=habits().filter(h=>!h.off&&!h.task);
+  for(let i=a;i<=upto;i++){ const req=hs.filter(h=>{ const on=habitOn(h,i); return on&&!on.opt; }); if(!req.length) continue; days++; let k=0; req.forEach(h=>{ need++; if(habDone(h.id,i)){ got++; k++; } }); if(k===req.length) full++; }
+  const rh=[],sl=[]; for(let i=a;i<=upto;i++){ const l=logs[isoOfIdx(i)]; if(l&&typeof l.rhr==="number") rh.push(l.rhr); if(l&&typeof l.sleepH==="number") sl.push(l.sleepH); }
+  const av=x=>x.length?x.reduce((s,v)=>s+v,0)/x.length:null;
+  return {y,m,a,b,open:b>ti,plan,done,km,min,longKm,cont,need,got,full,days,rhr:av(rh),sleep:av(sl)}; }
+function monthHigh(S){ const c=[];
+  if(S.cont>=30) c.push(`Juoksit <b>${S.cont} min yhtäjaksoisesti</b>. Se on jo kunnon lenkki.`);
+  else if(S.cont>=10) c.push(`Pisin yhtäjaksoinen juoksu: <b>${S.cont} min</b>.`);
+  if(S.plan>=4&&S.done/S.plan>=.9) c.push(`Teit <b>${S.done}/${S.plan}</b> suunnitellusta treenistä. Juuri tämä tasaisuus rakentaa Nutsin.`);
+  if(S.longKm>=10) c.push(`Pisin lenkki <b>${n1(S.longKm)} km</b>.`);
+  if(S.days>=7&&S.full/S.days>=.8) c.push(`Tavat kunnossa <b>${S.full}/${S.days}</b> päivänä.`);
+  if(!c.length&&S.done) c.push(`<b>${S.done} treeniä</b> tehty. Jokainen niistä on askel kohti Pallasta.`);
+  return c[0]||""; }
+function monthHTML(S,{nav=false,compact=false,title=null}={}){ if(!S) return "";
+  const P=monthSum(...mPrev(S.y,S.m)); const pct=S.need?Math.round(S.got/S.need*100):null; const hrs=S.min/60;
+  const d=(v,u,f=x=>x)=>v>0?`<span class="up">+${f(v)}${u}</span>`:v<0?`<span class="dn">${f(v)}${u}</span>`:`±0${u}`;
+  const cmp=P&&(P.done||P.km)?`<p class="mdelta">Verrattuna ${KKP[P.m]}: treenejä ${d(S.done-P.done,"")}, juoksua ${d(Math.round((S.km-P.km)*10)/10," km",n1)}${S.open?" (kuukausi kesken)":""}</p>`:"";
+  const tiles=[[`Treenit`,`${S.done}${S.plan?`/${S.plan}`:""}`],["Juostu",`${n1(S.km)} km`],["Liikuntaa",hrs>=1?`${n1(hrs)} h`:`${Math.round(S.min)} min`],
+    S.cont?["Pisin putki",`${S.cont} min`]:["Pisin lenkki",`${n1(S.longKm)} km`], pct!=null?["Tavat",`${pct} %`]:null, S.rhr!=null?["Leposyke ka",`${Math.round(S.rhr)}`]:S.sleep!=null?["Uni ka",`${n1(S.sleep)} h`]:null].filter(Boolean);
+  const hi=monthHigh(S);
+  const [py,pm]=mPrev(S.y,S.m), [ny,nm]=mNext(S.y,S.m); const ti=todayIdx();
+  const canP=idxOfISO(mIso(S.y,S.m))>0, canN=idxOfISO(mIso(ny,nm))<=ti;
+  return `<div class="mhead"><h2>${title||KK[S.m]}${title?"":S.y!==new Date().getFullYear()?` ${S.y}`:""}${S.open?` <small class="tip">kesken</small>`:""}</h2>${nav?`<span class="mnav"><button type="button" data-mon="${py}-${pm}" aria-label="Edellinen kuukausi" ${canP?"":"disabled"}>‹</button><button type="button" data-mon="${ny}-${nm}" aria-label="Seuraava kuukausi" ${canN?"":"disabled"}>›</button></span>`:""}</div>
+    ${hi?`<p class="mhi">${hi}</p>`:""}
+    <div class="tiles mtiles">${tiles.slice(0,compact?4:6).map(([k,v])=>`<div class="tile"><span>${k}</span><b class="num">${v}</b></div>`).join("")}</div>${cmp}`; }
+let monSel=null;
+function renderMonth(){ const el=$("aMonth"); if(!el) return; const n=new Date(); if(!monSel) monSel=[n.getFullYear(),n.getMonth()];
+  const S=monthSum(...monSel); el.hidden=!S; el.innerHTML=`<div class="eyebrow">Kuukausikatsaus</div>`+monthHTML(S,{nav:true}); }
+function renderMonthCard(){ const el=$("monthCard"); if(!el) return; const n=new Date(); const [py,pm]=mPrev(n.getFullYear(),n.getMonth()); const key=`${py}-${pm}`;
+  const show=n.getDate()<=3&&meta.monthSeen!==key; const S=show?monthSum(py,pm):null; el.hidden=!(S&&(S.done||S.plan));
+  if(!el.hidden) el.innerHTML=monthHTML(S,{compact:true,title:`${KK[pm]} takana`})+`<div class="row"><button class="btn ghost" data-monseen="${key}">Selvä, piilota</button></div>`; }
+document.addEventListener("click",e=>{ const b=e.target.closest("[data-mon]"); if(b&&!b.disabled){ monSel=b.dataset.mon.split("-").map(Number); renderMonth(); return; }
+  const s=e.target.closest("[data-monseen]"); if(s){ meta.monthSeen=s.dataset.monseen; persist(); renderMonthCard(); } });
+
 /* ===== v10: teemat ===== */
-const PALS=[{id:"tunturi",n:"Tunturi",d:"jäkälä ja lakka",bg:"#e9ece5",ac:"#1d5b6c",hl:"#d99a1e"},
+const PALS=[{id:"kausi",n:"Vuodenaika",d:"vaihtuu itsestään"},{id:"tunturi",n:"Tunturi",d:"jäkälä ja lakka",bg:"#e9ece5",ac:"#1d5b6c",hl:"#d99a1e"},
   {id:"ruska",n:"Ruska",d:"puolukka ja koivunlehti",bg:"#efe8e6",ac:"#972a3b",hl:"#c98a1c"},
   {id:"kaamos",n:"Kaamos",d:"sininen hetki",bg:"#e6e9f1",ac:"#34449a",hl:"#1f9d78"}];
-function applyTheme(){ const r=document.documentElement, p=meta.pal||"tunturi", m=meta.mode||"auto";
+function seasonPal(d=new Date()){ const k=d.getMonth(); return (k>=10||k<=0)?"kaamos":k>=8?"ruska":"tunturi"; }
+function applyTheme(){ const r=document.documentElement, p0=meta.pal||"kausi", p=p0==="kausi"?seasonPal():p0, m=meta.mode||"auto";
   if(p==="tunturi") delete r.dataset.pal; else r.dataset.pal=p;
   if(m==="auto") delete r.dataset.theme; else r.dataset.theme=m;
   const mt=document.querySelector('meta[name="theme-color"]'); if(mt) mt.content=getComputedStyle(r).getPropertyValue("--bg").trim()||"#e9ece5"; }
-function renderTheme(){ const el=$("palPick"); if(!el) return; const p=meta.pal||"tunturi", m=meta.mode||"auto";
-  el.innerHTML=PALS.map(x=>`<button type="button" data-pal-pick="${x.id}" aria-pressed="${x.id===p}"><span class="sw" style="background:${x.bg}"><u style="background:${x.hl}"></u><i style="background:${x.ac}"></i></span><span><b>${x.n}</b><small>${x.d}</small></span></button>`).join("");
+function renderTheme(){ const el=$("palPick"); if(!el) return; const p=meta.pal||"kausi", m=meta.mode||"auto"; const SN={kaamos:"Kaamos",ruska:"Ruska",tunturi:"Tunturi"};
+  el.innerHTML=PALS.map(x=>x.id==="kausi"?`<button type="button" data-pal-pick="kausi" aria-pressed="${p==="kausi"}"><span class="sw kausi"><i></i></span><span><b>${x.n}</b><small>nyt ${SN[seasonPal()]} · kaamos marras–tammi, ruska syys–loka</small></span></button>`:`<button type="button" data-pal-pick="${x.id}" aria-pressed="${x.id===p}"><span class="sw" style="background:${x.bg}"><u style="background:${x.hl}"></u><i style="background:${x.ac}"></i></span><span><b>${x.n}</b><small>${x.d}</small></span></button>`).join("");
   document.querySelectorAll("[data-mode-pick]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.modePick===m))); }
 document.addEventListener("click",e=>{ const b=e.target.closest("[data-pal-pick],[data-mode-pick]"); if(!b) return;
   if(b.dataset.palPick) meta.pal=b.dataset.palPick; else meta.mode=b.dataset.modePick;
