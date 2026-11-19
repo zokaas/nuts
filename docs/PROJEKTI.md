@@ -4,7 +4,7 @@ Päivitetty 19.11.2026. Tämä on kehityksen muisti: mitä on päätetty, miksi,
 Lue tämä ennen muutoksia. Päivitä se, kun jokin päätös muuttuu.
 
 ## Tavoite ja urheilija
-- Aloittaa nollakunnosta. Ohjelma alkaa **to 19.11.2026**.
+- Aloittaa nollakunnosta. Sovellus näkyy to 19.11.2026 alkaen, **ensimmäinen treeni la 21.11.2026** (to–pe lepoa, käyttäjän päätös 19.11.). Tavat alkoivat 19.11.
 - **Belgradin maraton** su 18.4.2027 klo 8.00 (välietappi).
 - **Nuts Ylläs–Pallas 66 km** (Hetta → Pallas) pe 23.7.2027 klo 15.00 (päätavoite).
 - Tukee myös yleistä terveellistä liikkumista: lajia voi vaihtaa (esim. uinti), ja Nutsin jälkeen on ylläpitotila.
