@@ -141,3 +141,13 @@ test("Nuts-tavoite 9 h näkyy kisasuunnitelmassa ja ultrajakso sisältää kynny
   assert.match(plan[221][1], /alle 3:25/);
   assert.deepEqual(errors, []); await ctx.close();
 });
+
+test("hiustenpesu vk 5→: maanantai ketokonatsoli, perjantai methi + mieto, vanha paikkamerkki korvautuu", async () => {
+  const old = { hr: { age: 35 }, habMig: 4, habits: [{ id: "pesu", ic: "🧴", name: "Hiustenpesu", when: "päivä", week: 2, sched: [
+    { from: "2026-11-19", to: "2026-12-13", days: { 0: { n: "x" } } }, { from: "2026-12-14", label: "Ylläpito (vk 5→)", days: { 0: { n: "Pesupäivä" }, 4: { n: "Pesupäivä" } }, todo: true }] }] };
+  const { page, errors, ctx } = await open({ date: "2026-12-18T08:00:00", meta: old });
+  const m = await meta(page); const sc = m.habits.find(h => h.id === "pesu").sched[1];
+  assert.equal(m.habMig, 5); assert.ok(!sc.todo); assert.match(sc.days[4].n, /methi.*mieto/); assert.match(sc.days[0].n, /ketokonatsoli/);
+  assert.match(await page.textContent("#habits"), /methi/);
+  assert.deepEqual(errors, []); await ctx.close();
+});

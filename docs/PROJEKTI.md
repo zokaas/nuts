@@ -42,7 +42,7 @@ Lue tämä ennen muutoksia. Päivitä se, kun jokin päätös muuttuu.
 - Verikoetehtävät sovelluksessa: veri1 (19.11.–31.12.2026), veri2 (1.2.–15.3.2027).
 
 ## Kesken
-- **Hiustenpesu viikosta 5 eteenpäin (14.12. alkaen):** rutiini puuttuu, tilalla paikkamerkki ma/pe "Pesupäivä" (`todo:true`). Odotetaan käyttäjältä.
+- ~~Hiustenpesu vk 5→~~ tehty 20.11.2026 (`PESU_V5`, migraatio habMig 5): ma öljy + ketokonatsoli, pe methi-naamio + mieto shampoo, joka toinen pe riisivesihuuhtelu.
 - Käyttäjä päätti 19.11.2026 jättää pois: pimeysvaroitus, juoksu–kävely-ajastin, kipukartta, tankkausharjoittelu, varustelista, kisapäivän aikataulu, LDL/apoB-kentät, touko–kesäkuun verikoetehtävä, vastustuskyky-kortti, push-testi, pukeutumisopas, kalenteri-integraatio, Siri-pikakomento, "miksi tämä treeni" -selitykset, vastustuskykytavat. Käyttäjä ei halua nyt uusia ominaisuuksia: odota hänen omia havaintojaan käytöstä. Älä tarjoa niitä uudelleen ilman syytä.
 - Ei testattu oikealla laitteella: iPhonen push-ilmoitukset, Intervals.icu oikeilla tunnuksilla.
 
