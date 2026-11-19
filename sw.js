@@ -1,11 +1,12 @@
 // Matka Pallakselle – offline-välimuisti
-const CACHE = "pallas-v47";
+const CACHE = "pallas-37325036";
 const CORE = ["./", "./index.html", "./manifest.webmanifest", "./icons/icon-192.png", "./icons/icon-512.png", "./icons/apple-touch-icon.png"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE)).then(() => self.skipWaiting())); });
 self.addEventListener("activate", e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener("fetch", e => {
   const req = e.request; if (req.method !== "GET") return;
   const url = new URL(req.url);
+  if (url.pathname.endsWith("version.json")) return; // aina verkosta: päivitysten tunnistus
   if (url.origin === location.origin && (req.mode === "navigate" || url.pathname.endsWith("index.html"))) {
     // Sivu: verkko ensin (päivitykset tulevat), välimuisti varalla
     e.respondWith(fetch(req).then(r => { const c = r.clone(); caches.open(CACHE).then(x => x.put("./index.html", c)); return r; }).catch(() => caches.match("./index.html")));

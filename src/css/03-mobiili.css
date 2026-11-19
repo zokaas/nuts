@@ -1,0 +1,70 @@
+/* ===== Mobiili ===== */
+.mastrow{display:flex; justify-content:space-between; align-items:flex-start; gap:12px}
+.gearbtn{position:relative; flex:none; width:44px; height:44px; border-radius:12px; display:grid; place-items:center; color:var(--muted); border:1px solid var(--line); background:var(--surface)}
+.gearbtn svg{width:22px; height:22px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round}
+.gdot{position:absolute; top:7px; right:7px; width:9px; height:9px; border-radius:50%; background:var(--crit)}
+.sethead{display:flex; flex-direction:column; gap:6px}
+.sethead h2{font-size:26px; font-stretch:112%}
+.zchip{display:inline-block; margin-top:-4px; font-size:13px; font-weight:700; color:var(--crit); background:var(--crit-bg); border-radius:999px; padding:3px 10px; align-self:flex-start}
+.zones{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:4px}
+.z{display:flex; justify-content:space-between; padding:8px 12px; border-radius:8px; font-size:15px}
+.z1{background:#e6eef3} .z2{background:#dcefe3} .z3{background:#f8eed2} .z4{background:#fbe1cf} .z5{background:#f7d6d3}
+.z{color:#16211f}
+.weather{display:flex; flex-wrap:wrap; gap:4px 10px; align-items:baseline; font-size:14px; color:var(--muted); padding:0 4px}
+.weather b{color:var(--warn)}
+.warn details summary{cursor:pointer; list-style:none}
+.warn details summary::-webkit-details-marker{display:none}
+.warn details[open] span{display:block; margin-top:4px}
+.sheet-bg{z-index:30}
+body.locked .tabs{display:none}
+:root{--nav-h:62px}
+html{-webkit-text-size-adjust:100%}
+body{overscroll-behavior-y:none}
+button,a,.day,.set,label.btn{touch-action:manipulation; -webkit-tap-highlight-color:transparent}
+input,select,textarea{font-size:16px !important} /* estää iOS-zoomauksen */
+.btn{min-height:44px}
+.wrap{gap:14px; padding-bottom:calc(var(--nav-h) + 28px + env(safe-area-inset-bottom))}
+.tabs{position:fixed; left:0; right:0; bottom:0; top:auto; z-index:12; display:grid; grid-template-columns:repeat(5,1fr); gap:0; padding:6px 6px calc(6px + env(safe-area-inset-bottom)); border-radius:0; border:0; border-top:1px solid var(--line); background:color-mix(in srgb, var(--surface) 92%, transparent); -webkit-backdrop-filter:saturate(1.4) blur(14px); backdrop-filter:saturate(1.4) blur(14px)}
+.tabs a{display:flex; flex-direction:column; align-items:center; gap:2px; padding:6px 0 4px; border-radius:10px; font-size:11px; font-family:var(--body); font-weight:700; color:var(--muted)}
+.tabs a svg{width:24px; height:24px; fill:none; stroke:currentColor; stroke-width:1.9; stroke-linecap:round; stroke-linejoin:round}
+.tabs a[aria-current="page"]{background:transparent; color:var(--accent)}
+.tabs a[aria-current="page"] svg{stroke-width:2.4}
+@media (min-width:700px){ .tabs{max-width:620px; margin:0 auto; left:0; right:0; bottom:12px; border:1px solid var(--line); border-radius:16px; padding:6px} }
+.toast{bottom:calc(var(--nav-h) + 16px + env(safe-area-inset-bottom))}
+.restbar{bottom:calc(var(--nav-h) + 12px + env(safe-area-inset-bottom))}
+.route{font-size:clamp(26px,8vw,44px)}
+.route small{margin-top:6px}
+.count{flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; margin:0 -16px; padding:0 16px}
+.count::-webkit-scrollbar{display:none}
+.chip{white-space:nowrap; flex:none}
+.install{position:relative}
+.x{position:absolute; top:6px; right:6px; width:36px; height:36px; border:0; background:transparent; font-size:24px; line-height:1; color:var(--muted)}
+.card{padding:14px; border-radius:16px}
+.today-title h2{font-size:24px}
+.day{grid-template-columns:44px 1fr 26px; padding:12px 2px; min-height:56px}
+/* kirjausikkuna koko näytön levyisenä */
+.sheet{max-height:94%; padding:0 16px; border-radius:20px 20px 0 0; gap:14px}
+.sheet-top{position:sticky; top:0; z-index:2; background:var(--surface); padding:8px 0 6px; display:flex; flex-direction:column; gap:4px; border-bottom:1px solid var(--line)}
+.grab{width:40px; height:5px; border-radius:3px; background:var(--line); align-self:center; margin-bottom:4px}
+.sheet-title{display:flex; justify-content:space-between; align-items:flex-start; gap:8px}
+.sheet-title .x{position:static}
+.sheet-foot{position:sticky; bottom:0; z-index:2; background:var(--surface); padding:10px 0 calc(12px + env(safe-area-inset-bottom)); display:flex; gap:8px; border-top:1px solid var(--line)}
+.sheet-foot .btn.primary{flex:1}
+.grid3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.grid2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.feel button{min-height:52px}
+.chips button{min-height:40px}
+/* historia: kortit puhelimella, taulukko leveällä */
+.hcards{display:none; list-style:none; margin:0; padding:0; flex-direction:column}
+.hcard{display:grid; grid-template-columns:52px 1fr; gap:10px; padding:12px 2px; border-bottom:1px solid var(--line); cursor:pointer}
+.hcard .hd{font-family:var(--display); font-weight:800; font-size:15px; line-height:1.15}
+.hcard .hd small{display:block; font-family:var(--body); font-weight:400; font-size:12px; color:var(--muted)}
+.hcard .hm{display:flex; flex-direction:column; gap:3px; min-width:0}
+.hcard .hs{font-size:14px; font-variant-numeric:tabular-nums}
+.hcard .hn{font-size:13px; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+@media (max-width:640px){ .tablewrap{display:none} .hcards{display:flex} }
+.tiles{grid-template-columns:repeat(auto-fit,minmax(100px,1fr))}
+.tile b{font-size:20px}
+.gear{grid-template-columns:1fr auto auto; gap:8px}
+.chk input{width:22px; height:22px}
+.levelcard{padding:16px}

@@ -48,6 +48,7 @@ Historia → Strava → liitä Workerin osoite → **Yhdistä Strava** → hyvä
 Suunto-sovelluksessa: Profiili → Yhteydet → Strava päälle, niin treenit kulkevat Suunnosta Stravaan automaattisesti.
 
 ## Kehitys
-- Lähdekoodi: `src/` (head.html, body.html, app.js, logic.js, plan.json). Rakenna: `python3 build.py` → `index.html`.
-- Testit: `node --test tests/*.test.*`
+- Lähdekoodi: `src/` – head.html, body.html, `css/*.css`, `js/*.js` (liitetään aakkosjärjestyksessä), logic.js, plan.json. Rakenna: `python3 build.py` → `index.html`, `version.json` ja `sw.js`:n välimuistin nimi päivittyvät itse.
+- Testit: `CHROME=/usr/bin/google-chrome node --test tests/*.test.*` (laskenta, välipalvelin ja käyttöliittymä Playwrightilla). GitHub Actions ajaa samat testit jokaisesta pushista.
+- Päätökset ja keskeneräiset asiat: [docs/PROJEKTI.md](docs/PROJEKTI.md).
 - Välipalvelin: `strava-worker/worker.js` (Strava, pilvivarmuuskopio KV:hen, ilmoitukset, iltatarkistus cron).

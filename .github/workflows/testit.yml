@@ -1,0 +1,18 @@
+name: Testit
+on: [push, pull_request]
+jobs:
+  testit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: index.html on rakennettu src-kansiosta
+        run: python3 build.py && git diff --exit-code index.html sw.js version.json
+      - name: Asenna Playwright (erilliseen kansioon, ettei juureen tule package.jsonia)
+        run: |
+          mkdir -p /tmp/pw && cd /tmp/pw && npm init -y >/dev/null && npm install playwright@1.63.0
+          npx playwright install --with-deps chromium
+      - name: Laskenta-, välipalvelin- ja käyttöliittymätestit
+        run: NODE_PATH=/tmp/pw/node_modules node --test tests/*.test.*

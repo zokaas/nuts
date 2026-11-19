@@ -212,6 +212,8 @@
     <ol><li>Avaa tämä sivu Safarissa.</li><li>Napauta Jaa-painiketta (neliö ja nuoli ylös).</li><li>Valitse <b>Lisää Koti-valikkoon</b>.</li></ol>
   </div>
       <p class="tip">Matka Pallakselle · <a class="link" href="https://github.com/zokaas/nuts" target="_blank" rel="noopener">GitHub</a></p>
+      <p class="tip" id="verLine"></p>
+      <div class="row"><button class="btn ghost" id="verCheck" type="button">Tarkista päivitys</button></div>
     </section>
   </div>
   <div data-view="kalenteri" class="view" hidden>
@@ -309,5 +311,6 @@
 </div>
 <nav class="tabs" aria-label="Näkymät"><a href="#tanaan"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg><span>Tänään</span></a><a href="#kalenteri"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/><path d="M8 14h2M14 14h2M8 17h2"/></svg><span>Kalenteri</span></a><a href="#historia"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg><span>Historia</span></a><a href="#analyysi"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20l5-7 4 4 5-9 4 6"/></svg><span>Analyysi</span></a><a href="#opas"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h9a3 3 0 013 3v13H9a3 3 0 01-3-3z"/><path d="M6 17a3 3 0 013-3h9"/></svg><span>Opas</span></a></nav>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="updbar" id="updBar" role="status" aria-live="polite" hidden><span>Uusi versio on valmis.</span><button class="btn primary" id="updGo" type="button">Päivitä nyt</button></div>
 <div class="restbar" id="restBar" hidden><span id="restTxt">Lepo</span><div class="track"><div class="fill" id="restFill"></div></div><button class="btn small" id="restSkip">Ohita</button></div>
 <canvas id="fx" hidden aria-hidden="true"></canvas>

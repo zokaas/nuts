@@ -1,0 +1,47 @@
+/* ===== v10: teemat ===== */
+.mast{position:relative; isolation:isolate}
+.mast::after{content:""; position:absolute; z-index:-1; left:-16px; right:-16px; bottom:-10px; height:74px; pointer-events:none;
+  background:linear-gradient(180deg, color-mix(in srgb, var(--accent) 30%, transparent), color-mix(in srgb, var(--accent) 6%, transparent));
+  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 60' preserveAspectRatio='none'%3E%3Cpath d='M0 60V46C22 44 40 34 66 35C88 36 100 24 124 20C146 16 158 27 178 29C200 31 214 9 240 6C262 4 274 19 294 24C316 29 332 17 354 20C374 23 388 33 400 36V60Z'/%3E%3C/svg%3E") bottom/100% 100% no-repeat; mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 60' preserveAspectRatio='none'%3E%3Cpath d='M0 60V46C22 44 40 34 66 35C88 36 100 24 124 20C146 16 158 27 178 29C200 31 214 9 240 6C262 4 274 19 294 24C316 29 332 17 354 20C374 23 388 33 400 36V60Z'/%3E%3C/svg%3E") bottom/100% 100% no-repeat}
+.route .arrow{color:var(--hl)}
+.route small{text-transform:none; letter-spacing:.01em; font-size:.34em}
+.eyebrow{text-transform:none; letter-spacing:.01em; font-size:13px; font-stretch:105%}
+.setgrp,.calphase,.tile span,th,.bhead,.chg-grid small,.mt th,.mtg b{text-transform:none; letter-spacing:.01em}
+.setgrp{font-size:15px}
+.calphase{font-size:15px}
+.tile span{font-size:13px}
+.palpick{display:grid; grid-template-columns:repeat(3,1fr); gap:8px}
+.palpick button{border:2px solid var(--line); background:var(--surface); border-radius:14px; padding:8px 8px 10px; display:flex; flex-direction:column; gap:8px; text-align:left}
+.palpick button[aria-pressed="true"]{border-color:var(--accent); box-shadow:0 0 0 2px color-mix(in srgb, var(--accent) 25%, transparent)}
+.palpick .sw{height:46px; border-radius:9px; position:relative; overflow:hidden; border:1px solid rgba(0,0,0,.06)}
+.palpick .sw i{position:absolute; left:0; right:0; bottom:0; height:22px; -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 60' preserveAspectRatio='none'%3E%3Cpath d='M0 60V46C22 44 40 34 66 35C88 36 100 24 124 20C146 16 158 27 178 29C200 31 214 9 240 6C262 4 274 19 294 24C316 29 332 17 354 20C374 23 388 33 400 36V60Z'/%3E%3C/svg%3E") bottom/100% 100% no-repeat; mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 60' preserveAspectRatio='none'%3E%3Cpath d='M0 60V46C22 44 40 34 66 35C88 36 100 24 124 20C146 16 158 27 178 29C200 31 214 9 240 6C262 4 274 19 294 24C316 29 332 17 354 20C374 23 388 33 400 36V60Z'/%3E%3C/svg%3E") bottom/100% 100% no-repeat}
+.palpick .sw u{position:absolute; top:8px; left:8px; width:12px; height:12px; border-radius:50%}
+.palpick b{font-family:var(--display); font-stretch:110%; font-size:15px}
+.palpick small{display:block; font-size:12px; color:var(--muted); line-height:1.25}
+#modePick{margin-top:10px}
+#modePick button[aria-pressed="true"]{background:var(--acc-bg)}
+#modePick button[aria-pressed="true"] b{color:var(--accent)}
+.t-run,.t-long,.t-test,.t-bike,.t-gym,.t-hike,.t-swim,.t-free{background:color-mix(in srgb, var(--c) var(--cbg), var(--surface)); color:color-mix(in srgb, var(--c) var(--cfg), var(--ink))}
+.t-run{--c:var(--c-run)} .t-long{--c:var(--c-long)} .t-test{--c:var(--c-test)} .t-bike{--c:var(--c-bike)} .t-gym{--c:var(--c-gym)} .t-hike{--c:var(--c-hike)} .t-swim{--c:var(--c-swim)} .t-free{--c:var(--c-free)}
+.palpick{grid-template-columns:1fr 1fr}
+.palpick .sw.kausi{background:linear-gradient(90deg,#e6e9f1 0 33%,#e9ece5 33% 67%,#efe8e6 67%)}
+.palpick .sw.kausi i{background:linear-gradient(90deg,#34449a 0 33%,#1d5b6c 33% 67%,#972a3b 67%)}
+.mhead{display:flex; align-items:center; justify-content:space-between; gap:8px}
+.mhead h2{font-size:20px; font-stretch:110%}
+.mhead .mnav{display:flex; gap:6px}
+.mhead .mnav button{width:36px; height:36px; border-radius:10px; border:1px solid var(--line); background:var(--surface); font-size:18px}
+.mhead .mnav button:disabled{opacity:.35}
+.mhi{margin:0; padding:10px 12px; border-radius:10px; background:var(--acc-bg); font-size:15px}
+.mhi b{color:var(--accent)}
+.mdelta{font-size:14px; color:var(--muted); margin:0}
+.mdelta .up{color:var(--ok); font-weight:700} .mdelta .dn{color:var(--muted); font-weight:700}
+.mtiles b{font-size:20px; white-space:nowrap}
+.sicklink{align-self:flex-start; margin-top:2px; font-size:14px; color:var(--muted)}
+.sickcard{border:2px solid color-mix(in srgb, var(--crit) 35%, var(--line)); background:color-mix(in srgb, var(--crit) 5%, var(--surface))}
+.sickcard.ret{border-color:color-mix(in srgb, var(--ok) 35%, var(--line)); background:color-mix(in srgb, var(--ok) 5%, var(--surface))}
+.sickhead{display:flex; align-items:baseline; justify-content:space-between; gap:8px} .sickhead h2{font-size:20px; font-stretch:110%}
+.sickcard p{margin:0} .sicklist{margin:0; padding-left:18px; display:flex; flex-direction:column; gap:4px; font-size:15px}
+.sickcard .seg2 button[aria-pressed="true"]{background:var(--surface); box-shadow:0 1px 2px rgba(0,0,0,.12)} .sickcard .seg2 small{font-size:12px; text-align:center}
+.updbar{position:fixed; left:12px; right:12px; bottom:calc(76px + env(safe-area-inset-bottom)); z-index:60; display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 10px 10px 16px; border-radius:14px; background:var(--ink); color:var(--bg); box-shadow:0 6px 20px rgba(0,0,0,.25); font-weight:700}
+.updbar[hidden]{display:none}
+.updbar .btn{min-height:40px; padding:0 14px}
