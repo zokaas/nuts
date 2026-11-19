@@ -131,7 +131,7 @@ function bloodHTML(){ const B=meta.blood||{}; const a=B.veri1||{}, b=B.veri2||{}
     ${bloodEdit?form(bloodEdit):`<div class="row">${BLOOD.map(([id,l])=>`<button class="btn small" data-bedit="${id}">${(B[id]?"Muokkaa ":"Kirjaa ")+l.toLowerCase()+"n arvot"}</button>`).join("")}</div>`}
     ${bloodNotes().map(x=>`<p class="tip">${x}</p>`).join("")}<p class="tip">Ferritiini nousee tulehduksessa, joten flunssan tai yskän aikana se voi näyttää todellista paremmalta. Transferriinireseptori kertoo silloin raudanpuutteesta luotettavammin. Viitearvot vaihtelevat laboratorioittain, joten tulkinta lääkärin kanssa.</p>`; }
 /* Verenluovutukset (pvm): ferritiinin lasku niiden jälkeen on odotettavaa, ei hälytys. */
-const DONATIONS=["2026-11-23"];
+const DONATIONS=[]; // esim. "2027-08-20" – lisää, kun luovutat
 function bloodNotes(){ const B=meta.blood||{}, a=B.veri1, b=B.veri2, out=[];
   const last=b&&b.ferr!=null?b:a; if(last&&typeof last.ferr==="number"&&last.ferr<30) out.push(`⚠️ Ferritiini ${n1(last.ferr)} µg/l on alle 30, jota käytetään yleisesti raudanpuutteen rajana. Keskustele lääkärin kanssa raudasta.`);
   const don=a&&b?DONATIONS.filter(d=>d>=(a.date||"2026-11-18")&&d<=(b.date||"2099")):[];

@@ -64,11 +64,11 @@ test("ohjelma alkaa to 19.11.: ensimmäinen treeni on juoksu, ti–ke eivät nä
   assert.deepEqual(errors, []); await ctx.close();
 });
 
-test("verenluovutus 23.11.: kävely seuraavana päivänä, testi siirtyi 8.12.", async () => {
-  const { page, ctx } = await open({ date: "2026-11-24T08:00:00" });
-  assert.match(await page.textContent("#today"), /Kävely/);
+test("tarkistuspiste 1 (30 min yhtäjaksoista) on pe 4.12.", async () => {
+  const { page, ctx } = await open({ hash: "kalenteri" });
   const plan = await page.evaluate(() => JSON.parse(document.getElementById("plan").textContent));
-  assert.equal(plan[17][0], "J"); assert.equal(plan[21][0], "X"); assert.match(plan[6][2], /Verenluovutus/);
+  assert.equal(plan[17][0], "X"); assert.match(plan[17][2], /Tarkistuspiste 1/);
+  assert.equal(await page.evaluate(() => CPS.find(c => c.id === "c30").by), 17);
   await ctx.close();
 });
 

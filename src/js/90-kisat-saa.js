@@ -1,7 +1,7 @@
 /* ===== 2. Belgradin välitarkistukset ===== */
 function maxLongKm(upto){ let m=0; for(const e of entries()){ if(e.idx>upto) continue; if(e.l.status==="done"&&RUN.has(e.code)&&typeof e.l.km==="number") m=Math.max(m,e.l.km); } return m; }
 const CPS=[
-  {id:"c30",by:21,t:"30 min yhtäjaksoista juoksua",v:()=>contStats().max,goal:30,u:"min"},
+  {id:"c30",by:17,t:"30 min yhtäjaksoista juoksua",v:()=>contStats().max,goal:30,u:"min"},
   {id:"c45",by:48,t:"45 min yhtäjaksoista juoksua",v:()=>contStats().max,goal:45,u:"min"},
   {id:"l17",by:95,t:"Pitkä lenkki 17 km",v:ti=>maxLongKm(ti),goal:17,u:"km"},
   {id:"l24",by:116,t:"Pitkä lenkki 24 km · päätöspiste",v:ti=>maxLongKm(ti),goal:24,u:"km"},

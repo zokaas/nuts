@@ -22,7 +22,7 @@ Lue tämä ennen muutoksia. Päivitä se, kun jokin päätös muuttuu.
 
 ## Tärkeät päätökset (älä riko vahingossa)
 - **Päiväindeksi 0 = ti 17.11.2026.** `plan.json`:n rivi 0 on 17.11. Viikkokaavat (`weekOf`, `dow`) olettavat tämän. 17.–18.11. on piilotettu vakiolla `FIRST` (= 19.11.) – älä numeroi ohjelmaa uudelleen.
-- **Verenluovutus ma 23.11.2026:** ti 24.11. kävely, ke Tribe kevyesti, la pitkä tarvittaessa lyhyempi, Tarkistuspiste 1 (30 min yhtäjaksoista) siirretty pe 4.12. → **ti 8.12.** (`CPS c30 by:21`). `DONATIONS`-lista tekee helmikuun ferritiinin laskusta tiedon eikä hälytystä.
+- **Verenluovutus siirretty myöhemmäksi** (päätös 19.11.2026: käyttäjä on sairastanut kolmesti kesän jälkeen). Ohjelma on alkuperäinen, Tarkistuspiste 1 pe 4.12. Kun luovutus ajoitetaan: päivä lepoa, seuraava kävely, 2 vk ei testejä, lisää päivä `DONATIONS`-listaan (40-terveys-tavat.js), jolloin ferritiinin lasku näytetään tietona eikä hälytyksenä. Ei 8 viikkoon ennen kisoja; rautatabletit suositeltavia.
 - **Sairastila** käynnistyy vain Vointi → 🤒 Sairas (tälle päivälle tai eiliselle). Erillinen "Olen kipeä" -nappi poistettiin (käyttäjä piti turhana). Peru-nappi ilmoituksessa; "Olen terve" samana päivänä perii kokonaan. Paluu: 2 pv / sairaspäivä, nuha 3–10 pv, kuume 7–14 pv (`sickRec`).
 - **Teemat:** Vuodenaika (oletus: kaamos marras–tammi, ruska syys–loka, muuten tunturi), Tunturi, Ruska, Kaamos; vaalea/tumma/auto. Ei terrakotta-aksenttia, otsikot pienaakkosin.
 - **Tavoiterenkaat poistettu** (turhat). Kuukautiskierto näkyy vain kierron alun tienoilla, ei joka päivä.
