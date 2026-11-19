@@ -41,7 +41,7 @@ Lue tämä ennen muutoksia. Päivitä se, kun jokin päätös muuttuu.
 
 ## Kesken
 - **Hiustenpesu viikosta 5 eteenpäin (14.12. alkaen):** rutiini puuttuu, tilalla paikkamerkki ma/pe "Pesupäivä" (`todo:true`). Odotetaan käyttäjältä.
-- Käyttäjä päätti 19.11.2026 jättää pois: pimeysvaroitus, juoksu–kävely-ajastin, kipukartta, tankkausharjoittelu, varustelista, kisapäivän aikataulu, LDL/apoB-kentät, touko–kesäkuun verikoetehtävä. Älä tarjoa niitä uudelleen ilman syytä.
+- Käyttäjä päätti 19.11.2026 jättää pois: pimeysvaroitus, juoksu–kävely-ajastin, kipukartta, tankkausharjoittelu, varustelista, kisapäivän aikataulu, LDL/apoB-kentät, touko–kesäkuun verikoetehtävä, vastustuskyky-kortti, push-testi, pukeutumisopas, kalenteri-integraatio, Siri-pikakomento, "miksi tämä treeni" -selitykset, vastustuskykytavat. Käyttäjä ei halua nyt uusia ominaisuuksia: odota hänen omia havaintojaan käytöstä. Älä tarjoa niitä uudelleen ilman syytä.
 - Ei testattu oikealla laitteella: iPhonen push-ilmoitukset, Intervals.icu oikeilla tunnuksilla.
 
 ## Työtapa
