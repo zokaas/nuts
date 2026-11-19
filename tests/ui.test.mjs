@@ -54,16 +54,15 @@ test("kaikki näkymät aukeavat ilman virheitä, vaalea ja tumma", async () => {
   }
 });
 
-test("ohjelma alkaa la 21.11.: to–pe lepoa, ensimmäinen treeni lauantaina, ti–ke eivät näy", async () => {
+test("ohjelma alkaa to 19.11.: ensimmäinen treeni tänään, ti–ke eivät näy", async () => {
   const { page, errors, ctx } = await open();
-  assert.match(await page.textContent("#today"), /Ohjelma alkaa lauantaina/);
+  assert.match(await page.textContent("#today"), /Juoksu/);
+  assert.match(await page.textContent("#today"), /Ensimmäinen treeni/);
   const days = await page.$$eval(".strip .sd .dn", els => els.map(e => e.textContent.trim()).filter(Boolean));
   assert.ok(!days.includes("17") && !days.includes("18") && days.includes("19"), days.join(","));
-  await ctx.close();
-  const b = await open({ date: "2026-11-21T08:00:00" });
-  assert.match(await b.page.textContent("#today"), /Juoksu/);
-  assert.match(await b.page.textContent("#today"), /Ensimmäinen treeni/);
-  assert.deepEqual([...errors, ...b.errors], []); await b.ctx.close();
+  await page.evaluate(() => { location.hash = "kalenteri"; }); await page.waitForTimeout(200);
+  assert.match(await page.textContent("#calBody"), /Vk 1\s*19\.11\.–22\.11\./);
+  assert.deepEqual(errors, []); await ctx.close();
 });
 
 test("tarkistuspiste 1 (30 min yhtäjaksoista) on pe 4.12.", async () => {

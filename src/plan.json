@@ -1,10 +1,10 @@
 [
 ["L", "", ""],
 ["L", "", ""],
-["L", "Ohjelma alkaa lauantaina 21.11. Tänään ei treeniä: aamutavat riittävät.", "Ennen aloitusta"],
-["L", "Pikkujoulut. Ohjelma alkaa huomenna: lenkkarit ja juomapullo valmiiksi.", "Pikkujoulut"],
 ["J", "Juoksumatto tai sisärata: kävely-juoksu 36 min: 8 min juoksu + 1 min kävely, toista 4×. Rauhallinen puhetahti. Ensimmäinen treeni: lopeta olo hyvänä, vaikka jaksaisit enemmän.", "Ohjelma alkaa!"],
-["S", "Spinning-tunti Tribessä 45 min rauhallisesti + lämmittely. Jalat ovat eilisestä ensimmäisestä treenistä vielä tottumattomat, joten pidä rasitus kevyenä.", ""],
+["L", "Pikkujoulut.", "Pikkujoulut"],
+["P", "Sisärata tai juoksumatto (kulma 1 %): pitkä kävely-juoksu 45 min: 8 min juoksu + 1 min kävely, toista 5×. Rauhallinen puhetahti.", "Jos olo on huono, vaihda su:n spinningin kanssa päikseen"],
+["S", "Spinning-tunti Tribessä 45–60 min + lämmittely. Pidä rasitus kohtuullisena: jalat ovat eilisestä väsyneet.", ""],
 ["L", "", ""],
 ["J", "Juoksumatto tai sisärata: kävely-juoksu 35 min: 10 min juoksu + 1 min kävely, toista 3×, loppu kävellen. Rauhallinen puhetahti.", "Nuts-ilmoittautuminen aukeaa klo 18"],
 ["T", "Tribe-tunti", ""],

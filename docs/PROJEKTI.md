@@ -4,7 +4,7 @@ Päivitetty 19.11.2026. Tämä on kehityksen muisti: mitä on päätetty, miksi,
 Lue tämä ennen muutoksia. Päivitä se, kun jokin päätös muuttuu.
 
 ## Tavoite ja urheilija
-- Aloittaa nollakunnosta. Sovellus näkyy to 19.11.2026 alkaen, **ensimmäinen treeni la 21.11.2026** (to–pe lepoa, käyttäjän päätös 19.11.). Tavat alkoivat 19.11. Lähtötaso: juoksee noin kerran viikossa, 7 km noin tunnissa muutamalla kävelytauolla, joten joulukuun ohjelma on noin 2 viikkoa alkuperäistä edellä (pidemmät juoksuosuudet, pitkä lenkki 50 → 85 min, viikkokm 5/14/12/20/22/23/27). Tammikuusta eteenpäin ennallaan.
+- Aloittaa nollakunnosta. Ohjelma alkaa **to 19.11.2026** (ensimmäinen treeni; käyttäjä ehdotti lauantaita mutta kertoi juksanneensa). Tavat alkoivat 19.11. Lähtötaso: juoksee noin kerran viikossa, 7 km noin tunnissa muutamalla kävelytauolla, joten joulukuun ohjelma on noin 2 viikkoa alkuperäistä edellä (pidemmät juoksuosuudet, pitkä lenkki 50 → 85 min, viikkokm 9/14/12/20/22/23/27). Tammikuusta eteenpäin ennallaan.
 - **Belgradin maraton** su 18.4.2027 klo 8.00 (välietappi).
 - **Nuts Ylläs–Pallas 66 km** (Hetta → Pallas) pe 23.7.2027 klo 15.00 (päätavoite).
 - Tukee myös yleistä terveellistä liikkumista: lajia voi vaihtaa (esim. uinti), ja Nutsin jälkeen on ylläpitotila.
