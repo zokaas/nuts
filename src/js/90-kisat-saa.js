@@ -60,7 +60,7 @@ function renderZones(){ const Z=zones(); const h=meta.hr||{};
 $("hrSave").onclick=()=>{ const n=id=>{ const v=Number($(id).value.trim()); return v>0?v:null; }; meta.hr={max:n("hrMax"),age:n("hrAge"),rest:n("hrRest")}; persist(); renderZones(); toast("Sykealueet päivitetty."); };
 
 /* ===== Kisasuunnitelmat ===== */
-/* Nutsin tavoiteaika minuutteina (päätös 19.11.2026). Alle 10 h on varatavoite. */
+/* Nutsin tavoite: alle tämän (min), naisten top 30 (päätös 19.11.2026). Alle 10 h on varatavoite. */
 const NUTS_GOAL=540;
 function longPace(){ const ps=entries().filter(e=>e.l.status==="done"&&e.code==="P"&&e.l.km>=8&&e.l.min).slice(-3); if(!ps.length) return null; return ps.reduce((a,e)=>a+e.l.min,0)/ps.reduce((a,e)=>a+e.l.km,0); }
 function hm(min){ const h=Math.floor(min/60), m=Math.round(min%60); return `${h} h ${String(m).padStart(2,"0")} min`; }
@@ -101,7 +101,7 @@ function renderRacePlans(){
   const test=entries().find(e=>e.key==="2027-06-26"&&e.l.status==="done"&&e.l.km&&e.l.min);
   const nTime = test? 66*(test.l.min/test.l.km)*1.2 : (p? 66*p*1.6 : null);
   $("raceN").innerHTML=`<ul class="ins">
-    <li><b>Tavoite:</b> ${hm(NUTS_GOAL)} (keskivauhti ${pace(1,NUTS_GOAL/66)}/km). Varatavoite alle 10 h. Mittari: kesäkuun 30 km:n testi alle 3:30.</li>
+    <li><b>Tavoite:</b> alle ${hm(NUTS_GOAL)} (keskivauhti alle ${pace(1,NUTS_GOAL/66)}/km), naisten top 30. Varatavoite alle 10 h. Mittari: kesäkuun 30 km:n testi alle 3:25.</li>
     <li><b>Aika-arvio:</b> ${nTime?`${hm(nTime*0.9)} – ${hm(nTime*1.15)}${test?" (testikisasta)":" (karkea, tarkentuu kesäkuun testistä)"}`:"tarkentuu kesäkuun testikisasta"}</li>
     <li><b>Lähtö pe 23.7. klo 15 Hetta:</b> lounas klo 11–12, välipala klo 14</li>
     <li><b>Taktiikka:</b> ylämäet kävellen, tasaiset ja loivat alamäet juosten, ensimmäinen tunti liian helposti</li>
