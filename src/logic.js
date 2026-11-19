@@ -1,6 +1,6 @@
 /* ===== Ohjelmalogiikka: mukautuva ohjelma, varoitukset, analyysi ===== */
 const START_UTC = Date.UTC(2026, 10, 17); // ti 17.11.2026 = indeksi 0
-const TARGET = [8,10,11,14,20,23,27,9,13,12,31,25,36,40,45,33,53,57,61,46,34,56,5,28,44,54,61,40,65,70,44,55,50,43,25,10];
+const TARGET = [5,14,12,20,22,23,27,9,13,12,31,25,36,40,45,33,53,57,61,46,34,56,5,28,44,54,61,40,65,70,44,55,50,43,25,10];
 const RUN = new Set(["J","JL","P","X","R"]);
 const KEY = new Set(["P","X","R"]);
 const TIRED_FLAGS = ["tired","sleep","stress","hangover"];
