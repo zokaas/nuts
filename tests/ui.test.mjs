@@ -128,3 +128,14 @@ test("päivitysilmoitus: uusi versio näyttää palkin, sama versio ei", async (
   const b = await open({ version: { hash: "uusi1234", built: "2026-12-01T10:00:00Z" } }); await b.page.waitForTimeout(3300);
   assert.ok(!(await b.page.isHidden("#updBar"))); await b.ctx.close();
 });
+
+test("Nuts-tavoite 9 h näkyy kisasuunnitelmassa ja ultrajakso sisältää kynnys- ja mäkitreenit", async () => {
+  const { page, errors, ctx } = await open({ hash: "opas" });
+  assert.match(await page.textContent("#raceN"), /Tavoite:\s*9 h 00 min \(keskivauhti 8:11\/km\)/);
+  const plan = await page.evaluate(() => JSON.parse(document.getElementById("plan").textContent));
+  const block = plan.slice(161, 248).map(r => r[1]).join(" ");
+  assert.ok((block.match(/kynnysvauhtia/g) || []).length >= 5);
+  assert.ok((block.match(/ylämäkeen juosten/g) || []).length >= 3);
+  assert.match(plan[221][1], /alle 3:30/);
+  assert.deepEqual(errors, []); await ctx.close();
+});

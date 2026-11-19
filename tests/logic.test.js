@@ -61,3 +61,7 @@ test("kuume: paluu vähintään viikko, nuha 3 pv", () => {
   const ret = Object.keys(ad).map(Number).filter(i => i > t + 1 && ad[i].kind === "sick");
   assert.ok(ret.length && Math.max(...ret) > t + 4 && Math.max(...ret) <= t + 7);
 });
+test("kynnystreeni kevenee väsyneenä", () => {
+  assert.ok(L.hasIntensity("10 km polulla: 2 × 20 min kynnysvauhtia"));
+  assert.ok(L.hasIntensity("Viimeinen tunti tavoiteteholla"));
+});

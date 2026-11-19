@@ -10,7 +10,7 @@ function weekOf(i){ return Math.floor((i+1)/7)+1; }
 function weekRange(w){ const a=(w-1)*7-1; return [Math.max(0,a), a+6]; }
 function flagsOf(l){ if(!l) return []; const f=Array.isArray(l.flags)?l.flags.slice():[]; if(l.pain && !f.includes("pain")) f.push("pain"); return f; }
 function painLevel(l){ if(!l) return 0; const f=flagsOf(l); if(!f.includes("pain")) return 0; return l.painLevel||2; }
-function hasIntensity(text){ return /veto|vedo|maratonvauh|reippaa|sykkeen nosto|kovaa|TESTI/i.test(text||""); }
+function hasIntensity(text){ return /veto|vedo|maratonvauh|reippaa|sykkeen nosto|kovaa|kynnys|tavoiteteho|TESTI/i.test(text||""); }
 function scaleText(code, text, f, noInt){
   const m = (text||"").match(/(\d+(?:[,.]\d+)?)(?:[–-](\d+(?:[,.]\d+)?))?\s?(km|min|h)\b/);
   let qty="";
@@ -116,4 +116,4 @@ function sickRec(len,fev){ return fev ? Math.min(14, Math.max(7, len*2)) : Math.
 function recentFlag(logs,today,flag,win){ for(let k=today;k>=Math.max(0,today-win);k--){ if(flagsOf(logs[isoOfIdx(k)]).includes(flag)) return true; } return false; }
 function loadRatio(plan,logs,today){ const kmDay=k=>{ let s=0; const d=isoOfIdx(k); for(const key in logs){ if(key.slice(0,10)!==d) continue; const l=logs[key]; if(l&&l.status==="done"&&RUN.has(logType(plan,key,l))&&typeof l.km==="number") s+=l.km; } return s; };
   if(today<21) return null; let a=0,c=0; for(let k=today-6;k<=today;k++) a+=kmDay(k); for(let k=today-27;k<=today;k++) c+=kmDay(k); c=c/4; if(c<5) return null; return {acute:Math.round(a), chronic:Math.round(c), ratio:a/c}; }
-if(typeof module!=="undefined") module.exports={buildAdapt,computeWarnings,weekKm,sessionsOn,effective,idxOfISO,isoOfIdx,weekOf,weekRange,TARGET,RUN,scaleText,loadRatio,sickRec};
+if(typeof module!=="undefined") module.exports={buildAdapt,computeWarnings,weekKm,sessionsOn,effective,idxOfISO,isoOfIdx,weekOf,weekRange,TARGET,RUN,scaleText,loadRatio,sickRec,hasIntensity};
