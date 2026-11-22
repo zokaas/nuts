@@ -3,14 +3,26 @@ let evKind="note", evSport="PA";
 /* Muu liikunta -meno: laji korvaa päivän treenin (käyttäjän päätös 22.11.2026).
    IMPACT = lajit, jotka kuormittavat jalkoja paljon: juoksua ei mieluiten seuraavaksi päiväksi.
    STRENGTHY = lajit, jotka hoitavat viikon lihaskunnon. */
-const IMPACT=new Set(["PA"]), STRENGTHY=new Set(["PA","SA","RF","T"]);
+const IMPACT=new Set(["PA","T"]), STRENGTHY=new Set(["PA","SA","RF","T"]), AEROBIC=new Set(["HI","PY","S","UI","SK","KA"]);
+/* Keston säännöt (22.11.2026):
+   1) lihaskunto hoituu lajilla vasta, kun kesto on vähintään 30 min
+   2) pallopeli ja HIIT kuormittavat seuraavaa päivää vasta, kun kesto on vähintään 45 min
+   3) peruskaudella (Pohja) kestävyyslaji korvaa kevyen lenkin, jos kesto ≥ kerroin × lenkin kesto
+   4) kokonaiskuorma (loadWarnings) laskee mukaan myös muut lajit */
+const STR_MIN=30, IMPACT_MIN=45;
+const strengthDone=(sp,min)=>STRENGTHY.has(sp)&&min>=STR_MIN;
+const impactful=(sp,min)=>IMPACT.has(sp)&&min>=IMPACT_MIN;
+function evMinVal(){ return Math.max(10,Math.min(600,parseInt($("evMin").value)||60)); }
+/* Kevyen lenkin korvaavan lajin vähimmäiskesto, tai 0 jos sääntö ei koske tätä päivää. */
+function coverNeed(i,r,sp){ if(!AEROBIC.has(sp)||r[0]!=="J"||hasIntensity(r[1])||PHASE(weekOf(i))!=="Pohja") return 0;
+  const f=(SPORTS.find(x=>x[0]===sp)||[0,0,1])[2]; return Math.round(f*estMin("J",r[1])/5)*5; }
 function sportTip(code,name){ const beach=/beach|ranta|hiekka/i.test(name||"");
   return ({PA:"Lämmittele 10 min. Hypyt ja käännökset kuormittavat nilkkoja ja pohkeita: pidä teho maltillisena."+(beach?" Hiekka kuormittaa pohkeita ja akillesjännettä: lopeta, jos akillesjänne kipeytyy.":""),
     HI:"Mäet reippaasti, tasaiset rauhallisesti: hyvää kestävyyttä ilman iskuja.",UI:"Kevyt päivä jaloille, hyvä palauttava laji.",PY:"Rauhallinen tai keskiraskas, ei kovia vetoja.",S:"Rauhallinen tai keskiraskas, ei kovia vetoja.",
     SA:"Jos huomenna on juoksu, tee jalkaliikkeet kevyesti.",RF:"Keskivartalo, lantion tuki ja liikkuvuus: hoitaa viikon lihaskunnon ja tukee juoksuasentoa.",T:"Kova tunti: jos huomenna on vauhtitreeni tai pitkä lenkki, pidä hypyt maltillisina.",JO:"Hyvä palautus ja liikkuvuus.",KA:"Kevyt päivä jaloille.",SK:"Ylämäet reippaasti: hyvää Nutsia varten.",MU:""})[code]||""; }
 function sportText(code,name,min){ return `${name} ${min} min. ${sportTip(code,name)}`.trim(); }
 /* Siirrettävästä treenistä poistetaan lihaskunto, jos laji hoiti sen. */
-function adjustMoved(was,sp){ if(!STRENGTHY.has(sp)||!/lihaskunto/i.test(was[1]||"")) return was;
+function adjustMoved(was,sp,min=60){ if(!strengthDone(sp,min)||!/lihaskunto/i.test(was[1]||"")) return was;
   const t=(was[1]||"").replace(/\s*(Heti perään|Perään)\s+lihaskunto[^.]*\.\s*/i," ").replace(/\s*\+\s*lihaskunto [A-D]\.?/i,".").trim();
   return [was[0]==="JL"?"J":was[0]==="TL"?"T":was[0], `${t} Lihaskunto hoitui tällä viikolla lajilla.`.replace(/\.\./g,"."), was[2]]; }
 function isoInput(i){ return isoOfIdx(Math.min(BASE.length-1,Math.max(0,i))); }
@@ -21,10 +33,13 @@ function syncEvent(){ document.querySelectorAll("[data-evk]").forEach(b=>b.setAt
   if(a>=0&&z>=a) for(let i=a;i<=Math.min(z,BASE.length-1);i++){ const r=rawAt(i); if(r[0]!=="L") lost.push(`${fmt(i)} ${TYPES[r[0]].l.toLowerCase()}`); }
   $("evSportRow").hidden=evKind!=="sport";
   if(evKind==="sport") $("evSports").innerHTML=SPORTS.filter(x=>x[0]!=="J").map(([c,e])=>`<button type="button" data-evsp="${c}" aria-pressed="${c===evSport}"><span>${e}</span>${(SPLABEL[c]||TYPES[c].l).replace(" / "," /<br>")}</button>`).join("");
-  if(evKind==="sport"){ const r=a>=0&&a<BASE.length?rawAt(a):["L"]; const single=!$("evTo").value||z===a;
-    $("evInfo").textContent = !single ? "Laji korvaa treenit kaikkina valittuina päivinä." : r[0]==="L" ? "Päivä on lepopäivä: laji lisätään päivän treeniksi." :
-      (RUN.has(r[0])||["P","X"].includes(r[0])) ? `${TYPES[adjustMoved(r,evSport)[0]].l} siirtyy toiselle päivälle samalla viikolla: saat ehdotukset tallennuksen jälkeen.${STRENGTHY.has(evSport)&&/lihaskunto/i.test(r[1]||"")?" Lihaskunto hoituu lajilla.":""}` :
-      `${TYPES[r[0]].l} korvautuu lajilla.`;
+  if(evKind==="sport"){ const r=a>=0&&a<BASE.length?rawAt(a):["L"]; const single=!$("evTo").value||z===a; const min=evMinVal(), need=single?coverNeed(a,r,evSport):0;
+    const lk=/lihaskunto/i.test(r[1]||"")&&STRENGTHY.has(evSport) ? (min>=STR_MIN?" Lihaskunto hoituu lajilla.":` Lihaskunto ei hoidu alle ${STR_MIN} min lajilla.`) : "";
+    const imp=impactful(evSport,min)?" Seuraavalle päivälle ei mieluiten juoksua.":"";
+    $("evInfo").textContent = !single ? "Laji korvaa treenit kaikkina valittuina päivinä." : r[0]==="L" ? `Päivä on lepopäivä: laji lisätään päivän treeniksi.${imp}` :
+      need&&min>=need ? `Kevyt lenkki hoituu lajilla (peruskausi, vähintään ${need} min): ei siirtoa.${imp}` :
+      (RUN.has(r[0])||["P","X"].includes(r[0])) ? `${TYPES[adjustMoved(r,evSport,min)[0]].l} siirtyy toiselle päivälle samalla viikolla: saat ehdotukset tallennuksen jälkeen.${need?` Vähintään ${need} min ${(SPLABEL[evSport]||TYPES[evSport].l).toLowerCase()} korvaisi lenkin.`:""}${lk}${imp}` :
+      `${TYPES[r[0]].l} korvautuu lajilla.${lk}${imp}`;
     $("evTo").min=$("evFrom").value; return; }
   $("evInfo").textContent = evKind==="note" ? "Treeni pysyy. Päivään tulee merkintä, joka näkyy kalenterissa ja Tulossa-listassa." :
     lost.length ? `Päivä muuttuu lepopäiväksi. Poistuu: ${lost.join(", ")}.${lost.length===1&&z===a?" Saat ehdotukset, minne treeni siirretään.":""}` : "Päivä on jo lepopäivä: tulee vain merkintä.";
@@ -37,7 +52,7 @@ function saveEvent(){ const name=$("evName").value.trim().slice(0,60); const a=i
   const err=m=>{ $("evErr").textContent=m; $("evErr").hidden=false; };
   if(!name) return err("Anna menolle nimi."); if(a<0||a>=BASE.length) return err("Valitse päivä ohjelman ajalta."); if(z<a) return err("Loppupäivä on ennen alkua."); if(z-a>30) return err("Enintään 31 päivää kerralla.");
   if(evKind==="off") for(let i=a;i<=z;i++) if(rawAt(i)[0]==="R") return err("Kisapäivää ei voi merkitä lepopäiväksi. Valitse Muistutus.");
-  const min=Math.max(10,Math.min(600,parseInt($("evMin").value)||60));
+  const min=evMinVal();
   if(evKind==="sport") for(let i=a;i<=z;i++) if(rawAt(i)[0]==="R") return err("Kisapäivää ei voi korvata toisella lajilla. Valitse Muistutus.");
   const single=a===z, was=rawAt(a);
   for(let i=a;i<=z;i++){ const d=isoOfIdx(i), r=rawAt(i);
@@ -46,12 +61,15 @@ function saveEvent(){ const name=$("evName").value.trim().slice(0,60); const a=i
     else edits[d]={code:"L",text:`${name}: ei treeniä.`,note:name,ev:{name,kind:"off"}}; }
   persist(); closeEvent();
   if(evKind==="off"&&single&&was[0]!=="L"){ render(); openEditor(isoOfIdx(a)); showMoveSuggest(a,was,name); return; }
-  if(evKind==="sport"&&single&&(RUN.has(was[0])||["P","X"].includes(was[0]))){ render(); openEditor(isoOfIdx(a)); showMoveSuggest(a,adjustMoved(was,evSport),name,{sport:evSport,impact:IMPACT.has(evSport)}); return; }
+  if(evKind==="sport"&&single){ const need=coverNeed(a,was,evSport);
+    if(need&&min>=need){ edits[isoOfIdx(a)].covers="J"; persist(); render(); toast(`Kevyt lenkki hoidettu lajilla: ${name} (${fmt(a)}).`); return; }
+    if(RUN.has(was[0])||["P","X"].includes(was[0])){ render(); openEditor(isoOfIdx(a)); showMoveSuggest(a,adjustMoved(was,evSport,min),name,{sport:evSport,impact:impactful(evSport,min)}); return; } }
   render(); toast(`Lisätty: ${name}${single?` (${fmt(a)})`:` (${fmt(a)} – ${fmt(z)})`}.`);
 }
 $("evSave").onclick=saveEvent; $("evCancel").onclick=closeEvent; $("evX").onclick=closeEvent;
 $("evBg").onclick=e=>{ if(e.target.id==="evBg") closeEvent(); };
 $("evKinds").onclick=e=>{ const b=e.target.closest("[data-evk]"); if(!b) return; evKind=b.dataset.evk; syncEvent(); };
+$("evMin").oninput=()=>{ if(evKind==="sport") syncEvent(); };
 $("evSports").onclick=e=>{ const b=e.target.closest("[data-evsp]"); if(!b) return; evSport=b.dataset.evsp; syncEvent(); };
 $("evFrom").onchange=syncEvent; $("evTo").onchange=syncEvent;
 document.addEventListener("click",e=>{ const o=e.target.closest("[data-addev]"); if(o){ openEvent(o.dataset.addev?+o.dataset.addev:null); return; }
@@ -110,9 +128,9 @@ function renderSummary(ti){ const d=dow(ti); const el=$("summary"); if(ti<5||ti>
   const w = d===6?weekOf(ti):weekOf(ti)-1; const S=weekSummary(w);
   /* Ei koostetta viikolta, jolla ei ollut yhtään treeniä (esim. ennen ohjelman alkua). */
   if(!S.planned){ el.hidden=true; return; }
-  el.hidden=false; el.innerHTML=`<div class="eyebrow">Viikkokooste · viikko ${w}</div>`+summaryHTML(S,true); }
+  el.hidden=false; el.innerHTML=`<div class="eyebrow">Viikkokooste · viikko ${wkNo(w)}</div>`+summaryHTML(S,true); }
 function renderWeeklyList(ti){ const cw=weekOf(ti); const ws=[]; for(let w=cw-1;w>=Math.max(1,cw-4);w--) if(weekSummary(w).planned) ws.push(w);
-  $("aWeeks").innerHTML=ws.length?ws.map(w=>`<details class="wk"><summary>Viikko ${w} · ${PHASE(w)}</summary>${summaryHTML(weekSummary(w),false)}</details>`).join(""):`<p class="note">Ensimmäinen kooste sunnuntaina.</p>`; }
+  $("aWeeks").innerHTML=ws.length?ws.map(w=>`<details class="wk"><summary>Viikko ${wkNo(w)} · ${PHASE(w)}</summary>${summaryHTML(weekSummary(w),false)}</details>`).join(""):`<p class="note">Ensimmäinen kooste sunnuntaina.</p>`; }
 
 /* ===== v4: kisa – kengät, varusteet, tankkaus ===== */
 const GEAR = [["pack","Juomareppu tai -liivi"],["water","Juomaa vähintään 1 l (pullot tai pussi)"],["cup","Oma juomamuki"],["food","Energiaa (geelit, patukat) koko matkalle"],["jacket","Sadetakki, teipatut saumat"],["pants","Pitkät juoksuhousut"],["layer","Lämmin välikerros"],["hat","Pipo tai buffi"],["gloves","Hanskat"],["blanket","Avaruuslakana"],["whistle","Pilli"],["phone","Puhelin ladattuna + varavirta"],["first","Ensiside ja rakkolaastarit"],["mosq","Hyttyskarkote"],["poles","Sauvat (jos käytät)"],["shoes","Kisakengät, ajetut sisään"],["socks","Kisasukat + varasukat"],["bib","Numerolappu ja kiinnitys"],["cash","Käteistä / kortti, kuljetus Pallakselta"]];
@@ -142,3 +160,15 @@ $("shoeAdd").onclick=()=>{ const name=$("shoeName").value.trim(); if(!name){ $("
   const id="s"+Date.now().toString(36); shoes.push({id,name:name.slice(0,40),startKm:start,limit:700,retired:false}); if(!meta.defaultShoe) meta.defaultShoe=id; $("shoeName").value=""; $("shoeStart").value=""; persist(); renderRace(); toast("Kengät lisätty."); };
 
 
+/* Kokonaiskuorma: kaikki lajit minuutteina, rasittavat (VIG) täydellä painolla ja muut puolella.
+   Akuutti 7 pv vs. 4 viikon keskiarvo. Juoksukilometrien oma varoitus (loadRatio) jää ennalleen. */
+function totalLoad(ti){ const day={};
+  for(const k in logs){ const i=idxOfISO(k); if(i<FIRST||i>ti||i<ti-27) continue; const l=logs[k]; if(!l||l.status!=="done") continue; const code=logType(BASE,k,l); if(code==="L") continue;
+    const txt=(BASE[i]&&!/~/.test(k))?BASE[i][1]:""; const min=(typeof l.min==="number"&&l.min>0)?l.min:estMin(code,txt);
+    day[i]=(day[i]||0)+min*(VIG.has(code)?1:0.5)+(l.strengthMin||0)*0.5; }
+  let a=0,c=0,other=0; for(let i=ti-27;i<=ti;i++){ const v=day[i]||0; c+=v; if(i>ti-7) a+=v; }
+  for(const k in logs){ const i=idxOfISO(k); if(i>ti-7&&i<=ti&&logs[k].status==="done"&&!RUN.has(logType(BASE,k,logs[k]))) other++; }
+  return {acute:Math.round(a), chronic:Math.round(c/4), other}; }
+function loadWarnings(ti){ if(ti-FIRST<21) return []; const r=loadRatio(BASE,logs,ti); if(r&&r.ratio>1.5&&r.acute>=15) return []; const L=totalLoad(ti);
+  if(L.chronic<60||L.acute<180||L.acute<=1.5*L.chronic) return [];
+  return [{level:"warn",title:"Kokonaiskuorma nousi jyrkästi",detail:`Viimeiset 7 pv ${L.acute} kuormaminuuttia, 4 viikon keskiarvo ${L.chronic}/vk${L.other?` (mukana ${L.other} muuta lajia)`:""}. Pidä seuraavat 2 päivää kevyinä tai lepona.`}]; }

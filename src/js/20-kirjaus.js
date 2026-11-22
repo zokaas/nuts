@@ -4,7 +4,7 @@ function openEditor(key,pre,mode){
   const s=sessionByKey(key); edit=s; const l=logs[key];
   draft=l?JSON.parse(JSON.stringify(l)):{status:null,km:null,min:null,hr:null,feel:null,flags:[],painArea:null,painLevel:null,rhr:null,sleepH:null,note:""};
   draft.flags=flagsOf(draft); if(pre&&(!l||l.status==="note")) draft.status=pre;
-  $("edDate").textContent=`${fmt(s.idx)} · vk ${weekOf(s.idx)}${s.moved?" · siirretty":""}`; $("edTitle").textContent=TYPES[s.code].l; $("edTarget").textContent=s.text||"Lepopäivä";
+  $("edDate").textContent=`${fmt(s.idx)} · vk ${wkNo(weekOf(s.idx))}${s.moved?" · siirretty":""}`; $("edTitle").textContent=TYPES[s.code].l; $("edTarget").textContent=s.text||"Lepopäivä";
   const train=s.code!=="L"||(s.orig&&s.orig.code!=="L"); $("statusRow").hidden=!train; $("trainFields").hidden=!train;
   $("kmField").hidden=!hasKm(s.code);
   { const pc=plannedCont(s.text); $("contField").hidden=!(RUN.has(s.code)&&(pc!=null||weekOf(s.idx)<=12)); $("edCont").placeholder= pc!=null?String(pc):"30"; $("contHint").textContent= pc!=null?`Ohjelmassa ${pc} min. Jätä tyhjäksi, jos juoksit ohjelman mukaan.`:""; }

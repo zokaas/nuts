@@ -61,6 +61,7 @@ const TOTAL_SESSIONS=PLAN.filter(p=>p[0]!=="L").length;
 /* Ohjelma ja tavat alkavat ma 23.11.2026; sitä edeltävät päivät eivät näy missään (käyttäjän päätös 22.11.). */
 const FIRST = idxOfISO("2026-11-23");
 const FIRST_W = weekOf(FIRST);
+const wkNo = w => w - FIRST_W + 1; // näytettävä viikkonumero: 23.11. alkava viikko = 1
 function entries(){ return Object.keys(logs).map(k=>({key:k,idx:idxOfISO(k),l:logs[k],code:logType(BASE,k,logs[k])})).filter(e=>e.idx>=FIRST).sort((a,b)=>a.key<b.key?-1:1); }
 /* Putki joustopäivällä: yksi väliin jäänyt päivä/treeni viikossa (ma–su) ei katkaise putkea. ev = [{w, ok}] aikajärjestyksessä */
 function flexStreak(ev, wNow){ let cur=0,best=0; const used=new Set(); for(const e of ev){ if(e.ok){ cur++; best=Math.max(best,cur); } else if(!used.has(e.w)&&cur>0){ used.add(e.w); } else { cur=0; } } return {cur,best,flexNow:used.has(wNow)}; }

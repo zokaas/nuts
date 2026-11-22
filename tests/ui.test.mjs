@@ -66,7 +66,7 @@ test("ohjelma alkaa ma 23.11.: aiemmat päivät piilossa ja aiemmat kirjaukset t
   assert.deepEqual(m.hab, { "2026-11-19": { veri1: 1 } }); assert.equal(l["2026-11-19"], undefined); assert.ok(l["2026-11-23"]);
   assert.equal(m.habits.find(h => h.id === "hera").sched[0].from, "2026-11-23"); assert.ok(m.habits.some(h => h.id === "kasvot"));
   await page.evaluate(() => { location.hash = "kalenteri"; }); await page.waitForTimeout(200);
-  assert.match(await page.textContent("#calBody"), /Vk 2\s*23\.11\.–29\.11\./); assert.doesNotMatch(await page.textContent("#calBody"), /Vk 1\b/);
+  assert.match(await page.textContent("#calBody"), /Vk 1\s*23\.11\.–29\.11\./); assert.match(await page.textContent("#calBody"), /Vk 2\s*30\.11\./); assert.doesNotMatch(await page.textContent("#calBody"), /Vk 0\b/);
   await ctx.close();
   const b = await open();
   assert.match(await b.page.textContent("#today"), /Ensimmäinen treeni/); assert.match(await b.page.textContent("#habits"), /Kasvot illalla/);
@@ -182,5 +182,46 @@ test("lajivalikoissa Reformer ja HIIT / Tribe; Reformer hoitaa lihaskunnon", asy
   assert.ok(labels.some(l => /Reformer/.test(l)) && labels.some(l => /HIIT \/\s*Tribe/.test(l)), labels.join(" | "));
   await page.fill("#evName", "Reformer"); await page.click("[data-evsp=RF]");
   assert.match(await page.textContent("#evInfo"), /Lihaskunto hoituu lajilla/);
+  assert.deepEqual(errors, []); await ctx.close();
+});
+
+test("keston säännöt: lihaskunto ≥30 min, iskukuorma ≥45 min, peruskaudella kestävyyslaji korvaa kevyen lenkin", async () => {
+  const { page, errors, ctx } = await open();
+  // 1) lyhyt beachvolley ei hoida lihaskuntoa eikä kuormita seuraavaa päivää
+  await page.evaluate(() => openEvent(14));
+  await page.fill("#evName", "Volley"); await page.click("[data-evk=sport]"); await page.click("[data-evsp=PA]"); await page.fill("#evMin", "25");
+  let info = await page.textContent("#evInfo");
+  assert.match(info, /Juoksu \+ lihaskunto siirtyy.*ei hoidu alle 30 min/); assert.doesNotMatch(info, /ei mieluiten juoksua/);
+  // 2) pitkä HIIT kuormittaa seuraavaa päivää, lyhyt ei
+  await page.click("[data-evsp=T]"); await page.fill("#evMin", "60");
+  assert.match(await page.textContent("#evInfo"), /ei mieluiten juoksua/);
+  await page.fill("#evMin", "30"); assert.doesNotMatch(await page.textContent("#evInfo"), /ei mieluiten juoksua/);
+  await page.click("#evCancel");
+  // 3) uinti korvaa kevyen 30 min lenkin (kerroin 1,15 → 35 min)
+  await page.evaluate(() => openEvent(16));
+  await page.fill("#evName", "Uinti"); await page.click("[data-evk=sport]"); await page.click("[data-evsp=UI]"); await page.fill("#evMin", "20");
+  assert.match(await page.textContent("#evInfo"), /siirtyy.*Vähintään 35 min uinti korvaisi lenkin/);
+  await page.fill("#evMin", "40");
+  assert.match(await page.textContent("#evInfo"), /Kevyt lenkki hoituu lajilla/);
+  await page.click("#evSave"); await page.waitForTimeout(200);
+  assert.equal(await page.evaluate(() => document.getElementById("peSuggest").hidden), true);
+  assert.equal(await page.evaluate(() => rawAt(16)[0]), "UI");
+  // avaintreeniä (testi) laji ei korvaa
+  await page.evaluate(() => openEvent(17));
+  await page.fill("#evName", "Uinti"); await page.click("[data-evk=sport]"); await page.click("[data-evsp=UI]"); await page.fill("#evMin", "90");
+  assert.doesNotMatch(await page.textContent("#evInfo"), /hoituu lajilla/);
+  assert.deepEqual(errors, []); await ctx.close();
+});
+
+test("kokonaiskuorma: muut lajit nostavat varoituksen, vaikka juoksu-km eivät nouse", async () => {
+  const logs = {};
+  const iso = i => new Date(Date.UTC(2026, 10, 17) + i * 864e5).toISOString().slice(0, 10);
+  for (let i = 6; i < 27; i += 3) logs[iso(i)] = { status: "done", type: "J", km: 4, min: 40 };
+  for (let i = 28; i <= 34; i++) logs[iso(i)] = { status: "done", type: i % 2 ? "PA" : "T", min: 75 };
+  const { page, errors, ctx } = await open({ date: "2026-12-21T08:00:00", logs });
+  const ws = await page.evaluate(() => loadWarnings(todayIdx()));
+  assert.equal(ws.length, 1); assert.match(ws[0].title, /Kokonaiskuorma/); assert.match(ws[0].detail, /muuta lajia/);
+  const none = await page.evaluate(() => { for (const k in logs) if (logs[k].type !== "J") delete logs[k]; return loadWarnings(todayIdx()); });
+  assert.equal(none.length, 0);
   assert.deepEqual(errors, []); await ctx.close();
 });

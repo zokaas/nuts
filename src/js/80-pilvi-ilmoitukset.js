@@ -1,9 +1,9 @@
 /* ===== Pilvivarmuuskopio ===== */
 let cloudTimer=null, cloudState={busy:false, last: meta.cloudSaved||null, err:null};
-function weeksStatus(){ const t=Math.max(0,todayIdx()), w=weekOf(t), o={}; for(const x of [w,w+1]){ if(x>36) continue; o[isoOfIdx((x-1)*7-1)]={w:x,tgt:TARGET_EFF[x-1]}; } return o; }
+function weeksStatus(){ const t=Math.max(0,todayIdx()), w=weekOf(t), o={}; for(const x of [w,w+1]){ if(x>36) continue; o[isoOfIdx((x-1)*7-1)]={w:wkNo(x),tgt:TARGET_EFF[x-1]}; } return o; }
 function upcomingStatus(){ const t0=Math.max(0,todayIdx()); const t=Math.max(0,(weekOf(t0)-1)*7-1); const up={}; for(let i=t;i<=Math.min(BASE.length-1,t+21);i++){ const e=effective(BASE,ADAPT,i); up[isoOfIdx(i)]={code:e.code,label:TYPES[e.code].l,text:(e.text||"").slice(0,120),note:(BASE[i][2]||"").slice(0,40)}; } return up; }
 function cloudPayload(){
-  const ti=todayIdx(); let ws=[]; try{ ws=computeWarnings(BASE,logs,ADAPT,ti).concat(eventWarnings(ti)).concat(cpWarnings(ti)).map(w=>({level:w.level,title:w.title})); }catch(e){}
+  const ti=todayIdx(); let ws=[]; try{ ws=computeWarnings(BASE,logs,ADAPT,ti).concat(loadWarnings(ti)).concat(eventWarnings(ti)).concat(cpWarnings(ti)).map(w=>({level:w.level,title:w.title})); }catch(e){}
   return { data:{app:"matka-pallakselle",version:3,logs,adjOff,edits,weekScale,shoes,gear,hr:meta.hr||null,defaultShoe:meta.defaultShoe||null,habits:meta.habits||null,hab:meta.hab||{},bGoal:meta.bGoal||null,rck:meta.rck||null,blood:meta.blood||null,habMove:meta.habMove||null,cycle:meta.cycle||null,planned:meta.planned||null,sick:meta.sick||null}, status:{upcoming:upcomingStatus(),weeks:weeksStatus(),warnings:ws,at:new Date().toISOString()}, refresh:strava.r||null };
 }
 function scheduleCloud(){ if(!stravaConnected()) return; clearTimeout(cloudTimer); cloudTimer=setTimeout(()=>cloudSave(false),8000); }
