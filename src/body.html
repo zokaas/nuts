@@ -302,7 +302,8 @@
     <div class="sheet-top"><div class="grab" aria-hidden="true"></div><div class="sheet-title"><div><div class="eyebrow">Kalenteri</div><h3 id="evTitle">Lisää meno tai suunnitelma</h3></div><button class="x" id="evX" aria-label="Sulje">×</button></div></div>
     <div class="field"><label for="evName">Mikä?</label><input type="text" id="evName" maxlength="60" placeholder="Esim. pikkujoulut, työmatka, mökki" autocomplete="off"></div>
     <div class="grid2"><div class="field"><label for="evFrom">Päivä</label><input type="date" id="evFrom"></div><div class="field"><label for="evTo">Loppuu (valinnainen)</label><input type="date" id="evTo"></div></div>
-    <div class="field"><label>Vaikutus treeniin</label><div class="seg2" id="evKinds" role="group" aria-label="Vaikutus treeniin"><button type="button" data-evk="note"><b>📌 Muistutus</b><small>treeni pysyy</small></button><button type="button" data-evk="off"><b>🚫 Ei treeniä</b><small>lepopäivä</small></button></div></div>
+    <div class="field"><label>Vaikutus treeniin</label><div class="seg3" id="evKinds" role="group" aria-label="Vaikutus treeniin"><button type="button" data-evk="note"><b>📌 Muistutus</b><small>treeni pysyy</small></button><button type="button" data-evk="off"><b>🚫 Ei treeniä</b><small>lepopäivä</small></button><button type="button" data-evk="sport"><b>🏐 Muu liikunta</b><small>laji korvaa treenin</small></button></div></div>
+    <div class="field" id="evSportRow" hidden><label>Laji</label><div class="sports" id="evSports" role="group" aria-label="Laji"></div><label for="evMin" style="margin-top:10px">Kesto (min)</label><input type="number" id="evMin" min="10" max="600" step="5" value="60" inputmode="numeric"></div>
     <p class="tip" id="evInfo"></p>
     <p class="err" id="evErr" hidden></p>
     <details class="fold"><summary>Tulevat menot</summary><ul class="evlist" id="evList"></ul></details>

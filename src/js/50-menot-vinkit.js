@@ -1,33 +1,58 @@
 /* ===== Menot ja suunnitelmat ===== */
-let evKind="note";
+let evKind="note", evSport="PA";
+/* Muu liikunta -meno: laji korvaa päivän treenin (käyttäjän päätös 22.11.2026).
+   IMPACT = lajit, jotka kuormittavat jalkoja paljon: juoksua ei mieluiten seuraavaksi päiväksi.
+   STRENGTHY = lajit, jotka hoitavat viikon lihaskunnon. */
+const IMPACT=new Set(["PA"]), STRENGTHY=new Set(["PA","SA"]);
+function sportTip(code,name){ const beach=/beach|ranta|hiekka/i.test(name||"");
+  return ({PA:"Lämmittele 10 min. Hypyt ja käännökset kuormittavat nilkkoja ja pohkeita: pidä teho maltillisena."+(beach?" Hiekka kuormittaa pohkeita ja akillesjännettä: lopeta, jos akillesjänne kipeytyy.":""),
+    HI:"Mäet reippaasti, tasaiset rauhallisesti: hyvää kestävyyttä ilman iskuja.",UI:"Kevyt päivä jaloille, hyvä palauttava laji.",PY:"Rauhallinen tai keskiraskas, ei kovia vetoja.",S:"Rauhallinen tai keskiraskas, ei kovia vetoja.",
+    SA:"Jos huomenna on juoksu, tee jalkaliikkeet kevyesti.",JO:"Hyvä palautus ja liikkuvuus.",KA:"Kevyt päivä jaloille.",SK:"Ylämäet reippaasti: hyvää Nutsia varten.",MU:""})[code]||""; }
+function sportText(code,name,min){ return `${name} ${min} min. ${sportTip(code,name)}`.trim(); }
+/* Siirrettävästä treenistä poistetaan lihaskunto, jos laji hoiti sen. */
+function adjustMoved(was,sp){ if(!STRENGTHY.has(sp)||!/lihaskunto/i.test(was[1]||"")) return was;
+  const t=(was[1]||"").replace(/\s*(Heti perään|Perään)\s+lihaskunto[^.]*\.\s*/i," ").replace(/\s*\+\s*lihaskunto [A-D]\.?/i,".").trim();
+  return [was[0]==="JL"?"J":was[0]==="TL"?"T":was[0], `${t} Lihaskunto hoitui tällä viikolla lajilla.`.replace(/\.\./g,"."), was[2]]; }
 function isoInput(i){ return isoOfIdx(Math.min(BASE.length-1,Math.max(0,i))); }
 function openEvent(i){ const d=i==null?(selDay==null?T0():selDay):i; $("evName").value=""; $("evFrom").value=isoInput(d); $("evTo").value=""; $("evFrom").min=isoInput(Math.max(0,todayIdx())); $("evFrom").max=$("evTo").max=isoInput(BASE.length-1); $("evTo").min=$("evFrom").value; evKind="note"; syncEvent(); $("evErr").hidden=true; renderEvList(); $("evBg").classList.add("open"); document.body.classList.add("locked"); setTimeout(()=>$("evName").focus(),50); }
 function closeEvent(){ $("evBg").classList.remove("open"); document.body.classList.remove("locked"); }
 function syncEvent(){ document.querySelectorAll("[data-evk]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.evk===evKind)));
   const a=idxOfISO($("evFrom").value), z=$("evTo").value?idxOfISO($("evTo").value):a; let lost=[];
   if(a>=0&&z>=a) for(let i=a;i<=Math.min(z,BASE.length-1);i++){ const r=rawAt(i); if(r[0]!=="L") lost.push(`${fmt(i)} ${TYPES[r[0]].l.toLowerCase()}`); }
+  $("evSportRow").hidden=evKind!=="sport";
+  if(evKind==="sport") $("evSports").innerHTML=SPORTS.filter(x=>x[0]!=="J").map(([c,e])=>`<button type="button" data-evsp="${c}" aria-pressed="${c===evSport}"><span>${e}</span>${TYPES[c].l.replace(" / "," /<br>")}</button>`).join("");
+  if(evKind==="sport"){ const r=a>=0&&a<BASE.length?rawAt(a):["L"]; const single=!$("evTo").value||z===a;
+    $("evInfo").textContent = !single ? "Laji korvaa treenit kaikkina valittuina päivinä." : r[0]==="L" ? "Päivä on lepopäivä: laji lisätään päivän treeniksi." :
+      (RUN.has(r[0])||["P","X"].includes(r[0])) ? `${TYPES[adjustMoved(r,evSport)[0]].l} siirtyy toiselle päivälle samalla viikolla: saat ehdotukset tallennuksen jälkeen.${STRENGTHY.has(evSport)&&/lihaskunto/i.test(r[1]||"")?" Lihaskunto hoituu lajilla.":""}` :
+      `${TYPES[r[0]].l} korvautuu lajilla.`;
+    $("evTo").min=$("evFrom").value; return; }
   $("evInfo").textContent = evKind==="note" ? "Treeni pysyy. Päivään tulee merkintä, joka näkyy kalenterissa ja Tulossa-listassa." :
     lost.length ? `Päivä muuttuu lepopäiväksi. Poistuu: ${lost.join(", ")}.${lost.length===1&&z===a?" Saat ehdotukset, minne treeni siirretään.":""}` : "Päivä on jo lepopäivä: tulee vain merkintä.";
   $("evTo").min=$("evFrom").value; }
 function renderEvList(){ const t=Math.max(0,todayIdx()); const it=Object.keys(edits).filter(d=>edits[d].ev&&idxOfISO(d)>=t).sort();
   // ryhmittele peräkkäiset samannimiset
   const groups=[]; it.forEach(d=>{ const e=edits[d], g=groups[groups.length-1]; if(g&&g.name===e.ev.name&&g.kind===e.ev.kind&&idxOfISO(d)===idxOfISO(g.days[g.days.length-1])+1) g.days.push(d); else groups.push({name:e.ev.name,kind:e.ev.kind,days:[d]}); });
-  $("evList").innerHTML=groups.length?groups.map(g=>{ const a=idxOfISO(g.days[0]), z=idxOfISO(g.days[g.days.length-1]); return `<li><span><b>${esc(g.name)}</b><small>${fmt(a)}${z>a?` – ${fmt(z)}`:""} · ${g.kind==="off"?"ei treeniä":"muistutus"}</small></span><button class="btn small ghost" data-evdel="${g.days.join(",")}">Poista</button></li>`; }).join(""):`<li class="note">Ei tulevia menoja.</li>`; }
+  $("evList").innerHTML=groups.length?groups.map(g=>{ const a=idxOfISO(g.days[0]), z=idxOfISO(g.days[g.days.length-1]); return `<li><span><b>${esc(g.name)}</b><small>${fmt(a)}${z>a?` – ${fmt(z)}`:""} · ${g.kind==="off"?"ei treeniä":g.kind==="sport"?"laji korvaa treenin":"muistutus"}</small></span><button class="btn small ghost" data-evdel="${g.days.join(",")}">Poista</button></li>`; }).join(""):`<li class="note">Ei tulevia menoja.</li>`; }
 function saveEvent(){ const name=$("evName").value.trim().slice(0,60); const a=idxOfISO($("evFrom").value), z=$("evTo").value?idxOfISO($("evTo").value):a;
   const err=m=>{ $("evErr").textContent=m; $("evErr").hidden=false; };
   if(!name) return err("Anna menolle nimi."); if(a<0||a>=BASE.length) return err("Valitse päivä ohjelman ajalta."); if(z<a) return err("Loppupäivä on ennen alkua."); if(z-a>30) return err("Enintään 31 päivää kerralla.");
   if(evKind==="off") for(let i=a;i<=z;i++) if(rawAt(i)[0]==="R") return err("Kisapäivää ei voi merkitä lepopäiväksi. Valitse Muistutus.");
+  const min=Math.max(10,Math.min(600,parseInt($("evMin").value)||60));
+  if(evKind==="sport") for(let i=a;i<=z;i++) if(rawAt(i)[0]==="R") return err("Kisapäivää ei voi korvata toisella lajilla. Valitse Muistutus.");
   const single=a===z, was=rawAt(a);
   for(let i=a;i<=z;i++){ const d=isoOfIdx(i), r=rawAt(i);
     if(evKind==="note") edits[d]={code:r[0],text:r[1],note:r[2]&&!r[2].includes(name)?`${name} · ${r[2]}`:name,ev:{name,kind:"note"}};
+    else if(evKind==="sport") edits[d]={code:evSport,text:sportText(evSport,name,min),note:name,ev:{name,kind:"sport",sp:evSport,min}};
     else edits[d]={code:"L",text:`${name}: ei treeniä.`,note:name,ev:{name,kind:"off"}}; }
   persist(); closeEvent();
   if(evKind==="off"&&single&&was[0]!=="L"){ render(); openEditor(isoOfIdx(a)); showMoveSuggest(a,was,name); return; }
+  if(evKind==="sport"&&single&&(RUN.has(was[0])||["P","X"].includes(was[0]))){ render(); openEditor(isoOfIdx(a)); showMoveSuggest(a,adjustMoved(was,evSport),name,{sport:evSport,impact:IMPACT.has(evSport)}); return; }
   render(); toast(`Lisätty: ${name}${single?` (${fmt(a)})`:` (${fmt(a)} – ${fmt(z)})`}.`);
 }
 $("evSave").onclick=saveEvent; $("evCancel").onclick=closeEvent; $("evX").onclick=closeEvent;
 $("evBg").onclick=e=>{ if(e.target.id==="evBg") closeEvent(); };
 $("evKinds").onclick=e=>{ const b=e.target.closest("[data-evk]"); if(!b) return; evKind=b.dataset.evk; syncEvent(); };
+$("evSports").onclick=e=>{ const b=e.target.closest("[data-evsp]"); if(!b) return; evSport=b.dataset.evsp; syncEvent(); };
 $("evFrom").onchange=syncEvent; $("evTo").onchange=syncEvent;
 document.addEventListener("click",e=>{ const o=e.target.closest("[data-addev]"); if(o){ openEvent(o.dataset.addev?+o.dataset.addev:null); return; }
   const d=e.target.closest("[data-evdel]"); if(d){ d.dataset.evdel.split(",").forEach(k=>delete edits[k]); persist(); render(); renderEvList(); toast("Meno poistettu, alkuperäinen ohjelma palautettu."); } });

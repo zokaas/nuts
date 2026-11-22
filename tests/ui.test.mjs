@@ -160,3 +160,17 @@ test("hiustenpesu vk 5→: maanantai ketokonatsoli, perjantai methi + mieto, van
   assert.match(await page.textContent("#habits"), /methi/);
   assert.deepEqual(errors, []); await ctx.close();
 });
+
+test("Muu liikunta -meno: laji korvaa juoksun, juoksu siirtyy ehdotettuun päivään ilman lihaskuntoa", async () => {
+  const { page, errors, ctx } = await open();
+  await page.evaluate(() => openEvent(14));
+  await page.fill("#evName", "Firman beachvolley"); await page.click("[data-evk=sport]"); await page.click("[data-evsp=PA]"); await page.fill("#evMin", "90");
+  assert.match(await page.textContent("#evInfo"), /Juoksu siirtyy.*Lihaskunto hoituu lajilla/);
+  await page.click("#evSave"); await page.waitForTimeout(200);
+  assert.match(await page.textContent("#peSuggest"), /ma 30\.11\.: lepopäivä/);
+  await page.click("#peSuggest [data-moveto]"); await page.waitForTimeout(200);
+  const r = await page.evaluate(() => [rawAt(13), rawAt(14)]);
+  assert.equal(r[1][0], "PA"); assert.match(r[1][1], /90 min.*akillesjänne/);
+  assert.equal(r[0][0], "J"); assert.doesNotMatch(r[0][1], /Heti perään lihaskunto/); assert.match(r[0][1], /Lihaskunto hoitui/);
+  assert.deepEqual(errors, []); await ctx.close();
+});

@@ -36,7 +36,7 @@ $("peSave").onclick=()=>{ const i=edit.idx; const code=$("peType").value, text=$
 $("peSwapBtn").onclick=()=>{ const i=edit.idx, j=+$("peSwap").value; if(isNaN(j)) return; const A=rawAt(i), B=rawAt(j); edits[isoOfIdx(i)]={code:B[0],text:B[1],note:B[2]}; edits[isoOfIdx(j)]={code:A[0],text:A[1],note:A[2]}; afterPlanEdit(`Treenit vaihdettu: ${fmt(i)} ↔ ${fmt(j)}.`); };
 function isHardRaw(r){ return ["P","X","R"].includes(r[0]) || (RUN.has(r[0]) && hasIntensity(r[1])); }
 function isMeno(j){ const e=edits[isoOfIdx(j)]; return !!(e && e.code==="L" && e.note && /ei treeniä/.test(e.text||"")); }
-function suggestSlots(i, moved){
+function suggestSlots(i, moved, ctx={}){
   const [a,z]=weekRange(weekOf(i)); const out=[]; const hard=isHardRaw(moved);
   for(let j=a;j<=z&&j<PLAN.length;j++){
     if(j===i||j<todayIdx()||isMeno(j)) continue; const r=rawAt(j);
@@ -44,14 +44,18 @@ function suggestSlots(i, moved){
     if(r[0]==="L" && r[1]) continue; // tarkoituksellinen lepo: matka, juhlat, darra, palautus
     if(hard && isHardRaw(r)) continue;
     let score, what;
-    if(r[0]==="L"){ score=3; what="lepopäivä"; }
-    else if(!RUN.has(r[0])){ score=2; what=`${TYPES[r[0]].l.toLowerCase()} jää pois`; }
+    /* Muu liikunta lisää jo kuormaa: silloin juoksu korvaa mieluummin tukilajin kuin vie lepopäivän. */
+    if(r[0]==="L"){ score=ctx.sport?2:3; what="lepopäivä"; }
+    else if(!RUN.has(r[0])){ score=ctx.sport?3:2; what=`${TYPES[r[0]].l.toLowerCase()} jää pois`; }
     else if(moved[0]==="P"||hard){ score=1; what=`${TYPES[r[0]].l.toLowerCase()} korvautuu`; }
     else continue;
     const why=[];
     if(hard){ for(const n of [j-1,j+1]){ if(n<0||n>=PLAN.length||n===i) continue; if(isHardRaw(rawAt(n))){ score-=2; why.push(`kova treeni ${n<j?"edellisenä":"seuraavana"} päivänä`); } } }
     if(!RUN.has(moved[0]) && j+1<PLAN.length && rawAt(j+1)[0]==="P"){ score-=1.5; why.push("pitkä lenkki seuraavana päivänä"); }
     if(RUN.has(moved[0]) && j-1>=0 && j-1!==i && rawAt(j-1)[0]==="P"){ score-=0.5; why.push("päivä pitkän lenkin jälkeen"); }
+    if(RUN.has(moved[0]) && moved[0]!=="P" && j+1<PLAN.length && rawAt(j+1)[0]==="P"){ score-=1; why.push("pitkä lenkki seuraavana päivänä"); }
+    if(ctx.impact&&j===i+1){ score-=2; why.push("jalat kuormittuneet edellisen päivän lajista"); }
+    if(ctx.impact&&j===i-1){ score-=0.5; why.push("päivä ennen lajia"); }
     if(moved[0]==="P" && dow(j)>=5) { score+=0.5; why.push("viikonloppu"); }
     score -= Math.abs(j-i)*0.2;
     out.push({j,score,label:`${fmt(j)}: ${what}`,why});
@@ -62,8 +66,8 @@ $("peEventBtn").onclick=()=>{ const i=edit.idx, name=$("peEvent").value.trim().s
   edits[isoOfIdx(i)]={code:"L",text:`${name}: ei treeniä.`,note:name,ev:{name,kind:"off"}}; persist();
   if(was[0]==="L"){ closeEditor(); render(); toast(`Merkitty: ${name}.`); return; }
   showMoveSuggest(i,was,name); };
-function showMoveSuggest(i,was,name){ $("planEdit").hidden=false; $("planEdit").open=true;
-  const sug=suggestSlots(i,was);
+function showMoveSuggest(i,was,name,ctx={}){ $("planEdit").hidden=false; $("planEdit").open=true;
+  const sug=suggestSlots(i,was,ctx);
   const best=sug.filter(x=>x.score>0);
   const drop = !isHardRaw(was) && was[0]!=="P";
   $("peSuggest").hidden=false;
@@ -76,7 +80,7 @@ function showMoveSuggest(i,was,name){ $("planEdit").hidden=false; $("planEdit").
 }
 document.addEventListener("click",e=>{
   const m=e.target.closest("[data-moveto]"); if(m&&edit){ const j=+m.dataset.moveto, was=JSON.parse($("peSuggest").dataset.was); const keepNote=rawAt(j)[2];
-    edits[isoOfIdx(j)]={code:was[0],text:was[1],note:keepNote}; persist(); closeEditor(); render(); toast(`${TYPES[was[0]].l} siirretty: ${fmt(j)}.`); return; }
+    edits[isoOfIdx(j)]={code:was[0],text:was[1],note:keepNote}; persist(); closeEditor(); render(); toast(`${TYPES[was[0]].l} siirretty: ${fmt(j)}`); return; }
   const d=e.target.closest("[data-dropmoved]"); if(d&&edit){ closeEditor(); render(); toast("Treeni jätetty pois. Viikon km-tavoite päivitetty."); }
 });
 $("peReset").onclick=()=>{ delete edits[isoOfIdx(edit.idx)]; afterPlanEdit("Alkuperäinen ohjelma palautettu."); };
