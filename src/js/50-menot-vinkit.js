@@ -3,11 +3,11 @@ let evKind="note", evSport="PA";
 /* Muu liikunta -meno: laji korvaa päivän treenin (käyttäjän päätös 22.11.2026).
    IMPACT = lajit, jotka kuormittavat jalkoja paljon: juoksua ei mieluiten seuraavaksi päiväksi.
    STRENGTHY = lajit, jotka hoitavat viikon lihaskunnon. */
-const IMPACT=new Set(["PA"]), STRENGTHY=new Set(["PA","SA"]);
+const IMPACT=new Set(["PA"]), STRENGTHY=new Set(["PA","SA","RF","T"]);
 function sportTip(code,name){ const beach=/beach|ranta|hiekka/i.test(name||"");
   return ({PA:"Lämmittele 10 min. Hypyt ja käännökset kuormittavat nilkkoja ja pohkeita: pidä teho maltillisena."+(beach?" Hiekka kuormittaa pohkeita ja akillesjännettä: lopeta, jos akillesjänne kipeytyy.":""),
     HI:"Mäet reippaasti, tasaiset rauhallisesti: hyvää kestävyyttä ilman iskuja.",UI:"Kevyt päivä jaloille, hyvä palauttava laji.",PY:"Rauhallinen tai keskiraskas, ei kovia vetoja.",S:"Rauhallinen tai keskiraskas, ei kovia vetoja.",
-    SA:"Jos huomenna on juoksu, tee jalkaliikkeet kevyesti.",JO:"Hyvä palautus ja liikkuvuus.",KA:"Kevyt päivä jaloille.",SK:"Ylämäet reippaasti: hyvää Nutsia varten.",MU:""})[code]||""; }
+    SA:"Jos huomenna on juoksu, tee jalkaliikkeet kevyesti.",RF:"Keskivartalo, lantion tuki ja liikkuvuus: hoitaa viikon lihaskunnon ja tukee juoksuasentoa.",T:"Kova tunti: jos huomenna on vauhtitreeni tai pitkä lenkki, pidä hypyt maltillisina.",JO:"Hyvä palautus ja liikkuvuus.",KA:"Kevyt päivä jaloille.",SK:"Ylämäet reippaasti: hyvää Nutsia varten.",MU:""})[code]||""; }
 function sportText(code,name,min){ return `${name} ${min} min. ${sportTip(code,name)}`.trim(); }
 /* Siirrettävästä treenistä poistetaan lihaskunto, jos laji hoiti sen. */
 function adjustMoved(was,sp){ if(!STRENGTHY.has(sp)||!/lihaskunto/i.test(was[1]||"")) return was;
@@ -20,7 +20,7 @@ function syncEvent(){ document.querySelectorAll("[data-evk]").forEach(b=>b.setAt
   const a=idxOfISO($("evFrom").value), z=$("evTo").value?idxOfISO($("evTo").value):a; let lost=[];
   if(a>=0&&z>=a) for(let i=a;i<=Math.min(z,BASE.length-1);i++){ const r=rawAt(i); if(r[0]!=="L") lost.push(`${fmt(i)} ${TYPES[r[0]].l.toLowerCase()}`); }
   $("evSportRow").hidden=evKind!=="sport";
-  if(evKind==="sport") $("evSports").innerHTML=SPORTS.filter(x=>x[0]!=="J").map(([c,e])=>`<button type="button" data-evsp="${c}" aria-pressed="${c===evSport}"><span>${e}</span>${TYPES[c].l.replace(" / "," /<br>")}</button>`).join("");
+  if(evKind==="sport") $("evSports").innerHTML=SPORTS.filter(x=>x[0]!=="J").map(([c,e])=>`<button type="button" data-evsp="${c}" aria-pressed="${c===evSport}"><span>${e}</span>${(SPLABEL[c]||TYPES[c].l).replace(" / "," /<br>")}</button>`).join("");
   if(evKind==="sport"){ const r=a>=0&&a<BASE.length?rawAt(a):["L"]; const single=!$("evTo").value||z===a;
     $("evInfo").textContent = !single ? "Laji korvaa treenit kaikkina valittuina päivinä." : r[0]==="L" ? "Päivä on lepopäivä: laji lisätään päivän treeniksi." :
       (RUN.has(r[0])||["P","X"].includes(r[0])) ? `${TYPES[adjustMoved(r,evSport)[0]].l} siirtyy toiselle päivälle samalla viikolla: saat ehdotukset tallennuksen jälkeen.${STRENGTHY.has(evSport)&&/lihaskunto/i.test(r[1]||"")?" Lihaskunto hoituu lajilla.":""}` :

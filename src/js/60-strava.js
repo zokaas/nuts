@@ -2,10 +2,10 @@
 const LS_STRAVA="pallas.strava.v1";
 let strava = load(LS_STRAVA, {});   // {worker, a, r, e, name, lastSync, after}
 function saveStrava(){ try{ localStorage.setItem(LS_STRAVA, JSON.stringify(strava)); }catch(e){} }
-const CAT = t => ["Run","TrailRun","VirtualRun"].includes(t)?"run": ["Walk","Hike","Snowshoe"].includes(t)?"hike": t==="Swim"?"swim": ["Yoga","Pilates"].includes(t)?"yoga":
+const CAT = t => ["Run","TrailRun","VirtualRun"].includes(t)?"run": ["Walk","Hike","Snowshoe"].includes(t)?"hike": t==="Swim"?"swim": t==="Pilates"?"pilates": t==="Yoga"?"yoga": ["HighIntensityIntervalTraining","Crossfit"].includes(t)?"hiit":
   ["Soccer","Basketball","Tennis","Badminton","Squash","Padel","Pickleball","Volleyball","TableTennis","Racquetball"].includes(t)?"ball": ["Ride","VirtualRide","EBikeRide","GravelRide","MountainBikeRide","Velomobile"].includes(t)?"bike": ["NordicSki","BackcountrySki","RollerSki"].includes(t)?"ski": "gym";
-const CODE_CAT = c => RUN.has(c)?"run": (c==="PT"||c==="YM"||c==="SK"||c==="KA")?"hike": ["S","SH","SL","PY"].includes(c)?"bike": c==="HI"?"ski": ["T","TL","K","LH","SA"].includes(c)?"gym": c==="UI"?"swim": c==="JO"?"yoga": c==="PA"?"ball": null;
-const CAT_CODE = {run:"J", hike:"KA", bike:"PY", ski:"HI", gym:"SA", swim:"UI", yoga:"JO", ball:"PA"};
+const CODE_CAT = c => RUN.has(c)?"run": (c==="PT"||c==="YM"||c==="SK"||c==="KA")?"hike": ["S","SH","SL","PY"].includes(c)?"bike": c==="HI"?"ski": ["T","TL","K","LH","SA"].includes(c)?"gym": c==="UI"?"swim": c==="JO"?"yoga": c==="PA"?"ball": c==="RF"?"pilates": null;
+const CAT_CODE = {run:"J", hike:"KA", bike:"PY", ski:"HI", gym:"SA", swim:"UI", yoga:"JO", ball:"PA", pilates:"RF", hiit:"T"};
 function workerBase(){ return (strava.worker||"").replace(/\/+$/,""); }
 function stravaConnected(){ return !!(strava.r && strava.worker); }
 function connectStrava(){
@@ -67,7 +67,7 @@ function importActivities(acts){
     if(cat==="gym"){ const s0=sessionsOn(BASE,logs,ADAPT,i).find(s=>RUN.has(s.code)&&(s.code==="JL"||/lihaskunto/i.test(s.text||""))&&!(logs[s.key]&&logs[s.key].strengthStravaId));
       if(s0){ const prev=logs[s0.key]||{}; logs[s0.key]={...prev, type:prev.type||s0.code, status:prev.status||"note", flags:prev.flags||[], note:prev.note||"", strength:prev.strength||progFromText(s0.text,weekOf(i)), strengthMin:Math.round((a.moving_time||0)/60), strengthStravaId:a.id, updatedAt:new Date().toISOString()}; added++; continue; } }
     let key=null;
-    for(const s of sessionsOn(BASE,logs,ADAPT,i)){ const l=logs[s.key]; if(l&&l.stravaId) continue; if(l&&l.status==="done"&&!l.quick) continue; if(CODE_CAT(s.code)===cat || (cat==="run"&&s.code==="JL") || (cat==="gym"&&s.code==="SL") || (cat==="bike"&&s.code==="TL") || s.code==="V"){ key=s.key; break; } }
+    for(const s of sessionsOn(BASE,logs,ADAPT,i)){ const l=logs[s.key]; if(l&&l.stravaId) continue; if(l&&l.status==="done"&&!l.quick) continue; if(CODE_CAT(s.code)===cat || (cat==="run"&&s.code==="JL") || (cat==="gym"&&s.code==="SL") || (cat==="hiit"&&["T","TL","K"].includes(s.code)) || (cat==="pilates"&&["JO","SA"].includes(s.code)) || (cat==="bike"&&s.code==="TL") || s.code==="V"){ key=s.key; break; } }
     let type;
     if(key){ type=sessionByKey(key).code; } else { key=`${date}~s${a.id}`; type=CAT_CODE[cat]; }
     const prev=logs[key]||{};

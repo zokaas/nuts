@@ -4,20 +4,22 @@ let BASE = PLAN.map(r=>r.slice());
 const PHASE = w => w<=8?"Pohja":w<=16?"Rakennus":w<=22?"Maratonjakso":w<=24?"Palautuminen":w<=33?"Kisaspesifi":"Kevennys";
 const TYPES = {
   J:{l:"Juoksu",c:"t-run"}, JL:{l:"Juoksu + lihaskunto",c:"t-run"}, P:{l:"Pitkä lenkki",c:"t-long"},
-  PT:{l:"Patikointi",c:"t-hike"}, YM:{l:"Ylämäkikävely",c:"t-hike"}, K:{l:"Kuntopiiri",c:"t-gym"}, T:{l:"Tribe",c:"t-gym"}, TL:{l:"Tribe tai lihaskunto",c:"t-gym"},
+  PT:{l:"Patikointi",c:"t-hike"}, YM:{l:"Ylämäkikävely",c:"t-hike"}, K:{l:"Kuntopiiri",c:"t-gym"}, RF:{l:"Reformer-pilates",c:"t-gym"}, T:{l:"Tribe",c:"t-gym"}, TL:{l:"Tribe tai lihaskunto",c:"t-gym"},
   S:{l:"Spinning",c:"t-bike"}, SH:{l:"Spinning tai hiihto",c:"t-bike"}, SL:{l:"Spinning tai lihaskunto",c:"t-bike"},
   LH:{l:"Lihashuolto",c:"t-hike"}, X:{l:"Testi",c:"t-test"}, R:{l:"Kisa",c:"t-race"}, L:{l:"Lepo",c:"t-rest"},
   V:{l:"Vapaa laji",c:"t-free"}, UI:{l:"Uinti",c:"t-swim"}, PY:{l:"Pyöräily",c:"t-bike"}, HI:{l:"Hiihto",c:"t-bike"}, SK:{l:"Sauvakävely",c:"t-hike"}, KA:{l:"Kävely",c:"t-hike"},
   SA:{l:"Sali / lihaskunto",c:"t-gym"}, JO:{l:"Jooga / liikkuvuus",c:"t-free"}, PA:{l:"Pallopeli",c:"t-gym"}, MU:{l:"Muu liikunta",c:"t-free"}
 };
 /* Lajit vaihtoon: [koodi, emoji, kerroin juoksuminuutteihin, rasittava?] */
-const SPORTS = [["UI","🏊",1.15,0],["PY","🚴",1.4,0],["S","🚲",1,1],["HI","⛷️",1.1,1],["SK","🥢",1.6,0],["KA","🚶",2,0],["SA","🏋️",1,0],["JO","🧘",1,0],["PA","⚽",1,1],["MU","✨",1,0],["J","🏃",1,1]];
+/* Lajivaihtoehdot: [koodi, ikoni, kestokerroin juoksuun nähden, raskas]. SPLABEL = napin nimi, jos eri kuin tyypin nimi. */
+const SPLABEL = {T:"HIIT / Tribe"};
+const SPORTS = [["UI","🏊",1.15,0],["PY","🚴",1.4,0],["S","🚲",1,1],["HI","⛷️",1.1,1],["SK","🥢",1.6,0],["KA","🚶",2,0],["SA","🏋️",1,0],["RF","🤸",1,0],["T","🔥",1,1],["JO","🧘",1,0],["PA","⚽",1,1],["MU","✨",1,0],["J","🏃",1,1]];
 const VIG = new Set(["J","JL","P","X","R","S","SH","SL","T","TL","K","PA","HI"]);
 const FLAGS = [["sick","🤒 Sairas"],["pain","🩹 Kipu"],["tired","😮‍💨 Väsynyt"],["sleep","😴 Huono uni"],["stress","🧠 Stressi"],["hangover","🍾 Darra"],["travel","✈️ Matkalla"],["great","⚡ Huippufiilis"]];
 const FLAG_L = Object.fromEntries(FLAGS.concat([["fever","🌡️ Kuume"]]));
 const AREAS = ["sääri","polvi","akillesjänne","pohje","jalkapohja","nilkka","lonkka","reisi","selkä","muu"];
 const DOW = ["ma","ti","ke","to","pe","la","su"];
-const SHORT = {V:"Vapaa",UI:"Uinti",PY:"Pyörä",HI:"Hiihto",SK:"Sauva",KA:"Kävely",SA:"Sali",JO:"Jooga",PA:"Pallo",MU:"Muu",J:"Juoksu",JL:"Juoksu",P:"Pitkä",PT:"Patikka",YM:"Ylämäki",K:"Piiri",T:"Tribe",TL:"Tribe",S:"Spin",SH:"Spin",SL:"Spin",LH:"Huolto",X:"Testi",R:"Kisa",L:"Lepo"};
+const SHORT = {V:"Vapaa",UI:"Uinti",PY:"Pyörä",HI:"Hiihto",SK:"Sauva",KA:"Kävely",SA:"Sali",JO:"Jooga",PA:"Pallo",RF:"Reformer",MU:"Muu",J:"Juoksu",JL:"Juoksu",P:"Pitkä",PT:"Patikka",YM:"Ylämäki",K:"Piiri",T:"Tribe",TL:"Tribe",S:"Spin",SH:"Spin",SL:"Spin",LH:"Huolto",X:"Testi",R:"Kisa",L:"Lepo"};
 const TITLES = {ohje:"Näin sovellus toimii",kalenteri:"Kalenteri",historia:"Historia",analyysi:"Analyysi",opas:"Opas",merkit:"Merkit",asetukset:"Asetukset"};
 let selDay=null, statusOpen=false, anaTab="matka";
 const FEEL = [["1","raskas"],["2","tahmea"],["3","ok"],["4","hyvä"],["5","kevyt"]];

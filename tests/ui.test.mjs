@@ -174,3 +174,13 @@ test("Muu liikunta -meno: laji korvaa juoksun, juoksu siirtyy ehdotettuun päiv�
   assert.equal(r[0][0], "J"); assert.doesNotMatch(r[0][1], /Heti perään lihaskunto/); assert.match(r[0][1], /Lihaskunto hoitui/);
   assert.deepEqual(errors, []); await ctx.close();
 });
+
+test("lajivalikoissa Reformer ja HIIT / Tribe; Reformer hoitaa lihaskunnon", async () => {
+  const { page, errors, ctx } = await open();
+  await page.evaluate(() => openEvent(14)); await page.click("[data-evk=sport]");
+  const labels = await page.$$eval("#evSports button", bs => bs.map(b => b.textContent.replace(/\s+/g, " ").trim()));
+  assert.ok(labels.some(l => /Reformer/.test(l)) && labels.some(l => /HIIT \/\s*Tribe/.test(l)), labels.join(" | "));
+  await page.fill("#evName", "Reformer"); await page.click("[data-evsp=RF]");
+  assert.match(await page.textContent("#evInfo"), /Lihaskunto hoituu lajilla/);
+  assert.deepEqual(errors, []); await ctx.close();
+});

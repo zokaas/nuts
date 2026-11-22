@@ -99,7 +99,7 @@ document.addEventListener("click",e=>{ const a=e.target.closest("[data-scale]");
 
 /* ===== Vaihda laji / kirjaa vapaa liikunta ===== */
 let sw=null; // {mode:"swap"|"log", i, code, min, moveTo}
-function sportBtns(sel){ return SPORTS.filter(x=>sw.mode==="log"||x[0]!==rawAt(sw.i)[0]).map(([c,e])=>`<button type="button" data-sp="${c}" aria-pressed="${c===sel}"><span>${e}</span>${TYPES[c].l.replace(" / "," /<br>")}</button>`).join(""); }
+function sportBtns(sel){ return SPORTS.filter(x=>sw.mode==="log"||x[0]!==rawAt(sw.i)[0]).map(([c,e])=>`<button type="button" data-sp="${c}" aria-pressed="${c===sel}"><span>${e}</span>${(SPLABEL[c]||TYPES[c].l).replace(" / "," /<br>")}</button>`).join(""); }
 function openSwap(i,mode){ const r=mode==="swap"?rawAt(i):null; sw={mode,i,code:null,min:null,moveTo:null};
   $("swTitle").textContent= mode==="swap"?"Vaihda laji":"Kirjaa liikunta"; $("swEyebrow").textContent=fmt(i);
   $("swOrig").innerHTML= mode==="swap"?`Ohjelmassa: <b>${TYPES[r[0]].l}</b>${r[1]?` · ${esc(r[1])}`:""}`:"Mikä tahansa liikunta lasketaan Terveys-tavoitteeseen.";
