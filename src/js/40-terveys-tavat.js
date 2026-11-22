@@ -1,6 +1,6 @@
 /* ===== Tavat ===== */
 const HABIT_V3=[
-  {id:"dvit",ic:"💊",name:"D-vitamiini 10 µg",when:"aamu",sched:[{from:"2026-11-19",to:"2027-03-31",days:"all"},{from:"2027-10-01",to:"2028-03-31",days:"all"}]},
+  {id:"dvit",ic:"💊",name:"D-vitamiini 10 µg",when:"aamu",sched:[{from:"2026-11-23",to:"2027-03-31",days:"all"},{from:"2027-10-01",to:"2028-03-31",days:"all"}]},
   {id:"veri1",ic:"🩸",name:"Verikoe: ferritiini ja perusverenkuva",task:true,when:"päivä",note:"Työterveys tai lääkäri. Lähtötaso treenin alussa.",sched:[{from:"2026-11-19",to:"2026-12-31",days:"all"}]},
   {id:"veri2",ic:"🩸",name:"Verikoe: ferritiini ja perusverenkuva",task:true,when:"päivä",note:"Vertaa lähtötasoon ennen Belgradin kovimpia viikkoja.",sched:[{from:"2027-02-01",to:"2027-03-15",days:"all"}]}];
 /* Hiustenpesu viikosta 5 (14.12.) eteenpäin: käyttäjän rutiini 20.11.2026. */
@@ -11,17 +11,22 @@ const HABIT_V6=[
   {id:"rullaus",ic:"🧽",name:"Rullaus 10 min",when:"ilta",sched:[{from:"2026-11-23",days:{1:{n:"pohkeet, reidet, pakarat"},3:{n:"pohkeet, reidet, pakarat"}}}]},
   {id:"jalat",ic:"🦶",name:"Jalkahoito",when:"päivä",sched:[{from:"2026-11-23",days:{6:{n:"kynnet lyhyiksi, kovettumat kevyesti raspilla"}}}]}];
 const HABIT_DEFAULT=[
-  {id:"hera",ic:"🌅",name:"Verenkierron herättely 5 min",when:"aamu",sched:[{from:"2026-11-19",days:"all"}]},
+  {id:"hera",ic:"🌅",name:"Verenkierron herättely 5 min",when:"aamu",sched:[{from:"2026-11-23",days:"all"}]},
   {id:"pesu",ic:"🧴",name:"Hiustenpesu",when:"päivä",week:2,sched:[
     {from:"2026-11-16",to:"2026-12-13",label:"Hilseen rauhoitus (vk 1–4)",days:{0:{n:"Pesupäivä: öljy ensin · ketokonatsoli"},2:{n:"Pikapesu, jos hiukset rasvoittuvat · mieto shampoo",opt:true},4:{n:"Pesupäivä + methi-naamio · ketokonatsoli"}}},
     PESU_V5]},
   ...HABIT_V3, ...HABIT_V6];
-function habits(){ if(!meta.habits){ meta.habits=JSON.parse(JSON.stringify(HABIT_DEFAULT)); meta.hab=meta.hab||{}; meta.habMig=6; persist(); }
+function habits(){ if(!meta.habits){ meta.habits=JSON.parse(JSON.stringify(HABIT_DEFAULT)); meta.hab=meta.hab||{}; meta.habMig=7; persist(); }
   if((meta.habMig||0)<2){ meta.habits=meta.habits.filter(h=>h.id!=="letti"&&h.id!=="kampa"); meta.habMig=2; persist(); }
   if((meta.habMig||0)<3){ for(const h of HABIT_V3) if(!meta.habits.some(x=>x.id===h.id)) meta.habits.push(JSON.parse(JSON.stringify(h))); meta.habMig=3; persist(); }
   if((meta.habMig||0)<4){ for(const h of meta.habits){ const s=h.sched&&h.sched[0]; if(!h.task&&s&&s.from&&s.from<"2026-11-19"&&!(meta.hab&&meta.hab["2026-11-18"]&&meta.hab["2026-11-18"][h.id])) s.from="2026-11-19"; } meta.habMig=4; persist(); }
   if((meta.habMig||0)<5){ const h=meta.habits.find(x=>x.id==="pesu"); if(h&&h.sched){ const k=h.sched.findIndex(x=>x.todo||x.from==="2026-12-14"); if(k>=0) h.sched[k]=JSON.parse(JSON.stringify(PESU_V5)); } meta.habMig=5; persist(); }
-  if((meta.habMig||0)<6){ for(const h of HABIT_V6) if(!meta.habits.some(x=>x.id===h.id)) meta.habits.push(JSON.parse(JSON.stringify(h))); meta.habMig=6; persist(); } return meta.habits.filter(h=>!h.off); }
+  if((meta.habMig||0)<6){ for(const h of HABIT_V6) if(!meta.habits.some(x=>x.id===h.id)) meta.habits.push(JSON.parse(JSON.stringify(h))); meta.habMig=6; persist(); }
+  if((meta.habMig||0)<7){ const F="2026-11-23", tasks=new Set(meta.habits.filter(h=>h.task).map(h=>h.id));
+    for(const d of Object.keys(meta.hab||{})) if(d<F){ for(const id of Object.keys(meta.hab[d])) if(!tasks.has(id)) delete meta.hab[d][id]; if(!Object.keys(meta.hab[d]).length) delete meta.hab[d]; }
+    for(const h of meta.habits){ const sc=h.sched&&h.sched[0]; if(!h.task&&sc&&sc.from&&sc.from<F) sc.from=F; }
+    for(const k of Object.keys(logs)) if(k.slice(0,10)<F) delete logs[k];
+    if(meta.sick&&meta.sick.from<F) meta.sick=null; meta.habMig=7; persist(); } return meta.habits.filter(h=>!h.off); }
 function habitOn(h,i){ if(h.task||!meta.habMove||!meta.habMove[h.id]) return habitOnBase(h,i); const d=isoOfIdx(i), mv=meta.habMove[h.id]; if(mv[d]) return null;
   for(const f in mv) if(mv[f]===d){ const b=habitOnBase(h,idxOfISO(f)); if(b) return {...b,n:(b.n?b.n+" · ":"")+`siirretty ${fmt(idxOfISO(f))}`,moved:f}; } return habitOnBase(h,i); }
 function habitOnBase(h,i){ const d=isoOfIdx(i), w=dow(i); const sc=(h.sched||[]).find(x=>x.from<=d&&(!x.to||d<=x.to)); if(!sc) return null;

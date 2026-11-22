@@ -202,10 +202,10 @@ function renderCalendar(t){
   const cw=weekOf(t); let h="", lastPh=null;
   const want=c=> calFilter==="all" || (calFilter==="run"&&RUN.has(c)) || (calFilter==="key"&&(c==="P"||c==="X"||c==="R"));
   // menneet viikot yhteen riviin
-  if(cw>1){ let km=0, pl=0, dn=0, met=0; for(let w=1;w<cw;w++){ const a=weekKm(BASE,logs,w); km+=a; if(TARGET_EFF[w-1]&&a>=TARGET_EFF[w-1]*0.9) met++; }
+  if(cw>FIRST_W){ let km=0, pl=0, dn=0, met=0; for(let w=FIRST_W;w<cw;w++){ const a=weekKm(BASE,logs,w); km+=a; if(TARGET_EFF[w-1]&&a>=TARGET_EFF[w-1]*0.9) met++; }
     for(let i=FIRST;i<(cw-1)*7-1&&i<BASE.length;i++){ const c=sessionsOn(BASE,logs,ADAPT,i)[0].code; if(c==="L") continue; pl++; const l=logs[isoOfIdx(i)]; if(l&&l.status==="done") dn++; }
-    h+=`<button class="calpast" id="calPast" aria-expanded="${calPastOpen}"><span><b>Vk 1–${cw-1}</b> · ${n1(km)} km · ${dn}/${pl} treeniä · tavoite täynnä ${met}/${cw-1} viikkona</span><span aria-hidden="true">${calPastOpen?"▴":"▾"}</span></button>`; }
-  for(let w=calPastOpen?1:cw;w<=36;w++){
+    h+=`<button class="calpast" id="calPast" aria-expanded="${calPastOpen}"><span><b>Vk ${FIRST_W}–${cw-1}</b> · ${n1(km)} km · ${dn}/${pl} treeniä · tavoite täynnä ${met}/${cw-FIRST_W} viikkona</span><span aria-hidden="true">${calPastOpen?"▴":"▾"}</span></button>`; }
+  for(let w=calPastOpen?FIRST_W:Math.max(cw,FIRST_W);w<=36;w++){
     const a0=(w-1)*7-1, ph=PHASE(w); if(ph!==lastPh){ h+=`<div class="calphase">${esc(ph)}</div>`; lastPh=ph; }
     const act=weekKm(BASE,logs,w), tgt=TARGET_EFF[w-1]; let cells="";
     for(let i=a0;i<=a0+6;i++){
