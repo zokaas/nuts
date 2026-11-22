@@ -50,8 +50,8 @@ test("scaleText säilyttää lihaskunnon ja skaalaa", () => {
   assert.match(L.scaleText("P", "2,5 h rauhallisesti polulla", 0.6, true), /1,5 h/);
 });
 test("viikon km lasketaan myös Strava-lisätreeneistä", () => {
-  const logs = { "2026-11-19": { status: "done", km: 4 }, "2026-11-20~s9": { status: "done", km: 3, type: "J" } };
-  assert.strictEqual(L.weekKm(plan, logs, 1), 7);
+  const logs = { "2026-11-23": { status: "done", km: 4 }, "2026-11-24~s9": { status: "done", km: 3, type: "J" } };
+  assert.strictEqual(L.weekKm(plan, logs, 2), 7);
 });
 test("kuume: paluu vähintään viikko, nuha 3 pv", () => {
   assert.strictEqual(L.sickRec(1, false), 3); assert.strictEqual(L.sickRec(1, true), 7); assert.strictEqual(L.sickRec(9, true), 14);

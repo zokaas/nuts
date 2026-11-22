@@ -54,15 +54,18 @@ test("kaikki näkymät aukeavat ilman virheitä, vaalea ja tumma", async () => {
   }
 });
 
-test("ohjelma alkaa to 19.11.: ensimmäinen treeni tänään, ti–ke eivät näy", async () => {
-  const { page, errors, ctx } = await open();
-  assert.match(await page.textContent("#today"), /Juoksu/);
-  assert.match(await page.textContent("#today"), /Ensimmäinen treeni/);
+test("ohjelma alkaa ma 23.11.: to–su lepoa, ensimmäinen treeni maanantaina, ti–ke 17.–18.11. eivät näy", async () => {
+  const { page, errors, ctx } = await open({ date: "2026-11-22T10:00:00" });
+  assert.match(await page.textContent("#today"), /Ohjelma alkaa huomenna/);
   const days = await page.$$eval(".strip .sd .dn", els => els.map(e => e.textContent.trim()).filter(Boolean));
   assert.ok(!days.includes("17") && !days.includes("18") && days.includes("19"), days.join(","));
-  await page.evaluate(() => { location.hash = "kalenteri"; }); await page.waitForTimeout(200);
-  assert.match(await page.textContent("#calBody"), /Vk 1\s*19\.11\.–22\.11\./);
-  assert.deepEqual(errors, []); await ctx.close();
+  await ctx.close();
+  const b = await open({ date: "2026-11-23T08:00:00" });
+  assert.match(await b.page.textContent("#today"), /Juoksu/); assert.match(await b.page.textContent("#today"), /Ensimmäinen treeni/);
+  assert.match(await b.page.textContent("#habits"), /Kasvot illalla/);
+  assert.ok(await b.page.isHidden("#summary"), "ei koostetta viikolta 1, jolla ei ollut treenejä");
+  const m = await meta(b.page); assert.equal(m.habMig, 6); assert.ok(["kasvot", "rullaus", "jalat"].every(id => m.habits.some(h => h.id === id)));
+  assert.deepEqual([...errors, ...b.errors], []); await b.ctx.close();
 });
 
 test("tarkistuspiste 1 (30 min yhtäjaksoista) on pe 4.12.", async () => {
@@ -147,7 +150,7 @@ test("hiustenpesu vk 5→: maanantai ketokonatsoli, perjantai methi + mieto, van
     { from: "2026-11-19", to: "2026-12-13", days: { 0: { n: "x" } } }, { from: "2026-12-14", label: "Ylläpito (vk 5→)", days: { 0: { n: "Pesupäivä" }, 4: { n: "Pesupäivä" } }, todo: true }] }] };
   const { page, errors, ctx } = await open({ date: "2026-12-18T08:00:00", meta: old });
   const m = await meta(page); const sc = m.habits.find(h => h.id === "pesu").sched[1];
-  assert.equal(m.habMig, 5); assert.ok(!sc.todo); assert.match(sc.days[4].n, /methi.*mieto/); assert.match(sc.days[0].n, /ketokonatsoli/);
+  assert.equal(m.habMig, 6); assert.ok(!sc.todo); assert.match(sc.days[4].n, /methi.*mieto/); assert.match(sc.days[0].n, /ketokonatsoli/);
   assert.match(await page.textContent("#habits"), /methi/);
   assert.deepEqual(errors, []); await ctx.close();
 });

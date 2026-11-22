@@ -82,8 +82,11 @@ function summaryHTML(S, full){
     ${full&&S.key.length?`<div class="eyebrow">Ensi viikon tärkeimmät</div><ul class="ins">${S.key.slice(0,4).map(k=>`<li>${esc(k)}</li>`).join("")}</ul>`:""}`;
 }
 function renderSummary(ti){ const d=dow(ti); const el=$("summary"); if(ti<5||ti>=BASE.length||!(d===6||d===0)){ el.hidden=true; return; }
-  const w = d===6?weekOf(ti):weekOf(ti)-1; el.hidden=false; el.innerHTML=`<div class="eyebrow">Viikkokooste · viikko ${w}</div>`+summaryHTML(weekSummary(w),true); }
-function renderWeeklyList(ti){ const cw=weekOf(ti); const ws=[]; for(let w=cw-1;w>=Math.max(1,cw-4);w--) ws.push(w);
+  const w = d===6?weekOf(ti):weekOf(ti)-1; const S=weekSummary(w);
+  /* Ei koostetta viikolta, jolla ei ollut yhtään treeniä (esim. ennen ohjelman alkua). */
+  if(!S.planned){ el.hidden=true; return; }
+  el.hidden=false; el.innerHTML=`<div class="eyebrow">Viikkokooste · viikko ${w}</div>`+summaryHTML(S,true); }
+function renderWeeklyList(ti){ const cw=weekOf(ti); const ws=[]; for(let w=cw-1;w>=Math.max(1,cw-4);w--) if(weekSummary(w).planned) ws.push(w);
   $("aWeeks").innerHTML=ws.length?ws.map(w=>`<details class="wk"><summary>Viikko ${w} · ${PHASE(w)}</summary>${summaryHTML(weekSummary(w),false)}</details>`).join(""):`<p class="note">Ensimmäinen kooste sunnuntaina.</p>`; }
 
 /* ===== v4: kisa – kengät, varusteet, tankkaus ===== */
