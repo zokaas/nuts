@@ -65,3 +65,19 @@ test("kynnystreeni kevenee väsyneenä", () => {
   assert.ok(L.hasIntensity("10 km polulla: 2 × 20 min kynnysvauhtia"));
   assert.ok(L.hasIntensity("Viimeinen tunti tavoiteteholla"));
 });
+
+test("planMin: toistot eivät ole kesto, km juoksuun, lihaskunto mukaan; jokainen ohjelmaviikko ≥ 4 h", () => {
+  const { planMin, WEEK_MIN } = L;
+  assert.equal(planMin("K", "Kuntopiiri 30 min + sykkeen nosto: 8× 1 min ylämäkeen kovaa"), 30);
+  assert.equal(planMin("JL", "7 km, mäkivedot 8×1 min. Perään lihaskunto D (10 min)."), 63);
+  assert.equal(planMin("P", "Pitkä 3–3,5 h polulla."), 195);
+  assert.equal(planMin("L", "Kävely käy."), 0);
+  const plan = require("../src/plan.json");
+  for (let w = 2; w <= 36; w++) { const a = (w - 1) * 7 - 1; let s = 0; for (let i = Math.max(a, 6); i <= a + 6 && i < plan.length; i++) s += planMin(plan[i][0], plan[i][1]); assert.ok(s >= WEEK_MIN, `viikko ${w - 1}: ${s} min`); }
+});
+
+test("kirjaamaton kävely ei ole väliin jäänyt treeni", () => {
+  const plan = [["L", ""], ["KA", "Kävely 30 min"], ["KA", "Kävely 30 min"], ["KA", "Kävely 30 min"], ["J", "30 min"]];
+  const w = L.computeWarnings(plan, {}, {}, 4);
+  assert.ok(!w.some(x => /väliin|kirjaamatta/.test(x.title)), JSON.stringify(w));
+});

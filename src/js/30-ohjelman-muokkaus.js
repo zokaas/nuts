@@ -45,7 +45,8 @@ function suggestSlots(i, moved, ctx={}){
     if(hard && isHardRaw(r)) continue;
     let score, what;
     /* Muu liikunta lisää jo kuormaa: silloin juoksu korvaa mieluummin tukilajin kuin vie lepopäivän. */
-    if(r[0]==="L"){ score=ctx.sport?2:3; what="lepopäivä"; }
+    if(LIGHT.has(r[0])&&/reissu|matka/i.test(r[1]||"")) continue; // matkapäivän kävely ei ole vapaa päivä
+    if(r[0]==="L"||LIGHT.has(r[0])){ score=ctx.sport?2:3; what=r[0]==="L"?"lepopäivä":`${TYPES[r[0]].l.toLowerCase()} jää pois`; }
     else if(!RUN.has(r[0])){ score=ctx.sport?3:2; what=`${TYPES[r[0]].l.toLowerCase()} jää pois`; }
     else if(moved[0]==="P"||hard){ score=1; what=`${TYPES[r[0]].l.toLowerCase()} korvautuu`; }
     else continue;
@@ -102,7 +103,7 @@ let sw=null; // {mode:"swap"|"log", i, code, min, moveTo}
 function sportBtns(sel){ return SPORTS.filter(x=>sw.mode==="log"||x[0]!==rawAt(sw.i)[0]).map(([c,e])=>`<button type="button" data-sp="${c}" aria-pressed="${c===sel}"><span>${e}</span>${(SPLABEL[c]||TYPES[c].l).replace(" / "," /<br>")}</button>`).join(""); }
 function openSwap(i,mode){ const r=mode==="swap"?rawAt(i):null; sw={mode,i,code:null,min:null,moveTo:null};
   $("swTitle").textContent= mode==="swap"?"Vaihda laji":"Kirjaa liikunta"; $("swEyebrow").textContent=fmt(i);
-  $("swOrig").innerHTML= mode==="swap"?`Ohjelmassa: <b>${TYPES[r[0]].l}</b>${r[1]?` · ${esc(r[1])}`:""}`:"Mikä tahansa liikunta lasketaan Terveys-tavoitteeseen.";
+  $("swOrig").innerHTML= mode==="swap"?`Ohjelmassa: <b>${TYPES[r[0]].l}</b>${r[1]?` · ${esc(r[1])}`:""}`:"Mikä tahansa liikunta lasketaan viikon 4 h liikuntaan.";
   $("swSave").textContent= mode==="swap"?"Vaihda":"Kirjaa"; $("swMin").value=""; $("swErr").hidden=true; syncSwap();
   $("swBg").classList.add("open"); document.body.classList.add("locked"); }
 function closeSwap(){ $("swBg").classList.remove("open"); document.body.classList.remove("locked"); sw=null; }
@@ -142,7 +143,7 @@ function renderMaint(){ const ti=todayIdx(), on=ti>NUTS; document.body.classList
   const w=weekOf(ti), G=weekGoals(w), a0=(w-1)*7-1; const items=[]; for(let i=a0;i<=a0+6;i++){ const d=isoOfIdx(i); for(const k of Object.keys(logs).filter(k=>k.startsWith(d)).sort()){ const l=logs[k]; if(l.status!=="done") continue; items.push(`<li><time>${DOW[dow(i)]} ${new Date(START_UTC+i*864e5).getUTCDate()}.</time><span>${typeChip(l.type||"MU")} ${l.min?`${l.min} min`:""}${l.km?` · ${n1(l.km)} km`:""}${l.stravaName?` · ${esc(l.stravaName)}`:""}</span></li>`); } }
   $("maint").innerHTML=`<div class="eyebrow">Ylläpitotila · ${ti-NUTS} pv Nutsista</div><h2>Liiku 3–4 kertaa viikossa, mitä tahansa</h2>
     <div class="goals"><div class="goal"><div class="gh">${ring(G.n/3,"r-nuts")}<div><b>Kerrat</b><span class="num">${G.n} / 3–4</span></div></div><small>${G.n>=3?"Viikon tavoite täynnä":`${3-G.n} kertaa vielä`}</small></div>
-    <div class="goal"><div class="gh">${ring(G.act/150,"r-health")}<div><b>Terveys</b><span class="num">${G.act} / 150 min</span></div></div><small>Lihaskunto ${Math.min(G.strength,2)}/2</small></div></div>
+    <div class="goal"><div class="gh">${ring(G.tot/WEEK_MIN,"r-health")}<div><b>Liikunta</b><span class="num">${fmtH(G.tot)} / 4 h</span></div></div><small>Lihaskunto ${Math.min(G.strength,2)}/2</small></div></div>
     <button class="btn primary big" data-logfree="${ti}">＋ Kirjaa liikunta</button>
     <ul class="up">${items.join("")||`<li class="note">Ei vielä liikuntaa tällä viikolla. Strava-treenit tulevat tähän automaattisesti.</li>`}</ul>
     <p class="tip">Seuraava tavoite? Kerro, niin teen uuden ohjelman.</p>`; }

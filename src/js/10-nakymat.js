@@ -158,15 +158,19 @@ function weekGoals(w){ const a0=(w-1)*7-1; let mod=0, vig=0, n=0; const sDays=ne
     if(VIG.has(code)) vig+=min; else mod+=min;
     if(l.strength||l.strengthStravaId||["K","SA","T","TL"].includes(code)||/lihaskunto/i.test(txt)) sDays.add(k.slice(0,10));
     if(l.strengthMin) mod+=l.strengthMin; }
-  const act=mod+2*vig; return {act:Math.round(act), mod, vig, n, strength:sDays.size, keyN, keyD}; }
+  const act=mod+2*vig; return {act:Math.round(act), tot:Math.round(mod+vig), mod, vig, n, strength:sDays.size, keyN, keyD}; }
+const fmtH=m=>{ m=Math.round(m); const h=Math.floor(m/60), r=m%60; return h?`${h} h${r?` ${r} min`:""}`:`${r} min`; };
+/* Viikon suunniteltu liikunta (ohjelma + muokkaukset + mukautukset). */
+function plannedWeekMin(w){ const a0=(w-1)*7-1; let s=0; for(let i=Math.max(a0,FIRST);i<=a0+6&&i<BASE.length;i++){ const e=effective(BASE,ADAPT,i); s+=planMin(e.code,e.text); } return s; }
 function ring(pct,cls){ const r=17,c=2*Math.PI*r, p=Math.max(0,Math.min(1,pct)); return `<svg class="ring ${cls}" viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="22" r="${r}" class="rbg"/><circle cx="22" cy="22" r="${r}" class="rfg" stroke-dasharray="${(c*p).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 22 22)"/>${p>=1?`<text x="22" y="27" text-anchor="middle">✓</text>`:""}</svg>`; }
 function goalsHTML(w, act, tgt){ const G=weekGoals(w); const kmP=tgt?act/tgt:0;
   return `<div class="goals">
     <div class="goal"><div class="gh">${ring(kmP,"r-nuts")}<div><b>Nuts</b><span class="num">${n1(act)} / ${tgt} km</span></div></div><small>Avaintreenit ${G.keyD}/${G.keyN}</small></div>
-    <button class="goal" data-logfree="" aria-label="Terveys: kirjaa liikuntaa"><div class="gh">${ring(G.act/150,"r-health")}<div><b>Terveys</b><span class="num">${G.act} / 150 min</span></div></div><small>Lihaskunto ${Math.min(G.strength,2)}/2 · ＋ kirjaa</small></button>
+    <button class="goal" data-logfree="" aria-label="Liikunta: kirjaa"><div class="gh">${ring(G.tot/WEEK_MIN,"r-health")}<div><b>Liikunta</b><span class="num">${fmtH(G.tot)} / 4 h</span></div></div><small>Lihaskunto ${Math.min(G.strength,2)}/2 · ＋ kirjaa</small></button>
   </div>`; }
-function slimGoal(w,act,tgt){ const G=weekGoals(w), pct=Math.min(100,tgt?act/tgt*100:0);
-  return `<div class="kmbar"><div class="lbl"><span><b class="num">${n1(act)}</b> / ${tgt} km</span><span>${G.keyN?`Avaintreenit ${G.keyD}/${G.keyN}`:""}</span></div><div class="track"><div class="fill" style="width:${pct}%"></div></div></div>`; }
+function slimGoal(w,act,tgt){ const G=weekGoals(w), pct=Math.min(100,tgt?act/tgt*100:0), pl=plannedWeekMin(w), cw=weekOf(T0());
+  const mv=`<div class="kmbar mv"><div class="lbl"><span>Liikunta <b class="num">${fmtH(G.tot)}</b> / 4 h</span><span>${w>=cw?`ohjelmassa ~${fmtH(pl)}`:G.tot>=WEEK_MIN?"✓":""}</span></div><div class="track"><div class="fill" style="width:${Math.min(100,G.tot/WEEK_MIN*100)}%"></div></div>${w>=cw&&pl<WEEK_MIN?`<p class="tip">Ohjelmasta puuttuu noin ${fmtH(Math.ceil((WEEK_MIN-pl)/5)*5)} 4 tunnista: lisää kävely, uinti tai jooga lepopäivälle.</p>`:""}</div>`;
+  return mv+`<div class="kmbar"><div class="lbl"><span><b class="num">${n1(act)}</b> / ${tgt} km</span><span>${G.keyN?`Avaintreenit ${G.keyD}/${G.keyN}`:""}</span></div><div class="track"><div class="fill" style="width:${pct}%"></div></div></div>`; }
 function dayMark(ss){ const s=ss.find(x=>logs[x.key]&&logs[x.key].status!=="moved")||ss[0]; return markFor(s); }
 function renderWeek(t){
   const w=viewWeek,[a,b]=weekRange(w),act=weekKm(BASE,logs,w),tgt=TARGET_EFF[w-1],pct=Math.min(100,tgt?act/tgt*100:0); const sel=selDay==null?t:selDay; let rows="", strip="";
@@ -176,7 +180,7 @@ function renderWeek(t){
     const d=new Date(START_UTC+i*864e5), ss=sessionsOn(BASE,logs,ADAPT,i), s0=ss[0], ci=changeInfo(s0);
     strip+=`<button class="sd${i===t?" today":""}${i===sel?" sel":""}${ci?" chg":""}" data-sel="${i}" aria-pressed="${i===sel}" aria-label="${fmt(i)}: ${TYPES[s0.code].l}"><span class="dw">${DOW[dow(i)]}</span><span class="dn num">${d.getUTCDate()}</span><span class="ty ${TYPES[s0.code].c}">${SHORT[s0.code]||""}</span><span class="hics">${habIcons(i)}</span>${i<=t?(dayMark(ss)||`<span class="mark none"></span>`):`<span class="mark none"></span>`}${(ss.length-1+extrasOn(i).length)>0?`<i class="plus">+${ss.length-1+extrasOn(i).length}</i>`:""}</button>`;
   }
-  $("week").innerHTML=`<div class="weekhead"><div><div class="eyebrow">${PHASE(w)}${(w<=21&&!(w>=8&&w<=10))?" · 🏠 sisäkausi":""}</div><h2>Viikko ${wkNo(w)}</h2></div><div class="navbtns"><button data-addev="" aria-label="Lisää meno" title="Lisää meno">＋</button><button id="wPrev" aria-label="Edellinen viikko" ${w<=1?"disabled":""}>‹</button><button id="wNow" aria-label="Tämä viikko">•</button><button id="wNext" aria-label="Seuraava viikko" ${w>=36?"disabled":""}>›</button></div></div>
+  $("week").innerHTML=`<div class="weekhead"><div><div class="eyebrow">${PHASE(w)}${(w<=21&&!(w>=8&&w<=10))?" · 🏠 sisäkausi":""}</div><h2>Viikko ${wkNo(w)}</h2></div><div class="navbtns"><button data-addev="" aria-label="Lisää meno" title="Lisää meno">＋</button><button id="wPrev" aria-label="Edellinen viikko" ${w<=FIRST_W?"disabled":""}>‹</button><button id="wNow" aria-label="Tämä viikko">•</button><button id="wNext" aria-label="Seuraava viikko" ${w>=36?"disabled":""}>›</button></div></div>
     <div class="strip" role="group" aria-label="Viikon päivät">${strip}</div>
     ${slimGoal(w,act,tgt)}${weekScaleControls(w,t)}`;
   { const lc=$("week").querySelector("#loadCtl"); if(lc) lc.ontoggle=e=>{ loadOpen=e.target.open; }; }

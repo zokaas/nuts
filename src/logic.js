@@ -3,6 +3,19 @@ const START_UTC = Date.UTC(2026, 10, 17); // ti 17.11.2026 = indeksi 0
 const TARGET = [0,12,12,20,22,23,27,9,13,12,31,25,36,40,45,33,53,57,61,46,34,56,5,28,44,54,61,40,65,70,44,55,50,43,25,10];
 const RUN = new Set(["J","JL","P","X","R"]);
 const KEY = new Set(["P","X","R"]);
+/* Kevyt lisäliikunta (kävely, jooga): kerryttää viikon 4 h, mutta kirjaamatta jäänyt ei ole "väliin jäänyt treeni". */
+const LIGHT = new Set(["KA","JO"]);
+const WEEK_MIN = 240; // käyttäjän tavoite 23.11.2026: liikuntaa vähintään 4 h joka viikko
+/* Päivän suunniteltu kesto minuutteina tekstistä. Toistot (8×1 min) eivät ole kokonaiskesto. */
+function planMin(code,text){ text=text||""; if(code==="L") return 0;
+  if(code==="R") return /nuts|66/i.test(text)?540:/maraton/i.test(text)?300:120;
+  const num=s=>parseFloat(s.replace(",",".")), v=m=>(num(m[1])+num(m[2]||m[1]))/2;
+  const t=text.replace(/\d+\s?×\s?\d+(?:[,.]\d+)?\s?(?:min|s|km|m)\b/g,"");
+  const h=t.match(/(\d+(?:[,.]\d+)?)(?:[–-](\d+(?:[,.]\d+)?))?\s?h\b/), km=t.match(/(\d+(?:[,.]\d+)?)(?:[–-](\d+(?:[,.]\d+)?))?\s?km\b/), mn=t.match(/(\d+)(?:[–-](\d+))?\s?min\b/);
+  let base = h ? v(h)*60 : km&&RUN.has(code) ? v(km)*7.5 : mn ? v(mn) : 40;
+  const lk=text.match(/lihaskunto[^.]*?\((\d+)\s?min\)/i);
+  base += lk ? +lk[1] : (/lihaskunto/i.test(text)&&!["K","SA","TL","SL"].includes(code) ? 20 : 0);
+  return Math.round(base); }
 const TIRED_FLAGS = ["tired","sleep","stress","hangover"];
 function idxOfISO(s){ const [y,m,d]=s.slice(0,10).split("-").map(Number); return Math.round((Date.UTC(y,m-1,d)-START_UTC)/864e5); }
 function isoOfIdx(i){ return new Date(START_UTC + i*864e5).toISOString().slice(0,10); }
@@ -69,7 +82,7 @@ function buildAdapt(plan, logs, adjOff, today){
   }
   return res;
   function lastFlag(i,flag,win){ for(let k=i;k>=Math.max(0,i-win);k--){ if(flagsOf(logAt(k)).includes(flag)) return k; } return -1; }
-  function isMissed(k){ const eff = res[k] ? res[k].code : plan[k][0]; if(eff==="L") return false; const l=logAt(k); const fl=flagsOf(l);
+  function isMissed(k){ const eff = res[k] ? res[k].code : plan[k][0]; if(eff==="L"||LIGHT.has(eff)) return false; const l=logAt(k); const fl=flagsOf(l);
     if(fl.includes("sick")||fl.includes("pain")) return false; if(l && l.status==="skip") return true; if(l && (l.status==="done"||l.status==="moved")) return false; return k < today - 1; }
   function rhrElevated(i){ const l=logAt(i); if(!l||typeof l.rhr!=="number") return false; const vals=[]; for(let k=i-1;k>=Math.max(0,i-21);k--){ const x=logAt(k); if(x&&typeof x.rhr==="number") vals.push(x.rhr); } if(vals.length<4) return false; vals.sort((a,b)=>a-b); const med=vals[Math.floor(vals.length/2)]; return l.rhr>=med+7; }
 }
@@ -88,14 +101,14 @@ function computeWarnings(plan, logs, adapt, today){
   if(today<1) return out;
   let missed=0, keyMissed=0;
   for(let i=Math.max(0,today-7); i<today && i<plan.length; i++){
-    for(const s of sessionsOn(plan,logs,adapt,i)){ if(s.code==="L") continue; const l=logs[s.key]; const fl=flagsOf(l);
+    for(const s of sessionsOn(plan,logs,adapt,i)){ if(s.code==="L"||LIGHT.has(s.code)) continue; const l=logs[s.key]; const fl=flagsOf(l);
       if(fl.includes("sick")||fl.includes("pain")) continue;
       const m=(l&&l.status==="skip")||((!l||!["done","moved","skip"].includes(l.status)) && i<today-1); if(m){ missed++; if(KEY.has(s.code)) keyMissed++; } }
   }
   if(missed>=3) add("crit",`${missed} treeniä väliin viimeisen viikon aikana`,"Ohjelma on kevennetty automaattisesti seuraaville päiville. Älä yritä kuroa kiinni.");
   else if(missed===2) add("warn","2 treeniä väliin viimeisen viikon aikana","Pidä seuraavat treenit kiinni. Kolmas väliin jäänyt keventää ohjelmaa.");
   if(keyMissed) add("warn","Pitkä lenkki tai testi jäi väliin","Tee seuraava pitkä normaalisti, älä tuplaa.");
-  const y=today-1; if(y>=0 && y<plan.length && sessionsOn(plan,logs,adapt,y).some(s=>s.code!=="L" && !logs[s.key])) add("info","Eilinen treeni on kirjaamatta","Kuittaa se, merkitse väliin jääneeksi tai siirrä tälle päivälle.");
+  const y=today-1; if(y>=0 && y<plan.length && sessionsOn(plan,logs,adapt,y).some(s=>s.code!=="L" && !LIGHT.has(s.code) && !logs[s.key])) add("info","Eilinen treeni on kirjaamatta","Kuittaa se, merkitse väliin jääneeksi tai siirrä tälle päivälle.");
   const lw=weekOf(today)-1;
   if(lw>=1 && lw<=36){ const act=weekKm(plan,logs,lw), tgt=(typeof TARGET_EFF!=="undefined"?TARGET_EFF:TARGET)[lw-1];
     if(tgt>=10 && act<0.7*tgt && !recentFlag(logs,today,"sick",10)) add("warn",`Viikko ${lw}: ${act} / ${tgt} km`,"Juoksukilometrit jäivät alle 70 % tavoitteesta.");
@@ -116,4 +129,4 @@ function sickRec(len,fev){ return fev ? Math.min(14, Math.max(7, len*2)) : Math.
 function recentFlag(logs,today,flag,win){ for(let k=today;k>=Math.max(0,today-win);k--){ if(flagsOf(logs[isoOfIdx(k)]).includes(flag)) return true; } return false; }
 function loadRatio(plan,logs,today){ const kmDay=k=>{ let s=0; const d=isoOfIdx(k); for(const key in logs){ if(key.slice(0,10)!==d) continue; const l=logs[key]; if(l&&l.status==="done"&&RUN.has(logType(plan,key,l))&&typeof l.km==="number") s+=l.km; } return s; };
   if(today<21) return null; let a=0,c=0; for(let k=today-6;k<=today;k++) a+=kmDay(k); for(let k=today-27;k<=today;k++) c+=kmDay(k); c=c/4; if(c<5) return null; return {acute:Math.round(a), chronic:Math.round(c), ratio:a/c}; }
-if(typeof module!=="undefined") module.exports={buildAdapt,computeWarnings,weekKm,sessionsOn,effective,idxOfISO,isoOfIdx,weekOf,weekRange,TARGET,RUN,scaleText,loadRatio,sickRec,hasIntensity};
+if(typeof module!=="undefined") module.exports={buildAdapt,computeWarnings,weekKm,sessionsOn,effective,idxOfISO,isoOfIdx,weekOf,weekRange,TARGET,RUN,scaleText,loadRatio,sickRec,hasIntensity,planMin,LIGHT,WEEK_MIN};

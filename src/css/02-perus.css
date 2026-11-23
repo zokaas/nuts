@@ -47,6 +47,7 @@
 .kmbar{display:flex; flex-direction:column; gap:6px}
 .kmbar .track{height:10px; background:var(--line); border-radius:6px; overflow:hidden}
 .kmbar .fill{height:100%; background:var(--accent)}
+.kmbar.mv{margin-bottom:10px} .kmbar.mv .fill{background:var(--ok)} .kmbar.mv .tip{margin:2px 0 0}
 .kmbar .lbl{display:flex; justify-content:space-between; font-size:14px; color:var(--muted)}
 .days{display:flex; flex-direction:column; gap:0; border-top:1px solid var(--line)}
 .day{display:grid; grid-template-columns:52px 1fr 26px; gap:10px; align-items:center; padding:10px 2px; border:0; border-bottom:1px solid var(--line); background:transparent; text-align:left; width:100%}

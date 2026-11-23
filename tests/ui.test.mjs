@@ -225,3 +225,10 @@ test("kokonaiskuorma: muut lajit nostavat varoituksen, vaikka juoksu-km eivät n
   assert.equal(none.length, 0);
   assert.deepEqual(errors, []); await ctx.close();
 });
+
+test("viikkonäkymässä 4 h liikuntatavoite: kirjatut minuutit ja ohjelman arvio", async () => {
+  const { page, errors, ctx } = await open({ logs: { "2026-11-23": { status: "done", type: "J", min: 40 }, "2026-11-23~x": { status: "done", type: "KA", min: 50 } } });
+  const t = await page.textContent("#week .kmbar.mv");
+  assert.match(t, /Liikunta\s*1 h 30 min\s*\/ 4 h/); assert.match(t, /ohjelmassa ~4 h/); assert.doesNotMatch(t, /puuttuu/);
+  assert.deepEqual(errors, []); await ctx.close();
+});
