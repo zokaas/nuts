@@ -10,13 +10,16 @@ const HABIT_V6=[
   {id:"kasvot",ic:"🧖‍♀️",name:"Kasvot illalla: mieto pesu + kosteusvoide",when:"ilta",sched:[{from:"2026-11-23",days:"all"}]},
   {id:"rullaus",ic:"🧽",name:"Rullaus 10 min",when:"ilta",sched:[{from:"2026-11-23",days:{1:{n:"pohkeet, reidet, pakarat"},3:{n:"pohkeet, reidet, pakarat"}}}]},
   {id:"jalat",ic:"🦶",name:"Jalkahoito",when:"päivä",sched:[{from:"2026-11-23",days:{6:{n:"kynnet lyhyiksi, kovettumat kevyesti raspilla"}}}]}];
+/* Askeltavoite (käyttäjän päätös 23.11.2026): vähintään 8000 askelta joka päivä. Kuittautuu itsestään, kun Intervals.icu tuo askeleet. */
+const STEP_GOAL=8000;
+const HABIT_V8=[{id:"askel",ic:"👣",name:"8000 askelta",when:"päivä",sched:[{from:"2026-11-23",days:"all"}]}];
 const HABIT_DEFAULT=[
   {id:"hera",ic:"🌅",name:"Verenkierron herättely 5 min",when:"aamu",sched:[{from:"2026-11-23",days:"all"}]},
   {id:"pesu",ic:"🧴",name:"Hiustenpesu",when:"päivä",week:2,sched:[
     {from:"2026-11-16",to:"2026-12-13",label:"Hilseen rauhoitus (vk 1–4)",days:{0:{n:"Pesupäivä: öljy ensin · ketokonatsoli"},2:{n:"Pikapesu, jos hiukset rasvoittuvat · mieto shampoo",opt:true},4:{n:"Pesupäivä + methi-naamio · ketokonatsoli"}}},
     PESU_V5]},
-  ...HABIT_V3, ...HABIT_V6];
-function habits(){ if(!meta.habits){ meta.habits=JSON.parse(JSON.stringify(HABIT_DEFAULT)); meta.hab=meta.hab||{}; meta.habMig=7; persist(); }
+  ...HABIT_V3, ...HABIT_V6, ...HABIT_V8];
+function habits(){ if(!meta.habits){ meta.habits=JSON.parse(JSON.stringify(HABIT_DEFAULT)); meta.hab=meta.hab||{}; meta.habMig=8; persist(); }
   if((meta.habMig||0)<2){ meta.habits=meta.habits.filter(h=>h.id!=="letti"&&h.id!=="kampa"); meta.habMig=2; persist(); }
   if((meta.habMig||0)<3){ for(const h of HABIT_V3) if(!meta.habits.some(x=>x.id===h.id)) meta.habits.push(JSON.parse(JSON.stringify(h))); meta.habMig=3; persist(); }
   if((meta.habMig||0)<4){ for(const h of meta.habits){ const s=h.sched&&h.sched[0]; if(!h.task&&s&&s.from&&s.from<"2026-11-19"&&!(meta.hab&&meta.hab["2026-11-18"]&&meta.hab["2026-11-18"][h.id])) s.from="2026-11-19"; } meta.habMig=4; persist(); }
@@ -26,13 +29,15 @@ function habits(){ if(!meta.habits){ meta.habits=JSON.parse(JSON.stringify(HABIT
     for(const d of Object.keys(meta.hab||{})) if(d<F){ for(const id of Object.keys(meta.hab[d])) if(!tasks.has(id)) delete meta.hab[d][id]; if(!Object.keys(meta.hab[d]).length) delete meta.hab[d]; }
     for(const h of meta.habits){ const sc=h.sched&&h.sched[0]; if(!h.task&&sc&&sc.from&&sc.from<F) sc.from=F; }
     for(const k of Object.keys(logs)) if(k.slice(0,10)<F) delete logs[k];
-    if(meta.sick&&meta.sick.from<F) meta.sick=null; meta.habMig=7; persist(); } return meta.habits.filter(h=>!h.off); }
+    if(meta.sick&&meta.sick.from<F) meta.sick=null; meta.habMig=7; persist(); }
+  if((meta.habMig||0)<8){ for(const h of HABIT_V8) if(!meta.habits.some(x=>x.id===h.id)) meta.habits.push(JSON.parse(JSON.stringify(h))); meta.habMig=8; persist(); } return meta.habits.filter(h=>!h.off); }
 function habitOn(h,i){ if(h.task||!meta.habMove||!meta.habMove[h.id]) return habitOnBase(h,i); const d=isoOfIdx(i), mv=meta.habMove[h.id]; if(mv[d]) return null;
   for(const f in mv) if(mv[f]===d){ const b=habitOnBase(h,idxOfISO(f)); if(b) return {...b,n:(b.n?b.n+" · ":"")+`siirretty ${fmt(idxOfISO(f))}`,moved:f}; } return habitOnBase(h,i); }
 function habitOnBase(h,i){ const d=isoOfIdx(i), w=dow(i); const sc=(h.sched||[]).find(x=>x.from<=d&&(!x.to||d<=x.to)); if(!sc) return null;
   if(h.task){ const H=meta.hab||{}; for(const k in H){ if(k>=sc.from&&k<d&&H[k][h.id]) return null; } return {n:h.note||"",opt:false,task:true,sc}; } if(sc.days==="all") return {n:"",opt:false,sc}; const x=sc.days[w]; return x?{...x,sc}:null; }
 function habIcons(i,max=1){ if(!meta.habits) return ""; return meta.habits.filter(h=>!h.off&&!h.task).map(h=>({h,on:habitOn(h,i)})).filter(x=>x.on&&x.on.sc.days!=="all").map(x=>`<span class="hic${x.on.opt?" opt":""}${habDone(x.h.id,i)?" done":""}" title="${esc(x.h.name)}">${x.h.ic}</span>`).slice(0,max).join(""); }
-function habDone(id,i){ const r=(meta.hab||{})[isoOfIdx(i)]; return !!(r&&r[id]); }
+function habDone(id,i){ const r=(meta.hab||{})[isoOfIdx(i)]; if(id==="askel"&&stepsOn(i)>=STEP_GOAL) return true; return !!(r&&r[id]); }
+function stepsOn(i){ const l=logs[isoOfIdx(i)]; return l&&typeof l.steps==="number"?l.steps:0; }
 function habEvents(h,from,to){ const ev=[]; for(let k=from;k<=to;k++){ const on=habitOn(h,k); if(!on||on.opt) continue; if(!habDone(h.id,k)&&flagsOf(logs[isoOfIdx(k)]).includes("sick")) continue; const d=habDone(h.id,k); if(!d&&k===to) continue; ev.push({w:weekOf(k),ok:d}); } return ev; }
 function habFirst(h){ return idxOfISO(((h.sched||[])[0]||{}).from||isoOfIdx(0)); }
 function habStreak(h,i){ return flexStreak(habEvents(h,habFirst(h),i),weekOf(i)).cur; }
@@ -46,7 +51,7 @@ function renderHabits(ti){ const el=$("habits"); if(!el) return; const i=selDay=
   const need=hs.filter(x=>!x.on.opt&&!x.h.task).length, needDone=hs.filter(x=>!x.on.opt&&!x.h.task&&habDone(x.h.id,i)).length;
   el.innerHTML=`<div class="habhead"><div><div class="eyebrow">Tavat${fut?" · tulossa":""}</div><b class="habday${i!==ti?" past":""}">${dayLbl}</b></div>${need&&!fut?`<span class="habcount${needDone>=need?" ok":""}">${needDone>=need?"✓ ":""}${needDone}/${need}</span>`:""}</div>
     ${(()=>{ const dn=hs.filter(x=>!fut&&!x.h.task&&habDone(x.h.id,i)); return dn.length?`<div class="habdone">${dn.map(({h})=>`<button class="hchip" data-hab="${h.id}" data-hi="${i}" aria-pressed="true" aria-label="${esc(h.name)} tehty, peru napauttamalla">✓ ${h.ic} ${esc(h.name.replace(/ \d.*$/,""))}</button>`).join("")}</div>`:""; })()}
-    <ul class="hablist">${!fut?cycRow(i):""}${hs.filter(x=>fut||x.h.task||!habDone(x.h.id,i)).map(({h,on})=>{ const d=habDone(h.id,i); const st=habStreak(h,i); const bv=h.task&&(meta.blood||{})[h.id]; const wk=fut?"":h.task?(d?(bv?`Ferritiini ${bv.ferr??"–"} · Hb ${bv.hb??"–"}`:"Tehty ✓"):"Tehtävä"):h.week?`${habWeek(h,i)}/${h.week} tällä viikolla`:(st>=2?`🔥 ${st} pv putkeen${habFlexNow(h,i)?" · 🛟 joustopäivä käytetty":""}`:"");
+    <ul class="hablist">${!fut?cycRow(i):""}${hs.filter(x=>fut||x.h.task||!habDone(x.h.id,i)).map(({h,on})=>{ const d=habDone(h.id,i); const st=habStreak(h,i); const bv=h.task&&(meta.blood||{})[h.id]; const sp=h.id==="askel"&&!fut&&stepsOn(i)?`${stepsOn(i).toLocaleString("fi-FI")} / ${STEP_GOAL.toLocaleString("fi-FI")} askelta`:""; const wk=fut?"":sp?sp:h.task?(d?(bv?`Ferritiini ${bv.ferr??"–"} · Hb ${bv.hb??"–"}`:"Tehty ✓"):"Tehtävä"):h.week?`${habWeek(h,i)}/${h.week} tällä viikolla`:(st>=2?`🔥 ${st} pv putkeen${habFlexNow(h,i)?" · 🛟 joustopäivä käytetty":""}`:"");
       return `<li><button class="hab${d?" done":""}${on.opt?" opt":""}${fut?" fut":""}${h.task?" task":""}" ${fut?"disabled":`data-hab="${h.id}" data-hi="${i}"`} aria-pressed="${d}"><span class="hk" aria-hidden="true">${d?"✓":""}</span><span class="hi" aria-hidden="true">${h.ic}</span><span class="ht"><b>${esc(h.name)}${on.opt?` <small>valinnainen</small>`:""}</b>${on.n&&!h.task?`<small>${esc(on.n)}</small>`:""}${wk?`<small class="hs">${wk}</small>`:""}</span></button>${!h.task&&!d&&!on.opt&&!fut&&on.sc.days!=="all"?(on.moved?`<button class="link bgo" data-hmvundo="${h.id}:${on.moved}">↺ Peru siirto</button>`:habMoveOpen===h.id+":"+i?`<div class="hmv">${habMoveTargets(h,i).map(k=>`<button class="btn small" data-hmv="${h.id}:${isoOfIdx(i)}:${isoOfIdx(k)}">${k===i+1?"Huomenna":DOW[dow(k)]+" "+new Date(START_UTC+k*864e5).getUTCDate()+"."}</button>`).join("")}<button class="btn small ghost" data-hmvopen="">Peruuta</button></div>`:`<button class="link bgo" data-hmvopen="${h.id}:${i}">→ Siirrä toiselle päivälle</button>`):""}${h.task&&d&&!fut?`<button class="link bgo" data-bgo="${h.id}">${(meta.blood||{})[h.id]?"Muokkaa arvoja":"＋ Kirjaa ferritiini ja hemoglobiini"}</button>`:""}</li>`; }).join("")}</ul>
     ${i!==ti?`<button class="link" data-seltoday>‹ Takaisin tähän päivään</button>`:yHas?`<button class="link" data-sel="${ti-1}">Unohtuiko eilen? Merkitse eilisen tavat</button>`:""}`; }
 document.addEventListener("click",e=>{ const b=e.target.closest("[data-hab]"); if(b){ const id=b.dataset.hab, i=+b.dataset.hi, d=isoOfIdx(i); meta.hab=meta.hab||{}; const r=meta.hab[d]=meta.hab[d]||{}; if(r[id]) delete r[id]; else { r[id]=1; if(navigator.vibrate) navigator.vibrate(10); } if(!Object.keys(r).length) delete meta.hab[d];
@@ -82,16 +87,16 @@ async function icuSync(manual){ const c=icu(); if(!c.ath||!c.key){ if(manual) to
     if(!r.ok){ meta.icu.err=r.status===404?"Välipalvelin päivittyy vielä. Yritä hetken päästä uudelleen.":"Haku epäonnistui, yritetään myöhemmin."; persist(); renderIcu(); if(manual) toast(meta.icu.err); return; }
     const rows=await r.json(); let n=0, latest=null;
     for(const w of rows){ if(!w||!w.d) continue; const d=c.shift?isoOfIdx(idxOfISO(w.d)+1):w.d; const i=idxOfISO(d); if(i<0) continue;
-      const vals={rhr:typeof w.rhr==="number"&&w.rhr>25?Math.round(w.rhr):null, sleepH:typeof w.sleep==="number"&&w.sleep>0?Math.round(w.sleep/360)/10:null, hrv:typeof w.hrv==="number"&&w.hrv>0?Math.round(w.hrv):null};
-      if(vals.rhr==null&&vals.sleepH==null&&vals.hrv==null) continue;
+      const vals={rhr:typeof w.rhr==="number"&&w.rhr>25?Math.round(w.rhr):null, sleepH:typeof w.sleep==="number"&&w.sleep>0?Math.round(w.sleep/360)/10:null, hrv:typeof w.hrv==="number"&&w.hrv>0?Math.round(w.hrv):null, steps:typeof w.steps==="number"&&w.steps>0?Math.round(w.steps):null};
+      if(vals.rhr==null&&vals.sleepH==null&&vals.hrv==null&&vals.steps==null) continue;
       const prev=logs[d]; const old=(prev&&prev.icu)||{}; const l=prev?{...prev}:{status:"note",type:i<BASE.length?BASE[i][0]:"L",flags:[],note:""};
-      let ch=false; for(const k of ["rhr","sleepH","hrv"]){ if(vals[k]==null) continue; if(l[k]==null||l[k]===old[k]){ if(l[k]!==vals[k]){ l[k]=vals[k]; ch=true; } } }
+      let ch=false; for(const k of ["rhr","sleepH","hrv","steps"]){ if(vals[k]==null) continue; if(l[k]==null||l[k]===old[k]){ if(l[k]!==vals[k]){ l[k]=vals[k]; ch=true; } } }
       l.icu=vals; if(ch||!prev){ l.updatedAt=new Date().toISOString(); logs[d]=l; n++; } if(!latest||d>latest.d) latest={d,...vals}; }
     meta.icu.last=Date.now(); meta.icu.latest=latest; delete meta.icu.err; persist(); if(n) render(); else renderIcu();
-    if(manual) toast(n?`Haettu ${n} päivän uni- ja leposyketiedot.`:"Ei uutta dataa. Tarkista, että Suunnon wellness-tuonti on päällä Intervals.icu:ssa."); }
+    if(manual) toast(n?`Haettu ${n} päivän uni-, leposyke- ja askeltiedot.`:"Ei uutta dataa. Tarkista, että Suunnon wellness-tuonti on päällä Intervals.icu:ssa."); }
   catch(e){ if(manual) toast("Yhteys Intervals.icu:hun epäonnistui."); } }
 function renderIcu(){ const el=$("icuStatus"); if(!el) return; const c=icu(); $("icuAth").value=c.ath||""; $("icuKey").value=c.key?"••••••••":""; $("icuShift").checked=!!c.shift;
-  const L=c.latest; el.innerHTML= c.err?`⚠️ ${esc(c.err)}`: c.last?`✓ Yhdistetty · haettu ${new Date(c.last).toLocaleString("fi-FI",{day:"numeric",month:"numeric",hour:"2-digit",minute:"2-digit"})}${L?`<br>Viimeisin: ${fmt(idxOfISO(L.d))} · uni ${L.sleepH!=null?n1(L.sleepH)+" h":"–"} · leposyke ${L.rhr??"–"} · HRV ${L.hrv??"–"}`:""}`:"Ei yhdistetty. Hakee Suunnon unen, leposykkeen ja HRV:n automaattisesti."; }
+  const L=c.latest; el.innerHTML= c.err?`⚠️ ${esc(c.err)}`: c.last?`✓ Yhdistetty · haettu ${new Date(c.last).toLocaleString("fi-FI",{day:"numeric",month:"numeric",hour:"2-digit",minute:"2-digit"})}${L?`<br>Viimeisin: ${fmt(idxOfISO(L.d))} · uni ${L.sleepH!=null?n1(L.sleepH)+" h":"–"} · leposyke ${L.rhr??"–"} · HRV ${L.hrv??"–"}`:""}`:"Ei yhdistetty. Hakee Suunnon unen, leposykkeen, HRV:n ja askeleet automaattisesti."; }
 $("icuSave").onclick=()=>{ const ath=$("icuAth").value.trim(), k=$("icuKey").value.trim(); meta.icu=meta.icu||{}; if(ath) meta.icu.ath=ath.replace(/\s/g,""); if(k&&!/^•+$/.test(k)) meta.icu.key=k; meta.icu.shift=$("icuShift").checked; delete meta.icu.last; persist(); icuSync(true); };
 $("icuShift").onchange=()=>{ meta.icu=meta.icu||{}; meta.icu.shift=$("icuShift").checked; delete meta.icu.last; persist(); };
 $("icuOff").onclick=()=>{ delete meta.icu; persist(); renderIcu(); toast("Intervals.icu-yhteys poistettu. Haetut tiedot säilyvät."); };
@@ -143,6 +148,7 @@ function bloodHTML(){ const B=meta.blood||{}; const a=B.veri1||{}, b=B.veri2||{}
   return `<div class="bhead"><span>Marraskuu${a.date?` <small>${fmtShort(idxOfISO(a.date))}</small>`:""}</span><span>→</span><span>Helmikuu${b.date?` <small>${fmtShort(idxOfISO(b.date))}</small>`:""}</span></div>
     ${rows?`<ul class="blist">${rows}</ul>`:`<p class="note">Ei vielä arvoja. Kirjaa ne, kun saat tulokset.</p>`}
     ${bloodEdit?form(bloodEdit):`<div class="row">${BLOOD.map(([id,l])=>`<button class="btn small" data-bedit="${id}">${(B[id]?"Muokkaa ":"Kirjaa ")+l.toLowerCase()+"n arvot"}</button>`).join("")}</div>`}
+    ${(d=>d?`<p class="tip">🩸 Seuraava verikoe: ${fmt(idxOfISO(d))} alkaen. Muistutus tulee Tänään-näkymään.</p>`:"")(bloodRecheckDue())}
     ${bloodNotes().map(x=>`<p class="tip">${x}</p>`).join("")}<p class="tip">Ferritiini nousee tulehduksessa, joten flunssan tai yskän aikana se voi näyttää todellista paremmalta. Transferriinireseptori kertoo silloin raudanpuutteesta luotettavammin. Viitearvot vaihtelevat laboratorioittain, joten tulkinta lääkärin kanssa.</p>`; }
 /* Verenluovutukset (pvm): ferritiinin lasku niiden jälkeen on odotettavaa, ei hälytys. */
 const DONATIONS=[]; // esim. "2027-08-20" – lisää, kun luovutat
@@ -154,6 +160,12 @@ function bloodNotes(){ const B=meta.blood||{}, a=B.veri1, b=B.veri2, out=[];
     : `⚠️ Ferritiini laski ${n1(a.ferr)} → ${n1(b.ferr)} µg/l (${Math.round((1-b.ferr/a.ferr)*100)} %). Treenimäärän kasvu kuluttaa rautavarastoja.`);
   if(a&&b&&typeof a.hb==="number"&&typeof b.hb==="number"&&a.hb-b.hb>=10) out.push(`⚠️ Hemoglobiini laski ${a.hb} → ${b.hb} g/l.`);
   return out; }
+/* Kontrollimuistutus (päätös 23.11.2026): noin 75 pv ensimmäisestä näytteestä, ennen maratonjakson kovia viikkoja. Näkyy, kunnes kontrollin arvot on kirjattu. */
+const BLOOD_RECHECK="2027-02-01";
+function bloodRecheckDue(){ const B=meta.blood||{}; if(Object.values(meta.hab||{}).some(r=>r&&r.veri2)) return null; if(B.veri2&&Object.keys(B.veri2).some(k=>k!=="date"&&typeof B.veri2[k]==="number")) return null;
+  return B.veri1&&B.veri1.date ? isoOfIdx(idxOfISO(B.veri1.date)+75) : BLOOD_RECHECK; }
+function bloodRecheckWarnings(ti){ const d=bloodRecheckDue(); if(!d||ti<idxOfISO(d)) return [];
+  return [{level:"info",title:"Verikokeen kontrolli",detail:"Varaa verikoe: ferritiini, perusverenkuva ja transferriinireseptori. Ajoita aamuun ja vältä kovaa treeniä edellisenä päivänä. Kirjaa tulokset Analyysi → Vointi."}]; }
 function bloodWarnings(){ const W=bloodNotes().filter(x=>x.startsWith("⚠️")); return W.length?[{level:"warn",title:"Verikoe: ferritiini vaatii huomiota",detail:W.join(" ").replace(/⚠️ /g,"")+" Katso Analyysi → Vointi."}]:[]; }
 document.addEventListener("click",e=>{ const ed=e.target.closest("[data-bedit]"); if(ed){ bloodEdit=ed.dataset.bedit; $("aBlood").innerHTML=bloodHTML(); setTimeout(()=>$("b_ferr").focus(),30); return; }
   if(e.target.closest("[data-bcancel]")){ bloodEdit=null; $("aBlood").innerHTML=bloodHTML(); return; }

@@ -81,3 +81,10 @@ test("kirjaamaton kävely ei ole väliin jäänyt treeni", () => {
   const w = L.computeWarnings(plan, {}, {}, 4);
   assert.ok(!w.some(x => /väliin|kirjaamatta/.test(x.title)), JSON.stringify(w));
 });
+
+test("alamäkivalmistelu: portaat alas helmikuusta, alamäkiohjeet kevään polkulenkeillä", () => {
+  const plan = require("../src/plan.json");
+  const ym = plan.map((r, i) => [i, r]).filter(([i, r]) => i >= 69 && r[0] === "YM");
+  assert.ok(ym.length >= 3 && ym.every(([, r]) => !/hissillä\./.test(r[1]) || /ei hissillä/.test(r[1])));
+  assert.ok(plan.filter(r => r[0] === "P" && /Alamäet juosten/.test(r[1])).length >= 5);
+});

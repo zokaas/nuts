@@ -79,7 +79,7 @@ export default {
       if (r.status === 401 || r.status === 403) return json({ error: "auth" }, 401);
       if (!r.ok) return json({ error: "upstream", status: r.status }, 502);
       const rows = await r.json();
-      return json((Array.isArray(rows) ? rows : []).map(w => ({ d: w.id, rhr: w.restingHR ?? null, hrv: w.hrv ?? null, sleep: w.sleepSecs ?? null, score: w.sleepScore ?? null })));
+      return json((Array.isArray(rows) ? rows : []).map(w => ({ d: w.id, rhr: w.restingHR ?? null, hrv: w.hrv ?? null, sleep: w.sleepSecs ?? null, score: w.sleepScore ?? null, steps: w.steps ?? null })));
     }
 
     /* ---------- Tallennustilaa vaativat reitit ---------- */

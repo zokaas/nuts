@@ -1,7 +1,7 @@
 /* ===== Lihaskunto: ohjelmat ja treenitila ===== */
 const WARMUP = "Lämmittely 5 min: reipas kävely, hyppynaru tai kuntopyörä. Sitten 10 jalkaheilautusta eteen ja sivulle per jalka, 10 lantion pyöritystä ja 10 kyykkyä ilman painoa.";
 const STRENGTH = {
-  A:{name:"Pohja", when:"Viikot 1–16 · 2× viikossa talvella", time:"30 min", goal:"Rakentaa perusvoiman jalkoihin, pakaroihin ja keskivartaloon. Valmistaa jänteet ja nivelet juoksun iskutukseen.",
+  A:{name:"Pohja", when:"Viikot 1–15 · 2× viikossa talvella", time:"30 min", goal:"Rakentaa perusvoiman jalkoihin, pakaroihin ja keskivartaloon. Valmistaa jänteet ja nivelet juoksun iskutukseen.",
     ex:[
       {n:"Kyykky",s:3,r:"10–12",t:"3 s alas, 1 s ylös",rest:60,c:["Jalat hartioiden levyisesti, varpaat hieman ulospäin","Lantio taakse kuin istuisit tuolille, rintakehä pystyssä","Polvet varpaiden suuntaan, paino koko jalkapohjalla"],e:"Kyykky tuolille ja ylös",h:"Kahvakuula rinnan edessä (8–16 kg)",w:"Reisien ja pakaroiden perusvoima"},
       {n:"Askelkyykky taakse",s:3,r:"8 / jalka",t:"rauhallisesti",rest:60,c:["Astu pitkä askel taakse","Takapolvi lähes lattiaan, etupolvi pysyy nilkan päällä","Ponnista etujalan kantapäällä takaisin ylös"],e:"Ota tuesta kiinni",h:"Käsipainot käsissä",w:"Yhden jalan voima ja tasapaino"},
@@ -11,16 +11,17 @@ const STRENGTH = {
       {n:"Kylkilankku",s:2,r:"20–30 s / puoli",t:"pito",rest:30,c:["Kyynärpää olkapään alla","Lantio ylhäällä, vartalo suorana","Hengitä normaalisti"],e:"Alempi polvi maassa",h:"Nosta ylempi jalka",w:"Lantion tuki, estää polven kiertymistä"},
       {n:"Yhden jalan seisonta",s:2,r:"30 s / jalka",t:"pito",rest:15,c:["Polvi pehmeänä","Katse eteenpäin","Pidä lantio suorassa"],e:"Kevyt tuki sormilla",h:"Silmät kiinni tai tyynyn päällä",w:"Nilkan hallinta kivikkoon ja juurakkoon"},
     ]},
-  B:{name:"Juoksijan voima", when:"Viikot 17–24 · 1–2× viikossa", time:"35 min", goal:"Yhden jalan voima, koska juoksu on hyppelyä yhdeltä jalalta toiselle. Tukee maratonjaksoa.",
+  B:{name:"Juoksijan voima", when:"Viikot 16–23 · 1–2× viikossa", time:"35 min", goal:"Yhden jalan voima, koska juoksu on hyppelyä yhdeltä jalalta toiselle. Tukee maratonjaksoa.",
     ex:[
       {n:"Bulgarialainen askelkyykky",s:3,r:"8 / jalka",t:"3 s alas, 1 s ylös",rest:90,c:["Takajalan päkiä penkillä tai tuolilla","Laskeudu suoraan alas, etupolvi linjassa varpaiden kanssa","Ylävartalo hieman eteenpäin kallistettuna"],e:"Ilman painoja, tuki kädellä",h:"Käsipainot (2 × 6–12 kg)",w:"Tehokkain yksittäinen juoksijan jalkaliike"},
       {n:"Askelnousu korkealle",s:3,r:"10 / jalka",t:"rauhallinen lasku",rest:60,c:["Polvenkorkuinen taso","Nouse etujalan voimalla, älä ponnista takajalalla","Laske hitaasti takaisin alas"],e:"Matalampi taso",h:"Käsipainot",w:"Suoraan ylämäkivoimaa tuntureille"},
       {n:"Yhden jalan maastaveto",s:3,r:"8 / jalka",t:"hitaasti",rest:60,c:["Kallista ylävartaloa eteen, vapaa jalka taakse","Selkä suorana, lantio suorassa","Nouse puristamalla pakaraa"],e:"Ota seinästä tuki",h:"Kahvakuula vastakkaisessa kädessä",w:"Takareidet ja tasapaino"},
       {n:"Yhden jalan lantionnosto",s:3,r:"10 / jalka",t:"pito 2 s",rest:45,c:["Toinen jalka suorana ilmassa","Työnnä kantapäällä","Lantio pysyy vaakasuorassa"],e:"Kahdella jalalla",h:"Kantapää penkillä",w:"Pakaroiden voima väsyneenä"},
       {n:"Yhden jalan pohjenousu",s:3,r:"12 / jalka",t:"1 s ylös, 3 s alas",rest:45,c:["Suorin polvin portaan reunalla","Täysi liikerata","Lopuksi 1 sarja polvi koukussa (syvä pohje)"],e:"Kahdella jalalla",h:"Käsipaino samassa kädessä",w:"Pohje kantaa maratonin lopussa"},
+      {n:"Hidas lasku portaalta",s:2,r:"6 / jalka",t:"3 s alas",rest:45,c:["Seiso portaalla yhdellä jalalla","Laske toisen jalan kantapää lattiaan 3 sekunnissa","Polvi linjassa, ei kierry sisään"],e:"Matalampi porras",h:"4 s alas",w:"Alamäkivalmistelu: reidet tottuvat jarruttavaan työhön hyvissä ajoin ennen kevään polkuja"},
       {n:"Lankku olkapääkosketuksin",s:3,r:"10 / puoli",t:"rauhallisesti",rest:30,c:["Punnerrusasento, jalat leveämmällä","Kosketa vuorotellen vastakkaista olkapäätä","Lantio ei saa heilua"],e:"Polvet maassa",h:"Jalat lähempänä toisiaan",w:"Keskivartalon kiertojäykkyys"},
     ]},
-  C:{name:"Alamäkivoima", when:"Viikot 25–33 · 1× viikossa", time:"30 min", goal:"Valmistaa reidet tunturin alamäkiin. Nutsissa jalat hajoavat yleensä alamäissä, eivät ylämäissä.",
+  C:{name:"Alamäkivoima", when:"Viikot 24–32 · 1× viikossa", time:"30 min", goal:"Valmistaa reidet tunturin alamäkiin. Nutsissa jalat hajoavat yleensä alamäissä, eivät ylämäissä.",
     ex:[
       {n:"Hidas lasku portaalta",s:3,r:"8 / jalka",t:"4 s alas",rest:60,c:["Seiso portaalla yhdellä jalalla","Laske toisen jalan kantapää lattiaan 4 sekunnissa","Polvi pysyy linjassa, ei kierry sisään"],e:"Matalampi porras",h:"Korkeampi taso tai paino",w:"Eksentrinen voima = alamäkikestävyys"},
       {n:"Bulgarialainen askelkyykky",s:3,r:"8 / jalka",t:"3 s alas",rest:90,c:["Kuten ohjelmassa B","Painot käsiin","Hidas, hallittu lasku"],e:"Ilman painoja",h:"Raskaammat painot",w:"Reisien voima"},

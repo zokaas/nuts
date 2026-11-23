@@ -156,7 +156,7 @@ test("hiustenpesu vk 5→: maanantai ketokonatsoli, perjantai methi + mieto, van
     { from: "2026-11-19", to: "2026-12-13", days: { 0: { n: "x" } } }, { from: "2026-12-14", label: "Ylläpito (vk 5→)", days: { 0: { n: "Pesupäivä" }, 4: { n: "Pesupäivä" } }, todo: true }] }] };
   const { page, errors, ctx } = await open({ date: "2026-12-18T08:00:00", meta: old });
   const m = await meta(page); const sc = m.habits.find(h => h.id === "pesu").sched[1];
-  assert.equal(m.habMig, 7); assert.ok(!sc.todo); assert.match(sc.days[4].n, /methi.*mieto/); assert.match(sc.days[0].n, /ketokonatsoli/);
+  assert.equal(m.habMig, 8); assert.ok(!sc.todo); assert.match(sc.days[4].n, /methi.*mieto/); assert.match(sc.days[0].n, /ketokonatsoli/);
   assert.match(await page.textContent("#habits"), /methi/);
   assert.deepEqual(errors, []); await ctx.close();
 });
@@ -230,5 +230,23 @@ test("viikkonäkymässä 4 h liikuntatavoite: kirjatut minuutit ja ohjelman arvi
   const { page, errors, ctx } = await open({ logs: { "2026-11-23": { status: "done", type: "J", min: 40 }, "2026-11-23~x": { status: "done", type: "KA", min: 50 } } });
   const t = await page.textContent("#week .kmbar.mv");
   assert.match(t, /Liikunta\s*1 h 30 min\s*\/ 4 h/); assert.match(t, /ohjelmassa ~4 h/); assert.doesNotMatch(t, /puuttuu/);
+  assert.deepEqual(errors, []); await ctx.close();
+});
+
+test("verikokeen kontrollimuistutus helmikuussa, poistuu kun arvot kirjattu", async () => {
+  const { page, errors, ctx } = await open({ date: "2027-02-02T08:00:00", meta: { hr: { age: 35 }, blood: { veri1: { date: "2026-11-18", ferr: 40 } } } });
+  assert.equal(await page.evaluate(() => bloodRecheckDue()), "2027-02-01");
+  assert.ok(await page.evaluate(() => bloodRecheckWarnings(todayIdx()).length === 1));
+  assert.equal(await page.evaluate(() => { meta.blood.veri2 = { date: "2027-02-03", ferr: 45 }; return bloodRecheckDue(); }), null);
+  assert.deepEqual(errors, []); await ctx.close();
+});
+
+test("askeltavoite 8000: uusi tapa, kuittautuu Intervals-askelista ja näyttää määrän", async () => {
+  const { page, errors, ctx } = await open({ logs: { "2026-11-23": { status: "note", type: "J", flags: [], note: "", steps: 9120 } } });
+  assert.ok(await page.evaluate(() => habits().some(h => h.id === "askel")));
+  assert.ok(await page.evaluate(() => habDone("askel", todayIdx())));
+  assert.match(await page.textContent("#habits"), /8000 askelta/);
+  await page.evaluate(() => { logs["2026-11-23"].steps = 5300; render(); });
+  assert.match(await page.textContent("#habits"), /5\s300 \/ 8\s000 askelta/);
   assert.deepEqual(errors, []); await ctx.close();
 });

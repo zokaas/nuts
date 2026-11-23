@@ -5,7 +5,7 @@ function render(){
   sickSync(ti); BASE = buildBase(); ADAPT = buildAdapt(BASE, logs, adjOff, ti);
   const r=route(); document.body.dataset.route=r; $("pageTitle").textContent=TITLES[r]||""; document.querySelectorAll("[data-view]").forEach(v=>v.hidden=v.dataset.view!==r);
   document.querySelectorAll(".tabs a").forEach(a=>a.setAttribute("aria-current",a.getAttribute("href")==="#"+r?"page":"false"));
-  const st=stats(), bs=badges(st); const ws=computeWarnings(BASE,logs,ADAPT,ti).concat(loadWarnings(ti)).concat(eventWarnings(ti)).concat(cpWarnings(ti)).concat(bloodWarnings()); checkCont30();
+  const st=stats(), bs=badges(st); const ws=computeWarnings(BASE,logs,ADAPT,ti).concat(loadWarnings(ti)).concat(eventWarnings(ti)).concat(cpWarnings(ti)).concat(bloodWarnings()).concat(bloodRecheckWarnings(ti)); checkCont30();
   renderCount(ti,st,bs);
   if(r==="tanaan"){ renderSick(ti); renderPlanWeek(ti); renderMonthCard(); renderHabits(ti); renderMaint(); renderRaceWeek(ti); renderStatus(ws); renderToday(t,ti); renderTip(t); renderSummary(ti); renderWeek(t); renderUpcoming(t); }
   if(r==="historia"){ renderHistory(st); }

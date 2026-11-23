@@ -74,7 +74,7 @@ test("Intervals.icu-hyvinvointidata välitetään ja validoidaan", async()=>{
   const env={...base};
   const post=b=>call("/icu/wellness",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b)},env);
   const ok=await (await post({athlete:"i123",key:"goodkey123",oldest:"2026-11-10",newest:"2026-11-18"})).json();
-  assert.deepStrictEqual(ok[0],{d:"2026-11-17",rhr:54,hrv:77,sleep:25740,score:80});
+  assert.deepStrictEqual(ok[0],{d:"2026-11-17",rhr:54,hrv:77,sleep:25740,score:80,steps:null});
   assert.strictEqual((await post({athlete:"i123",key:"badkey1234",oldest:"2026-11-10",newest:"2026-11-18"})).status,401);
   assert.strictEqual((await post({athlete:"../x",key:"goodkey123",oldest:"2026-11-10",newest:"2026-11-18"})).status,400);
 });
