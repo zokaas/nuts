@@ -28,7 +28,7 @@ test.before(async () => {
 test.after(async () => { await browser?.close(); server?.close(); });
 
 /** Avaa sovelluksen annettuna päivänä annetulla tallennetulla datalla. Palauttaa sivun ja virhelistan. */
-async function open({ date = "2026-11-23T08:00:00", hash = "tanaan", logs = {}, meta = { hr: { age: 35 } }, scheme = "light", version } = {}) {
+async function open({ date = "2026-11-26T08:00:00", hash = "tanaan", logs = {}, meta = { hr: { age: 35 } }, scheme = "light", version } = {}) {
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, colorScheme: scheme, serviceWorkers: "block" });
   await ctx.addInitScript(([l, m]) => { if (!sessionStorage.getItem("seeded")) { sessionStorage.setItem("seeded", "1"); localStorage.clear(); localStorage.setItem("pallas.logs.v1", l); localStorage.setItem("pallas.meta.v1", m); } }, [JSON.stringify(logs), JSON.stringify(meta)]);
   // Ulkoiset palvelut (sää, fontit, Strava) eivät kuulu testiin
@@ -54,7 +54,7 @@ test("kaikki näkymät aukeavat ilman virheitä, vaalea ja tumma", async () => {
   }
 });
 
-test("ohjelma alkaa ma 23.11.: aiemmat päivät piilossa ja aiemmat kirjaukset tyhjennetty (tehtävät säilyvät)", async () => {
+test("ohjelma alkaa to 26.11.: aiemmat päivät piilossa ja aiemmat kirjaukset tyhjennetty (tehtävät säilyvät)", async () => {
   const old = { hr: { age: 35 }, habMig: 5, hab: { "2026-11-19": { hera: 1, veri1: 1 }, "2026-11-20": { dvit: 1 } },
     habits: [{ id: "hera", ic: "🌅", name: "Verenkierron herättely 5 min", when: "aamu", sched: [{ from: "2026-11-19", days: "all" }] },
              { id: "veri1", ic: "🩸", name: "Verikoe", task: true, when: "päivä", sched: [{ from: "2026-11-19", to: "2026-12-31" }] }] };
@@ -66,10 +66,10 @@ test("ohjelma alkaa ma 23.11.: aiemmat päivät piilossa ja aiemmat kirjaukset t
   assert.deepEqual(m.hab, { "2026-11-19": { veri1: 1 } }); assert.equal(l["2026-11-19"], undefined); assert.ok(l["2026-11-23"]);
   assert.equal(m.habits.find(h => h.id === "hera").sched[0].from, "2026-11-23"); assert.ok(m.habits.some(h => h.id === "kasvot"));
   await page.evaluate(() => { location.hash = "kalenteri"; }); await page.waitForTimeout(200);
-  assert.match(await page.textContent("#calBody"), /Vk 1\s*23\.11\.–29\.11\./); assert.match(await page.textContent("#calBody"), /Vk 2\s*30\.11\./); assert.doesNotMatch(await page.textContent("#calBody"), /Vk 0\b/);
+  assert.match(await page.textContent("#calBody"), /Vk 1\s*26\.11\.–29\.11\./); assert.match(await page.textContent("#calBody"), /Vk 2\s*30\.11\./); assert.doesNotMatch(await page.textContent("#calBody"), /Vk 0\b/);
   await ctx.close();
   const b = await open();
-  assert.match(await b.page.textContent("#today"), /Ensimmäinen treeni/); assert.match(await b.page.textContent("#habits"), /Kasvot illalla/);
+  assert.match(await b.page.textContent("#today"), /ensimmäinen treeni/i); assert.match(await b.page.textContent("#habits"), /Kasvot illalla/);
   assert.ok(await b.page.isHidden("#summary"));
   assert.deepEqual([...errors, ...b.errors], []); await b.ctx.close();
 });
@@ -88,21 +88,21 @@ test("sairastila: Vointi → Sairas käynnistää, Peru ja Olen terve samana pä
     await page.click("[data-mode=vointi]"); await page.click("[data-flag=sick]"); await page.click("#edSave"); await page.waitForTimeout(200);
   };
   await markSick();
-  assert.ok(!(await page.isHidden("#sickCard"))); assert.equal((await meta(page)).sick.from, "2026-11-23");
+  assert.ok(!(await page.isHidden("#sickCard"))); assert.equal((await meta(page)).sick.from, "2026-11-26");
   await page.click("#toast .tbtn"); await page.waitForTimeout(150);
-  assert.equal((await meta(page)).sick, null); assert.equal((await logs(page))["2026-11-23"], undefined);
+  assert.equal((await meta(page)).sick, null); assert.equal((await logs(page))["2026-11-26"], undefined);
   await markSick(); await page.click("[data-sickoff]"); await page.waitForTimeout(150);
   assert.equal((await meta(page)).sick, null); assert.ok(await page.isHidden("#sickCard"));
   assert.deepEqual(errors, []); await ctx.close();
 });
 
 test("sairastila jatkuu itsestään seuraaville päiville ja paluu alkaa terveeksi merkitsemisestä", async () => {
-  const { page, ctx } = await open({ meta: { hr: { age: 35 }, sick: { from: "2026-11-24", kind: "fever", auto: [] } }, date: "2026-11-26T08:00:00" });
+  const { page, ctx } = await open({ meta: { hr: { age: 35 }, sick: { from: "2026-11-27", kind: "fever", auto: [] } }, date: "2026-11-29T08:00:00" });
   const l = await logs(page);
-  for (const d of ["2026-11-24", "2026-11-25", "2026-11-26"]) assert.ok(l[d]?.flags.includes("fever"), d);
+  for (const d of ["2026-11-27", "2026-11-28", "2026-11-29"]) assert.ok(l[d]?.flags.includes("fever"), d);
   await page.click("[data-sickoff]"); await page.waitForTimeout(150);
-  const m = await meta(page); assert.equal(m.sick.to, "2026-11-25"); assert.equal(m.sick.rec, 7);
-  assert.ok(!(await logs(page))["2026-11-26"]?.flags?.includes("sick"));
+  const m = await meta(page); assert.equal(m.sick.to, "2026-11-28"); assert.equal(m.sick.rec, 7);
+  assert.ok(!(await logs(page))["2026-11-29"]?.flags?.includes("sick"));
   await ctx.close();
 });
 
@@ -120,7 +120,7 @@ test("tavat: aamutavat näkyvät ja kuittaus tallentuu", async () => {
   const { page, ctx } = await open();
   const btn = page.locator('#habits [data-hab="hera"]').first();
   await btn.click(); await page.waitForTimeout(100);
-  assert.equal((await meta(page)).hab["2026-11-23"].hera, 1);
+  assert.equal((await meta(page)).hab["2026-11-26"].hera, 1);
   await ctx.close();
 });
 
@@ -227,9 +227,9 @@ test("kokonaiskuorma: muut lajit nostavat varoituksen, vaikka juoksu-km eivät n
 });
 
 test("viikkonäkymässä 4 h liikuntatavoite: kirjatut minuutit ja ohjelman arvio", async () => {
-  const { page, errors, ctx } = await open({ logs: { "2026-11-23": { status: "done", type: "J", min: 40 }, "2026-11-23~x": { status: "done", type: "KA", min: 50 } } });
+  const { page, errors, ctx } = await open({ logs: { "2026-11-26": { status: "done", type: "J", min: 40 }, "2026-11-26~x": { status: "done", type: "KA", min: 50 } } });
   const t = await page.textContent("#week .kmbar.mv");
-  assert.match(t, /Liikunta\s*1 h 30 min\s*\/ 4 h/); assert.match(t, /ohjelmassa ~4 h/); assert.doesNotMatch(t, /puuttuu/);
+  assert.match(t, /Liikunta\s*1 h 30 min\s*\/ 2 h 20 min/); assert.match(t, /ohjelmassa ~2 h 50 min/); assert.doesNotMatch(t, /puuttuu/);
   assert.deepEqual(errors, []); await ctx.close();
 });
 
@@ -242,11 +242,11 @@ test("verikokeen kontrollimuistutus helmikuussa, poistuu kun arvot kirjattu", as
 });
 
 test("askeltavoite 8000: uusi tapa, kuittautuu Intervals-askelista ja näyttää määrän", async () => {
-  const { page, errors, ctx } = await open({ logs: { "2026-11-23": { status: "note", type: "J", flags: [], note: "", steps: 9120 } } });
+  const { page, errors, ctx } = await open({ logs: { "2026-11-26": { status: "note", type: "J", flags: [], note: "", steps: 9120 } } });
   assert.ok(await page.evaluate(() => habits().some(h => h.id === "askel")));
   assert.ok(await page.evaluate(() => habDone("askel", todayIdx())));
   assert.match(await page.textContent("#habits"), /8000 askelta/);
-  await page.evaluate(() => { logs["2026-11-23"].steps = 5300; render(); });
+  await page.evaluate(() => { logs["2026-11-26"].steps = 5300; render(); });
   assert.match(await page.textContent("#habits"), /5\s300 \/ 8\s000 askelta/);
   assert.deepEqual(errors, []); await ctx.close();
 });

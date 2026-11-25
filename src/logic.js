@@ -1,11 +1,13 @@
 /* ===== Ohjelmalogiikka: mukautuva ohjelma, varoitukset, analyysi ===== */
 const START_UTC = Date.UTC(2026, 10, 17); // ti 17.11.2026 = indeksi 0
-const TARGET = [0,12,12,20,22,23,27,9,13,12,31,25,36,40,45,33,53,57,61,46,34,56,5,28,44,54,61,40,65,70,44,55,50,43,25,10];
+const TARGET = [0,5,12,20,22,23,27,9,13,12,31,25,36,40,45,33,53,57,61,46,34,56,5,28,44,54,61,40,65,70,44,55,50,43,25,10];
 const RUN = new Set(["J","JL","P","X","R"]);
 const KEY = new Set(["P","X","R"]);
 /* Kevyt lisäliikunta (kävely, jooga): kerryttää viikon 4 h, mutta kirjaamatta jäänyt ei ole "väliin jäänyt treeni". */
 const LIGHT = new Set(["KA","JO"]);
 const WEEK_MIN = 240; // käyttäjän tavoite 23.11.2026: liikuntaa vähintään 4 h joka viikko
+/* Aloitusviikko on vajaa (to–su): tavoite suhteessa päiviin. first = ensimmäisen ohjelmapäivän indeksi. */
+function weekMinGoal(w, first){ const a0=(w-1)*7-1, days=Math.min(7,a0+7-first); return days>=7?WEEK_MIN:Math.round(WEEK_MIN*Math.max(0,days)/7/10)*10; }
 /* Päivän suunniteltu kesto minuutteina tekstistä. Toistot (8×1 min) eivät ole kokonaiskesto. */
 function planMin(code,text){ text=text||""; if(code==="L") return 0;
   if(code==="R") return /nuts|66/i.test(text)?540:/maraton/i.test(text)?300:120;
@@ -129,4 +131,4 @@ function sickRec(len,fev){ return fev ? Math.min(14, Math.max(7, len*2)) : Math.
 function recentFlag(logs,today,flag,win){ for(let k=today;k>=Math.max(0,today-win);k--){ if(flagsOf(logs[isoOfIdx(k)]).includes(flag)) return true; } return false; }
 function loadRatio(plan,logs,today){ const kmDay=k=>{ let s=0; const d=isoOfIdx(k); for(const key in logs){ if(key.slice(0,10)!==d) continue; const l=logs[key]; if(l&&l.status==="done"&&RUN.has(logType(plan,key,l))&&typeof l.km==="number") s+=l.km; } return s; };
   if(today<21) return null; let a=0,c=0; for(let k=today-6;k<=today;k++) a+=kmDay(k); for(let k=today-27;k<=today;k++) c+=kmDay(k); c=c/4; if(c<5) return null; return {acute:Math.round(a), chronic:Math.round(c), ratio:a/c}; }
-if(typeof module!=="undefined") module.exports={buildAdapt,computeWarnings,weekKm,sessionsOn,effective,idxOfISO,isoOfIdx,weekOf,weekRange,TARGET,RUN,scaleText,loadRatio,sickRec,hasIntensity,planMin,LIGHT,WEEK_MIN};
+if(typeof module!=="undefined") module.exports={buildAdapt,computeWarnings,weekKm,sessionsOn,effective,idxOfISO,isoOfIdx,weekOf,weekRange,TARGET,RUN,scaleText,loadRatio,sickRec,hasIntensity,planMin,LIGHT,WEEK_MIN,weekMinGoal};

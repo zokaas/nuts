@@ -50,7 +50,7 @@ test("scaleText säilyttää lihaskunnon ja skaalaa", () => {
   assert.match(L.scaleText("P", "2,5 h rauhallisesti polulla", 0.6, true), /1,5 h/);
 });
 test("viikon km lasketaan myös Strava-lisätreeneistä", () => {
-  const logs = { "2026-11-23": { status: "done", km: 4 }, "2026-11-24~s9": { status: "done", km: 3, type: "J" } };
+  const logs = { "2026-11-28": { status: "done", km: 4 }, "2026-11-27~s9": { status: "done", km: 3, type: "J" } };
   assert.strictEqual(L.weekKm(plan, logs, 2), 7);
 });
 test("kuume: paluu vähintään viikko, nuha 3 pv", () => {
@@ -73,7 +73,8 @@ test("planMin: toistot eivät ole kesto, km juoksuun, lihaskunto mukaan; jokaine
   assert.equal(planMin("P", "Pitkä 3–3,5 h polulla."), 195);
   assert.equal(planMin("L", "Kävely käy."), 0);
   const plan = require("../src/plan.json");
-  for (let w = 2; w <= 36; w++) { const a = (w - 1) * 7 - 1; let s = 0; for (let i = Math.max(a, 6); i <= a + 6 && i < plan.length; i++) s += planMin(plan[i][0], plan[i][1]); assert.ok(s >= WEEK_MIN, `viikko ${w - 1}: ${s} min`); }
+  for (let w = 2; w <= 36; w++) { const a = (w - 1) * 7 - 1; let s = 0; for (let i = Math.max(a, 9); i <= a + 6 && i < plan.length; i++) s += planMin(plan[i][0], plan[i][1]); assert.ok(s >= L.weekMinGoal(w, 9), `viikko ${w - 1}: ${s} min`); }
+  assert.equal(L.weekMinGoal(2, 9), 140); assert.equal(L.weekMinGoal(3, 9), WEEK_MIN);
 });
 
 test("kirjaamaton kävely ei ole väliin jäänyt treeni", () => {

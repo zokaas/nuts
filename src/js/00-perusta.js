@@ -59,7 +59,7 @@ const TOTAL_SESSIONS=PLAN.filter(p=>p[0]!=="L").length;
 
 /* ---------- johdetut tiedot ---------- */
 /* Ohjelma ja tavat alkavat ma 23.11.2026; sitä edeltävät päivät eivät näy missään (käyttäjän päätös 22.11.). */
-const FIRST = idxOfISO("2026-11-23");
+const FIRST = idxOfISO("2026-11-26"); // ohjelma alkaa to 26.11. beachvolleylla (käyttäjän päätös 25.11.2026)
 const FIRST_W = weekOf(FIRST);
 const wkNo = w => w - FIRST_W + 1; // näytettävä viikkonumero: 23.11. alkava viikko = 1
 function entries(){ return Object.keys(logs).map(k=>({key:k,idx:idxOfISO(k),l:logs[k],code:logType(BASE,k,logs[k])})).filter(e=>e.idx>=FIRST).sort((a,b)=>a.key<b.key?-1:1); }
